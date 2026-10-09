@@ -1,0 +1,209 @@
+{
+  "chainId": 56,
+  "deployer": "0x5D8245Bb247965b922F3E82148f5758CF5Da1a8A",
+  "status": "live",
+  "contracts": {
+    "registry": "0x6c8e4985fca2C10d1baC9A990ce361b094628d60",
+    "launchpad": "0xC513Ff292169Bd8c48aD178aD458fC9E25b308e0",
+    "agent_moss": "0x47dc2f5b015626E9809D33F802C3A89CC3aF8a21",
+    "agent_flicker": "0x01336452E2D2dbbC5222e612816db1638E6b661c",
+    "agent_rook": "0x50bA780703C08c421FFCe695A5dD32Fc91F87262",
+    "agent_pip": "0xf20ed580991FC5D281A232558abfEa11dCC63562",
+    "agent_vale": "0xF69b0625642851a32a290174C72Fd92a3385371f",
+    "agent_echo": "0x3e76b45af47C3e5c6539f0958D6D59412e7Cc001"
+  },
+  "transactions": [
+    {
+      "hash": "e7449b35779399d98d0ae58ef7f448913bfe50b4da38b5b3c22b112ffe94e26a",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "423b1e9a49c7b37c147df92843607661f8724b0bba9535eed5ea2afc6a117677",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "e116cb81fcb04ce68972696bd0417ad3267d38dad03ac37108ac56ab7eaddea0",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "a84ad1e12e8f30e06fde5d3f79069e0ac812eaec0aa5daed7a76fa5b807a61f2",
+      "kind": "policy",
+      "agent": "moss",
+      "status": "confirmed"
+    },
+    {
+      "hash": "4065657dc344e0e38bdf61290a3178ceb10666bac8a396995524438c58e32240",
+      "kind": "registration",
+      "agent": "moss",
+      "status": "confirmed"
+    },
+    {
+      "hash": "84dc4378a38de0394f9ebf8ebeb81a6fa3c757ae090ff84a337b8891e5338be2",
+      "kind": "funding",
+      "agent": "moss",
+      "status": "confirmed"
+    },
+    {
+      "hash": "d8da04ad6a3f428f54207f00ad51190261d9728b4035f7d16d1675c8960c7d4a",
+      "kind": "operator_gas",
+      "agent": "moss",
+      "status": "confirmed"
+    },
+    {
+      "hash": "bd1c9bafdbd5f27ac2161f23aebb9383069af1d9f508e028d8d19a7a00741d6f",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "096c22e3c6d0bea80e779ad4d1448a0a00bd23e5afc26f296b1c10d9749f68b3",
+      "kind": "policy",
+      "agent": "flicker",
+      "status": "confirmed"
+    },
+    {
+      "hash": "8ac76a8972b4c2d53a147d31fdcfe8c7a387d21ca6acd14d0ef1242f88a78139",
+      "kind": "registration",
+      "agent": "flicker",
+      "status": "confirmed"
+    },
+    {
+      "hash": "243686b2138625666d0965663b62654f07fddad38e56355f61a8cff2173f4ca1",
+      "kind": "funding",
+      "agent": "flicker",
+      "status": "confirmed"
+    },
+    {
+      "hash": "7ad1c6b9539ea0faf68be7891e8c12af6b0247c85ceca956ae8fb24759b708b3",
+      "kind": "operator_gas",
+      "agent": "flicker",
+      "status": "confirmed"
+    },
+    {
+      "hash": "3f6f36b5349815083ed145f7202b1c65bf09a2e7ffee1d7bd850e15f9fec65ec",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "f76471324cd505bec512813b68bed767b853e70b539744db508c136557805a86",
+      "kind": "policy",
+      "agent": "rook",
+      "status": "confirmed"
+    },
+    {
+      "hash": "2464394d44254e24c71ec7796270e832e873bbabbb2a0deb6cf855a0eecc4518",
+      "kind": "registration",
+      "agent": "rook",
+      "status": "confirmed"
+    },
+    {
+      "hash": "5c7bd2928de533e7fdabfdf77f5422977fe62e2c72191e9ad2ccc793ee3c905a",
+      "kind": "funding",
+      "agent": "rook",
+      "status": "confirmed"
+    },
+    {
+      "hash": "205092045ddbe2ad27a17763d5ad1c267eff0100471fdae93455a2b214395e27",
+      "kind": "operator_gas",
+      "agent": "rook",
+      "status": "confirmed"
+    },
+    {
+      "hash": "5e3b9d9e6fe1d383924370f7d5ff3215444ae35aa3d41ace1f3f5e5f057e411c",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "197609da4bafe7e27a1c1be452194940ffdd1a0de092051303a67f290877f860",
+      "kind": "policy",
+      "agent": "pip",
+      "status": "confirmed"
+    },
+    {
+      "hash": "256f45ac4cae56938f32ff95da904a05a94fa2a9ff00253bbb9100dc8511ca86",
+      "kind": "registration",
+      "agent": "pip",
+      "status": "confirmed"
+    },
+    {
+      "hash": "6c2d5a70d1bd9d27188769e999ad72e60e15c55140b73828561eac0d0a6ed79a",
+      "kind": "funding",
+      "agent": "pip",
+      "status": "confirmed"
+    },
+    {
+      "hash": "f2e100bedca646f21aa42d1e4397a1d96b4b7086b7007a117e8e95e015fb6385",
+      "kind": "operator_gas",
+      "agent": "pip",
+      "status": "confirmed"
+    },
+    {
+      "hash": "06102415d8f5566fcbd8dfdec2b770f5e8919b122df2741348403ed83839ff0b",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "d4d851414852e10b44e3d4929ae6d25de8c34ba7150f8f6dd6c34e75d5b63e9a",
+      "kind": "policy",
+      "agent": "vale",
+      "status": "confirmed"
+    },
+    {
+      "hash": "6368fbaddca236f6ffc8eb09e48b2cde1699fa22ab6b919b00da2889bfc28b00",
+      "kind": "registration",
+      "agent": "vale",
+      "status": "confirmed"
+    },
+    {
+      "hash": "d3dc72e5417a3ed161addfa41b58fc0204a75f2686b480ef02039cf79096e459",
+      "kind": "funding",
+      "agent": "vale",
+      "status": "confirmed"
+    },
+    {
+      "hash": "30f41d71289560d51ae0b52fcce1fa362c75b526aa9ad3a8c4239067af2393a6",
+      "kind": "operator_gas",
+      "agent": "vale",
+      "status": "confirmed"
+    },
+    {
+      "hash": "1919aef759ca3f9a353e1914a810d6bd567bb8af50f520ccccfafd01ec736d90",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "c6357f34698e7bfdf992636d04d032544bc77b2f2d93eb45dfa7d22b6ea77d71",
+      "kind": "policy",
+      "agent": "echo",
+      "status": "confirmed"
+    },
+    {
+      "hash": "745dbbcb4b73366882397142075d790540214515861c7781927da6771e3c7e3d",
+      "kind": "registration",
+      "agent": "echo",
+      "status": "confirmed"
+    },
+    {
+      "hash": "4a47532bf85d807d8e9231d41a46c4384d2c80f033164b513f9557dfb16144c9",
+      "kind": "funding",
+      "agent": "echo",
+      "status": "confirmed"
+    },
+    {
+      "hash": "cc7294fbf68c843aa22bcfa18b59b5ca7ec66c9bee173fdb7c12b96d1ca2e866",
+      "kind": "operator_gas",
+      "agent": "echo",
+      "status": "confirmed"
+    }
+  ]
+}

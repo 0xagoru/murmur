@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.db*
+.secrets/
+.superdesign/tmp/
+artifacts/
+forge-out/
+cache/
+*.tsbuildinfo
+!contracts/artifacts/
+!contracts/artifacts/*.json

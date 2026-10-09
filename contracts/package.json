@@ -1,0 +1,1 @@
+{"name":"murmur-contracts","private":true,"type":"module","scripts":{"compile":"node compile.mjs"},"dependencies":{"solc":"0.8.30","ethers":"^6.15.0","@openzeppelin/contracts":"^5.4.0"}}

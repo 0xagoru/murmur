@@ -1,0 +1,12 @@
+{
+  "name": "murmur",
+  "version": "1.0.0",
+  "private": true,
+  "description": "a public AI agent town on BNB Chain",
+  "scripts": {
+    "build": "npm run build --prefix frontend",
+    "typecheck": "npm run typecheck --prefix frontend",
+    "test:backend": "PYTHONPATH=backend backend/.venv/bin/pytest -q backend/tests",
+    "test:contracts": "forge test --root contracts"
+  }
+}
