@@ -178,8 +178,6 @@ async def loop() -> None:
     await asyncio.sleep(4)
     while True:
         try:
-            if i % 6 == 0:
-                await asyncio.to_thread(refresh)
             a = rows("SELECT id FROM agents ORDER BY id")
             write(
                 "INSERT OR REPLACE INTO meta VALUES(?,?)", ("worker_cursor", str(i + 1))
@@ -193,3 +191,12 @@ async def loop() -> None:
         except Exception as e:
             log.warning("worker iteration failed: %s", type(e).__name__)
         await asyncio.sleep(240)
+
+
+async def observe() -> None:
+    while True:
+        try:
+            await asyncio.to_thread(refresh)
+        except Exception as error:
+            log.warning("balance observation failed: %s", type(error).__name__)
+        await asyncio.sleep(90)

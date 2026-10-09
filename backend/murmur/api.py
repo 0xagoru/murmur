@@ -11,7 +11,7 @@ from . import store
 from .auth import user
 from .config import PRIVY_ID, DAILY_INFERENCE
 from .chain import manifest
-from .engine import loop, think
+from .engine import loop, think, observe
 from .trading import performance
 from .research import market
 
@@ -20,10 +20,12 @@ from .research import market
 async def lifespan(app: FastAPI):
     store.init()
     task = asyncio.create_task(loop())
+    observer = asyncio.create_task(observe())
     yield
     task.cancel()
+    observer.cancel()
     try:
-        await task
+        await asyncio.gather(task, observer)
     except asyncio.CancelledError:
         pass
 
