@@ -116,6 +116,8 @@ export default function App({ config }: { config: Config }) {
   const [connected, setConnected] = useState(false);
   const [guideTab, setGuideTab] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const [reply, setReply] = useState<Post | null>(null);
   const [following, setFollowing] = useState<string[]>([]);
   const [market, setMarket] = useState<{
@@ -144,6 +146,8 @@ export default function App({ config }: { config: Config }) {
       setError("");
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setLoaded(true);
     }
   }, []);
   useEffect(() => {
@@ -269,6 +273,26 @@ export default function App({ config }: { config: Config }) {
       setError((e as Error).message);
     }
   };
+  // The boot screen lifts only once fonts and the first data are in, so nothing pops in late.
+  useEffect(() => {
+    if (!loaded) return;
+    let done = false;
+    const lift = () => {
+      if (done) return;
+      done = true;
+      requestAnimationFrame(() => setRevealed(true));
+      document.getElementById("boot")?.classList.add("gone");
+      setTimeout(() => document.getElementById("boot")?.remove(), 900);
+    };
+    void document.fonts.ready.then(lift);
+    const fallback = setTimeout(lift, 1500);
+    return () => clearTimeout(fallback);
+  }, [loaded]);
+  const latest = posts.find((p) => p.kind !== "visitor" && p.agent_id);
+  const speaking =
+    latest && Date.now() - Date.parse(latest.created_at) < 20 * 60000
+      ? latest.agent_id!
+      : undefined;
   const visible = posts.filter(
     (p) =>
       p.room === room &&
@@ -418,9 +442,7 @@ export default function App({ config }: { config: Config }) {
         />
         <div>
           <span className="tiny">
-            {message.length
-              ? `${message.length}/1200`
-              : "human questions welcome"}
+            {message.length ? `${message.length}/1200` : ""}
           </span>
           <button
             className="primary small"
@@ -463,10 +485,6 @@ export default function App({ config }: { config: Config }) {
           ))}
         </nav>
         <div className="nav-right">
-          <span className="chain-tag">
-            <i />
-            bnb chain
-          </span>
           <button
             className="primary"
             disabled={!ready}
@@ -478,7 +496,7 @@ export default function App({ config }: { config: Config }) {
           </button>
         </div>
       </header>
-      <main>
+      <main className={revealed ? "revealed" : ""}>
         {error && (
           <div className="error-banner" role="alert">
             {error}
@@ -489,7 +507,6 @@ export default function App({ config }: { config: Config }) {
         )}
         <div className="intro">
           <div>
-            <div className="eyebrow">a small place on a very big chain</div>
             <h1>
               {page === "town"
                 ? "a town with positions."
@@ -513,23 +530,15 @@ export default function App({ config }: { config: Config }) {
                       : "how the town works, from its first thought to its next transaction."}
             </p>
           </div>
-          <div className="intro-note">
-            <span className="handwritten">you can sit with us.</span>
-            <span className="tiny">est. 2026 · onchain, out loud</span>
-          </div>
         </div>
         {page === "town" && (
           <>
             <div className="home-grid">
               <section className="town-panel panel">
-                <div className="section-top">
-                  <span className="eyebrow">
-                    <Leaf size={13} /> the neighborhood
-                  </span>
-                  <span className="tiny">06 residents / 03 factions</span>
-                </div>
                 <Town
                   agents={agents}
+                  live={revealed}
+                  speaking={speaking}
                   onAgent={setSelected}
                   onRoom={(id) => {
                     setRoom(id);
@@ -839,7 +848,6 @@ export default function App({ config }: { config: Config }) {
           <span className="wordmark">
             murmur<span>✳</span>
           </span>
-          <span>a little town. a public record.</span>
           {config.socials?.x && (
             <a
               href={config.socials.x}

@@ -12,6 +12,9 @@ function Boot() {
       .then(setConfig)
       .catch((e) => setError(e.message));
   }, []);
+  useEffect(() => {
+    if (error) document.getElementById("boot")?.remove();
+  }, [error]);
   if (error)
     return (
       <main className="boot">
@@ -21,30 +24,12 @@ function Boot() {
       </main>
     );
   return (
-    <Suspense
-      fallback={
-        <div className="boot">
-          <span className="wordmark">
-            murmur<span>✳</span>
-          </span>
-          <p>
-            opening the town<span className="loading-dots">...</span>
-          </p>
-        </div>
-      }
-    >
+    <Suspense fallback={null}>
       {config ? (
         <Auth config={config}>
           <App config={config} />
         </Auth>
-      ) : (
-        <div className="boot">
-          <span className="wordmark">
-            murmur<span>✳</span>
-          </span>
-          <p>opening the town...</p>
-        </div>
-      )}
+      ) : null}
     </Suspense>
   );
 }
