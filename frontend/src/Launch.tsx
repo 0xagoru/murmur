@@ -35,7 +35,13 @@ const client = createPublicClient({
   transport: http("https://bsc-dataseed.bnbchain.org"),
 });
 type Coin = { address: `0x${string}`; name: string; symbol: string };
-export default function Launch({ config }: { config: Config }) {
+export default function Launch({
+  config,
+  selectedAddress,
+}: {
+  config: Config;
+  selectedAddress?: string;
+}) {
   const { authenticated, login } = usePrivy();
   const { wallets } = useWallets();
   const [name, setName] = useState("");
@@ -86,13 +92,35 @@ export default function Launch({ config }: { config: Config }) {
         }),
       );
       setCoins(list);
+      if (selectedAddress) {
+        const match = list.find(
+          (c) => c.address.toLowerCase() === selectedAddress.toLowerCase(),
+        );
+        if (match) setCoin(match);
+        else {
+          const a = selectedAddress as `0x${string}`;
+          const [name, symbol] = await Promise.all([
+            client.readContract({
+              address: a,
+              abi: tokenAbi,
+              functionName: "name",
+            }),
+            client.readContract({
+              address: a,
+              abi: tokenAbi,
+              functionName: "symbol",
+            }),
+          ]);
+          setCoin({ address: a, name, symbol });
+        }
+      }
     } catch {
       setStatus("the launch ledger is temporarily unavailable");
     }
   }
   useEffect(() => {
     void load();
-  }, [address]);
+  }, [address, selectedAddress]);
   useEffect(() => {
     setQuote(null);
     if (!coin || !address) return;
@@ -151,61 +179,67 @@ export default function Launch({ config }: { config: Config }) {
   }
   return (
     <section className="launch-panel panel">
-      <h2>launch a coin</h2>
-      <p>
-        fixed 1 billion supply. 20% creator allocation, 80% BNB curve. inspect
-        the field guide for the curve rules.
-      </p>
+      <h2>{selectedAddress ? "trade" : "launch a coin"}</h2>
+      {!selectedAddress && (
+        <p>
+          fixed 1 billion supply. 20% creator allocation, 80% BNB curve. inspect
+          the field guide for the curve rules.
+        </p>
+      )}
       {address ? (
         <>
-          <form
-            className="launch-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void execute(async () => {
-                const w = await wallet();
-                return w.writeContract({
-                  address,
-                  abi,
-                  functionName: "launch",
-                  args: [name.trim(), symbol.trim()],
+          {!selectedAddress && (
+            <form
+              className="launch-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void execute(async () => {
+                  const w = await wallet();
+                  return w.writeContract({
+                    address,
+                    abi,
+                    functionName: "launch",
+                    args: [name.trim(), symbol.trim()],
+                  });
                 });
-              });
-            }}
-          >
-            <input
-              required
-              maxLength={40}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="coin name"
-              aria-label="coin name"
-            />
-            <input
-              required
-              maxLength={10}
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              placeholder="symbol"
-              aria-label="coin symbol"
-            />
-            <button className="primary" disabled={busy}>
-              {busy ? "waiting..." : "launch coin"}
-              <ArrowUpRight size={14} />
-            </button>
-          </form>
-          <div className="launch-coins">
-            {coins.map((c) => (
-              <button
-                key={c.address}
-                className="coin-chip"
-                onClick={() => setCoin(c)}
-              >
-                {c.name} · {c.symbol}
-                <ArrowUpRight size={12} />
+              }}
+            >
+              <input
+                required
+                maxLength={40}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="coin name"
+                aria-label="coin name"
+              />
+              <input
+                required
+                maxLength={10}
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="symbol"
+                aria-label="coin symbol"
+              />
+              <button className="primary" disabled={busy}>
+                {busy ? "waiting..." : "launch coin"}
+                <ArrowUpRight size={14} />
               </button>
-            ))}
-          </div>
+            </form>
+          )}
+          {!selectedAddress && (
+            <div className="launch-coins">
+              {coins.map((c) => (
+                <button
+                  key={c.address}
+                  className="coin-chip"
+                  onClick={() => setCoin(c)}
+                >
+                  {c.name} · {c.symbol}
+                  <ArrowUpRight size={12} />
+                </button>
+              ))}
+            </div>
+          )}
           {coin && (
             <div className="launch-state">
               <h3>

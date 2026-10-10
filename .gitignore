@@ -14,3 +14,5 @@ cache/
 *.tsbuildinfo
 !contracts/artifacts/
 !contracts/artifacts/*.json
+
+deploy-backups/

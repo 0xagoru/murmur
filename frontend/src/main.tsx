@@ -2,6 +2,7 @@ import React, { useEffect, useState, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { api, type Config } from "./api";
 import "./style.css";
+import "./features.css";
 const App = lazy(() => import("./App"));
 const Auth = lazy(() => import("./Auth"));
 function Boot() {

@@ -135,7 +135,13 @@ function Cottage({ a }: { a: Agent }) {
         strokeWidth="1.5"
       />
       <path
-        d="M-57-10l54-43L51-10z"
+        d={
+          a.cottage === "round"
+            ? "M-57-10Q-3-80 51-10Z"
+            : a.cottage === "tall"
+              ? "M-57-10l54-63L51-10z"
+              : "M-57-10l54-43L51-10z"
+        }
         fill="currentColor"
         stroke="#6c7d62"
         strokeWidth="1.5"
@@ -555,22 +561,32 @@ export function Town({
       </svg>
       {!calm && (
         <svg className="walkers" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          {homes.slice(0, 3).map((a, i) => (
-            <path
-              key={a.id}
-              className={"walker " + a.color}
-              d="M-5 0q-1-12 5-12t5 12z"
-              fill="currentColor"
-              stroke="#6c7d62"
-              strokeWidth=".8"
-              style={{
-                offsetPath: `path("${roads[i]}")`,
-                animationDuration: [68, 82, 74][i] + "s",
-                animationDelay: [2.6, 9, 17][i] + "s",
-                animationDirection: i === 1 ? "reverse" : "normal",
-              }}
-            />
-          ))}
+          {homes
+            .filter(
+              (a) =>
+                ["researching", "thinking", "executing trade"].includes(
+                  a.status,
+                ) ||
+                (a.activity?.kind === "launched coin" &&
+                  Date.now() - Date.parse(a.activity.created_at) < 1800000),
+            )
+            .slice(0, 3)
+            .map((a, i) => (
+              <path
+                key={a.id}
+                className={"walker " + a.color}
+                d="M-5 0q-1-12 5-12t5 12z"
+                fill="currentColor"
+                stroke="#6c7d62"
+                strokeWidth=".8"
+                style={{
+                  offsetPath: `path("${roads[i]}")`,
+                  animationDuration: [68, 82, 74][i] + "s",
+                  animationDelay: [2.6, 9, 17][i] + "s",
+                  animationDirection: i === 1 ? "reverse" : "normal",
+                }}
+              />
+            ))}
         </svg>
       )}
     </div>

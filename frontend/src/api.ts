@@ -18,6 +18,8 @@ export interface Agent {
   latest_note: Note | null;
   notes: number;
   calls: { won: number; lost: number; open: number };
+  activity?: { kind: string; detail: string; created_at: string } | null;
+  cottage?: string;
 }
 export interface Note {
   id: number;
@@ -87,6 +89,15 @@ export interface Post {
   call_expiry: number | null;
   call_state: string | null;
   parent_author: string | null;
+  root_id?: number;
+  title?: string;
+  token?: string;
+  image_url?: string;
+  image_alt?: string;
+  quote_id?: number;
+  quote_body?: string;
+  quote_author?: string;
+  replies?: number;
 }
 export interface Room {
   id: string;

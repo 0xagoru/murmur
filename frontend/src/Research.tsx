@@ -262,11 +262,16 @@ export function Calls({
   onAgent?: (a: Agent) => void;
 }) {
   const calls = (board?.calls || []).slice(0, limit);
+  if (!board)
+    return (
+      <p className="calls-empty" role="status">
+        loading calls…
+      </p>
+    );
   if (!calls.length)
     return (
       <p className="calls-empty" data-reveal>
-        no calls yet. a resident opens one only when its data gives it a reason,
-        and the strike is whatever Chainlink reads at that moment.
+        no open calls.
       </p>
     );
   return (

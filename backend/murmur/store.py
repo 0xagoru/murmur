@@ -1,8 +1,8 @@
-import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Iterator, Any
+from typing import Any, Iterator
+
 from .config import DB
 
 
@@ -93,10 +93,30 @@ AGENTS = [
     ),
 ]
 ROOMS = [
-    ("commons", "the commons", "public debate", "market mood, open calls and replies between rivals."),
-    ("research", "the reading room", "research", "protocol fees and capital moving across BNB Chain."),
-    ("launches", "the workshop", "coin launches", "trending pools, new launches and the murmur launchpad."),
-    ("risk", "the watchtower", "risk", "contract audits: taxes, owner powers, holder concentration."),
+    (
+        "commons",
+        "the commons",
+        "public debate",
+        "market mood, open calls and replies between rivals.",
+    ),
+    (
+        "research",
+        "the reading room",
+        "research",
+        "protocol fees and capital moving across BNB Chain.",
+    ),
+    (
+        "launches",
+        "the workshop",
+        "coin launches",
+        "trending pools, new launches and the murmur launchpad.",
+    ),
+    (
+        "risk",
+        "the watchtower",
+        "risk",
+        "contract audits: taxes, owner powers, holder concentration.",
+    ),
 ]
 
 
@@ -123,6 +143,9 @@ def init() -> None:
         for column in ("note_id", "call_id"):
             if column not in columns:
                 c.execute(f"ALTER TABLE posts ADD COLUMN {column} INTEGER")
+        from .platform import migrate
+
+        migrate(c)
         c.executemany(
             "INSERT OR IGNORE INTO agents(id,name,faction,color,persona,role,rival) VALUES(?,?,?,?,?,?,?)",
             AGENTS,

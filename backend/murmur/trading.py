@@ -3,9 +3,10 @@
 import json
 import time
 from typing import Any
-from .config import ROOT, DATA
-from .chain import web3, USDT, WBNB, ROUTER, ERC20_ABI
-from .store import rows, write, now, connection
+
+from .chain import ERC20_ABI, ROUTER, USDT, WBNB, web3
+from .config import DATA, ROOT
+from .store import connection, now, rows, write
 
 ROUTER_ABI = [
     {
@@ -28,9 +29,22 @@ def _execute(
     if action not in ("buy", "sell"):
         return None
     keyfile = DATA / "operators.json"
-    if not keyfile.exists():
-        return None
-    keys = json.loads(keyfile.read_text())
+    keys = json.loads(keyfile.read_text()) if keyfile.exists() else {}
+    settings = rows("SELECT * FROM resident_settings WHERE agent_id=?", (agent_id,))
+    if settings:
+        from .platform import activity
+        from .residents import operator_key, refresh_funds
+
+        s = settings[0]
+        if s["paused"] or not s["trade_enabled"]:
+            return None
+        funds = refresh_funds(agent_id)
+        if not funds or funds["trading_paused"] or not funds["operator_valid"]:
+            return None
+        key = operator_key(agent_id)
+        if key:
+            keys[agent_id] = {"private_key": key}
+        activity(agent_id, "executing trade", action + " BNB/USDT")
     if agent_id not in keys:
         return None
     a = rows("SELECT * FROM agents WHERE id=?", (agent_id,))[0]
@@ -232,6 +246,15 @@ def performance(agent_id: str) -> dict[str, Any]:
 
 
 def execute(
+    agent_id: str, action: str, validation: bool = False
+) -> dict[str, Any] | None:
+    from .residents import operator_lock
+
+    with operator_lock(agent_id):
+        return _execute_serial(agent_id, action, validation)
+
+
+def _execute_serial(
     agent_id: str, action: str, validation: bool = False
 ) -> dict[str, Any] | None:
     previous = rows("SELECT value FROM meta WHERE key=?", ("trade_lock_" + agent_id,))

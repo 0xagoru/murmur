@@ -130,7 +130,7 @@ nav {
   flex: 1;
 }
 nav button {
-  font-size: 13px;
+  font-size: 14px;
   padding: 8px 13px;
   color: var(--muted);
 }
@@ -154,7 +154,7 @@ nav .active:after {
   background: var(--forest);
   color: #f8f7ef;
   padding: 11px 15px;
-  font-size: 12px;
+  font-size: 14px;
   border: 1px solid var(--forest);
 }
 .primary:hover {
@@ -172,7 +172,7 @@ time {
   font-family: "DM Mono", monospace;
 }
 .chain-tag {
-  font-size: 12px;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -196,14 +196,14 @@ main {
   padding: 34px 0 30px;
 }
 .eyebrow {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   display: flex;
   align-items: center;
   gap: 7px;
 }
 .tiny {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .panel {
@@ -269,7 +269,7 @@ main {
   stroke-width: 1.5;
 }
 .map-label {
-  font-size: 12px;
+  font-size: 14px;
   fill: #354a3e;
 }
 .map-label.soft {
@@ -499,7 +499,7 @@ main {
   flex-wrap: wrap;
   gap: 12px 20px;
   font:
-    12px "DM Mono",
+    14px "DM Mono",
     monospace;
 }
 .faction-legend span {
@@ -545,7 +545,7 @@ main {
   gap: 8px;
 }
 .counter {
-  font-size: 12px;
+  font-size: 14px;
   background: #e7ecdf;
   padding: 3px 8px;
   border-radius: 20px;
@@ -561,12 +561,13 @@ main {
 }
 .room-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 0 20px 13px;
   border-bottom: 1px solid var(--border);
 }
 .room-tabs button {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   padding: 5px 10px;
 }
@@ -588,7 +589,7 @@ main {
   width: 100%;
   border: 0;
   outline: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ink);
 }
 .post-list {
@@ -629,7 +630,7 @@ main {
 }
 .post-by time {
   margin-left: auto;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .post p {
@@ -643,7 +644,7 @@ main {
   align-items: center;
   gap: 13px;
   font:
-    12px "DM Mono",
+    14px "DM Mono",
     monospace;
   color: var(--muted);
   margin-top: 9px;
@@ -654,7 +655,7 @@ main {
   padding: 0;
 }
 .reply-label {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   margin-top: 6px;
 }
@@ -681,7 +682,7 @@ main {
   gap: 8px;
 }
 .reply-chip {
-  font-size: 12px;
+  font-size: 14px;
   margin-bottom: 8px;
 }
 .below-grid {
@@ -690,7 +691,7 @@ main {
 .text-button {
   padding: 0;
   font:
-    12px "DM Mono",
+    14px "DM Mono",
     monospace;
 }
 .resident-mini-grid {
@@ -716,7 +717,7 @@ main {
 }
 .badge {
   font:
-    12px "DM Mono",
+    14px "DM Mono",
     monospace;
   padding: 3px 7px;
   border: 1px solid #d7ddcd;
@@ -754,7 +755,7 @@ main {
   padding: 0;
 }
 .agent-card-body > p {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   margin: 10px 0 20px;
 }
@@ -765,7 +766,7 @@ main {
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
   padding: 12px 0;
-  font-size: 12px;
+  font-size: 14px;
 }
 .data-pair > span:first-child {
   color: var(--muted);
@@ -776,11 +777,11 @@ main {
   align-items: center;
 }
 .data-pair strong {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 .data-pair code {
-  font-size: 12px;
+  font-size: 14px;
 }
 .card-actions {
   display: flex;
@@ -789,7 +790,7 @@ main {
   margin-top: 20px;
 }
 .card-actions > button {
-  font-size: 12px;
+  font-size: 14px;
 }
 .rooms-layout {
   display: grid;
@@ -846,7 +847,7 @@ main {
   gap: 20px;
   padding: 18px 22px;
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 14px;
 }
 .receipt-row > span:nth-child(2) {
   flex: 1;
@@ -854,12 +855,12 @@ main {
   flex-direction: column;
 }
 .receipt-row small {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .receipt-row code,
 .receipt-row time {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .receipt-icon {
@@ -884,11 +885,11 @@ main {
   padding: 13px 8px;
   gap: 10px;
   text-align: left;
-  font-size: 12px;
+  font-size: 14px;
 }
 .docs-layout aside button span {
   font:
-    12px "DM Mono",
+    14px "DM Mono",
     monospace;
   color: var(--muted);
 }
@@ -919,7 +920,7 @@ main {
   margin-top: 30px;
 }
 .docs-next button {
-  font-size: 12px;
+  font-size: 14px;
   background: #e9eddf;
   padding: 10px 15px;
 }
@@ -935,7 +936,7 @@ main {
   min-height: 240px;
 }
 .empty p {
-  font-size: 12px;
+  font-size: 14px;
   max-width: 300px;
 }
 .empty svg {
@@ -948,7 +949,7 @@ footer {
   padding: 32px 0 24px;
   margin-top: 28px;
   border-top: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 footer .wordmark {
@@ -960,7 +961,7 @@ footer .wordmark span {
 }
 footer > button {
   margin-left: auto;
-  font-size: 12px;
+  font-size: 14px;
 }
 .modal-backdrop {
   position: fixed;
@@ -1003,7 +1004,7 @@ footer > button {
   margin: 6px 0;
 }
 .profile-top p {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .profile-body {
@@ -1024,7 +1025,7 @@ footer > button {
 }
 .profile-stats span {
   font:
-    9px "DM Mono",
+    14px "DM Mono",
     monospace;
   color: var(--muted);
 }
@@ -1040,7 +1041,7 @@ footer > button {
   border-bottom: 1px solid var(--border);
 }
 .profile-thought p {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.7;
   margin-bottom: 8px;
 }
@@ -1053,7 +1054,7 @@ footer > button {
   background: #f4e4d7;
   border: 1px solid #d6b9a3;
   color: #744b38;
-  font-size: 12px;
+  font-size: 14px;
 }
 .launch-panel {
   margin-top: 24px;
@@ -1064,7 +1065,7 @@ footer > button {
 }
 .launch-panel p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   margin-bottom: 15px;
 }
 .launch-form {
@@ -1079,7 +1080,7 @@ footer > button {
   padding: 10px 12px;
   border-radius: 4px;
   font:
-    12px "DM Sans",
+    14px "DM Sans",
     sans-serif;
   color: var(--ink);
   min-width: 0;
@@ -1089,7 +1090,7 @@ footer > button {
 }
 .launch-state {
   margin-top: 12px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .launch-coins {
   display: flex;
@@ -1101,7 +1102,7 @@ footer > button {
   border: 1px solid var(--border);
   padding: 9px 12px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .wallet-tools {
   display: flex;
@@ -1109,7 +1110,7 @@ footer > button {
   margin: 16px 0;
 }
 .wallet-tools button {
-  font-size: 12px;
+  font-size: 14px;
   padding: 8px 12px;
   border: 1px solid var(--border);
 }
@@ -1138,7 +1139,7 @@ footer > button {
   }
   nav button {
     padding: 8px;
-    font-size: 12px;
+    font-size: 14px;
   }
   .nav-right {
     gap: 10px;
@@ -1193,7 +1194,7 @@ footer > button {
   }
   .nav-right .primary {
     padding: 9px 11px;
-    font-size: 12px;
+    font-size: 14px;
   }
   nav {
     order: 3;
@@ -1208,7 +1209,7 @@ footer > button {
     white-space: nowrap;
     padding: 8px 6px;
     min-height: 36px;
-    font-size: 12px;
+    font-size: 14px;
   }
   main {
     padding: 0 5%;
@@ -1244,7 +1245,7 @@ footer > button {
     padding-left: 16px;
   }
   .room-tabs button {
-    font-size: 12px;
+    font-size: 14px;
     padding: 7px 12px;
   }
   .resident-strip {
@@ -1281,7 +1282,7 @@ footer > button {
     padding: 16px 12px;
   }
   .stats-row .eyebrow {
-    font-size: 12px;
+    font-size: 14px;
   }
   .receipt-row {
     padding: 15px 12px;
@@ -1353,7 +1354,7 @@ footer > button {
     padding: 10px;
   }
   .profile-stats strong {
-    font-size: 12px;
+    font-size: 14px;
   }
   .launch-form {
     flex-direction: column;
@@ -1393,11 +1394,11 @@ footer > button {
 }
 .research-observation p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 .research-observation a {
   font:
-    12px "DM Mono",
+    14px "DM Mono",
     monospace;
   display: flex;
   gap: 7px;
@@ -1549,7 +1550,7 @@ button:active {
   align-items: center;
   gap: 5px;
   font:
-    12.5px "DM Sans",
+    14px "DM Sans",
     sans-serif;
   color: var(--forest);
   background: none;
@@ -1601,7 +1602,7 @@ button:active {
   gap: 2px;
 }
 .live-stats dt {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
 }
 .live-stats dd {
@@ -1642,7 +1643,7 @@ button:active {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: #42554c;
   white-space: nowrap;
 }
@@ -1669,7 +1670,7 @@ button:active {
   background: #f4f3ea;
 }
 .post-room {
-  font-size: 10.5px;
+  font-size: 14px;
   color: var(--muted);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -1678,7 +1679,7 @@ button:active {
 .post-call {
   display: inline-block;
   font:
-    11px "DM Mono",
+    14px "DM Mono",
     monospace;
   background: #e9eee0;
   color: #2e4a3d;
@@ -1739,7 +1740,7 @@ button:active {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--muted);
   position: static;
   height: auto;
@@ -1752,7 +1753,7 @@ button:active {
   gap: 7px;
   font-weight: 500;
   color: var(--ink);
-  font-size: 12.5px;
+  font-size: 14px;
 }
 .note-author:hover {
   background: none;
@@ -1775,7 +1776,7 @@ button:active {
   font-size: 23px;
 }
 .note-card > p {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   color: #3c4f46;
 }
@@ -1786,14 +1787,14 @@ button:active {
   overflow: hidden;
 }
 .note-question {
-  font-size: 12.5px !important;
+  font-size: 14px !important;
   color: var(--muted) !important;
   border-left: 2px solid #d5dccb;
   padding-left: 10px;
 }
 .note-question span {
   display: block;
-  font-size: 10.5px;
+  font-size: 14px;
   color: #7b8a7f;
   margin-bottom: 1px;
 }
@@ -1803,7 +1804,7 @@ button:active {
   gap: 4px 16px;
   margin-top: auto;
   padding-top: 6px;
-  font-size: 11.5px;
+  font-size: 14px;
 }
 .note-card footer a {
   display: inline-flex;
@@ -1827,13 +1828,13 @@ button:active {
     0 1px 0 var(--border);
 }
 .facts dt {
-  font-size: 10.5px;
+  font-size: 14px;
   color: var(--muted);
 }
 .facts dd {
   margin: 2px 0 0;
   font:
-    12.5px "DM Mono",
+    14px "DM Mono",
     monospace;
   color: var(--ink);
 }
@@ -1887,7 +1888,7 @@ button:active {
   font-size: 14px;
 }
 .call-main p {
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: #44574d;
   margin-top: 4px;
@@ -1900,12 +1901,12 @@ button:active {
   display: grid;
   justify-items: end;
   gap: 3px;
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--muted);
   text-align: right;
 }
 .call-state {
-  font-size: 11px;
+  font-size: 14px;
   border-radius: 999px;
   padding: 1px 9px;
   background: #ecefe5;
@@ -1923,7 +1924,7 @@ button:active {
 }
 .call-price {
   font:
-    13px "DM Mono",
+    14px "DM Mono",
     monospace;
   color: var(--ink);
 }
@@ -1945,7 +1946,7 @@ button:active {
   padding: 22px;
   border: 1px dashed #cfd5c4;
   border-radius: 3px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
   line-height: 1.6;
 }
@@ -1971,15 +1972,15 @@ button:active {
   gap: 8px;
   padding: 6px 0;
   border-bottom: 1px solid #e6e8de;
-  font-size: 13px;
+  font-size: 14px;
 }
 .record b {
   font:
-    500 13px "DM Mono",
+    500 14px "DM Mono",
     monospace;
 }
 .record small {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
   min-width: 42px;
   text-align: right;
@@ -2010,13 +2011,13 @@ button:active {
   margin-top: 6px;
 }
 .resident-mini small {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   line-height: 1.4;
 }
 .resident-mini span {
   font:
-    11px "DM Mono",
+    14px "DM Mono",
     monospace;
   color: #4d6357;
   margin-top: 6px;
@@ -2052,12 +2053,12 @@ button:active {
   line-height: 1.1;
 }
 .agent-head p {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--muted);
   margin-top: 2px;
 }
 .agent-persona {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.65;
   color: #3c4f46;
 }
@@ -2065,7 +2066,7 @@ button:active {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 6px;
-  font-size: 12.5px;
+  font-size: 14px;
   align-items: baseline;
 }
 .agent-beat span {
@@ -2086,12 +2087,12 @@ button:active {
   line-height: 1.3;
 }
 .agent-latest > p {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   color: #3c4f46;
 }
 .agent-latest-meta {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
 }
 .agent-numbers {
@@ -2102,18 +2103,18 @@ button:active {
   padding-top: 12px;
 }
 .agent-numbers dt {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
 }
 .agent-numbers dd {
   margin: 2px 0 0;
   font:
-    13px "DM Mono",
+    14px "DM Mono",
     monospace;
 }
 .agent-numbers small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 14px;
 }
 .agent-card .card-actions {
   align-items: center;
@@ -2121,12 +2122,12 @@ button:active {
 .agent-card .card-actions .text-button {
   margin-left: auto;
   font:
-    11.5px "DM Mono",
+    14px "DM Mono",
     monospace;
 }
 .profile-thought strong {
   font-weight: 500;
-  font-size: 13.5px;
+  font-size: 14px;
 }
 
 /* research page */
@@ -2137,7 +2138,7 @@ button:active {
   margin-bottom: 18px;
 }
 .filter-row button {
-  font-size: 12.5px;
+  font-size: 14px;
   padding: 6px 12px 6px 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -2155,10 +2156,12 @@ button:active {
 .note-column {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 .research-side {
   position: sticky;
   top: 92px;
+  min-width: 0;
 }
 
 /* footer */
@@ -2191,7 +2194,7 @@ footer .text-button:hover {
   }
   .agents-grid,
   .research-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .research-side {
     position: static;
@@ -2209,7 +2212,7 @@ footer .text-button:hover {
   }
   .note-grid,
   .calls-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .call-row {
     grid-template-columns: 40px minmax(0, 1fr);

@@ -3,7 +3,7 @@ import solc from "solc";
 const input = {
   language: "Solidity",
   sources: Object.fromEntries(
-    ["Murmur.sol", "MurmurLedger.sol"].map((f) => [
+    ["Murmur.sol", "MurmurLedger.sol", "MurmurResident.sol"].map((f) => [
       f,
       { content: fs.readFileSync("src/" + f, "utf8") },
     ]),

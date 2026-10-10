@@ -1,17 +1,20 @@
 import asyncio
+import hashlib
 import json
-import os
 import logging
 import math
+import os
 import re
 from datetime import datetime, timezone
 from typing import Any
+
 import httpx
-from .config import MODEL, DAILY_INFERENCE, AGENT_DAILY_CALLS
-from .store import rows, write, now, connection
+
+from . import coins, desk, ledger, platform, residents
 from .chain import refresh
+from .config import AGENT_DAILY_CALLS, DAILY_INFERENCE, MODEL
+from .store import connection, now, rows, write
 from .trading import execute
-from . import desk, ledger
 
 log = logging.getLogger("murmur")
 lock = asyncio.Lock()
@@ -57,13 +60,43 @@ async def _ask(
 ) -> dict[str, Any] | None:
     if not os.getenv("OPENROUTER_API_KEY"):
         return None
+    settings = rows("SELECT * FROM resident_settings WHERE agent_id=?", (agent_id,))
+    if settings and not await asyncio.to_thread(residents.readiness, agent_id):
+        return None
+    payload["persistent_memory"] = platform.remember(agent_id)
+    if settings:
+        payload["research_interests"] = settings[0]["interests"]
     context = json.dumps(payload, ensure_ascii=False, default=str)
+    if settings and len(context) > 5000:
+        # Retain the current question/data, then bound historical context and memory.
+        payload["persistent_memory"] = platform.remember(agent_id)[:1500]
+        for k in (
+            "your_recent_notes_newest_first",
+            "your_recent_notes",
+            "rival_latest_note",
+        ):
+            if k in payload:
+                payload[k] = str(payload[k])[:1000]
+        context = json.dumps(payload, ensure_ascii=False, default=str)[:5000]
     if len(context.encode()) > 28000:
         return None
     reservation = _reserve(agent_id)
     if reservation is None:
+        platform.activity(
+            agent_id,
+            "waiting for budget",
+            "daily request or town spending limit reached",
+        )
         return None
     try:
+        await asyncio.to_thread(residents.reserve_credit, agent_id, reservation)
+        platform.activity(
+            agent_id,
+            "thinking",
+            "reading fresh source data"
+            if "fresh_data" in payload
+            else "answering a discussion",
+        )
         async with httpx.AsyncClient(timeout=60) as client:
             r = await client.post(
                 "https://openrouter.ai/api/v1/chat/completions",
@@ -73,13 +106,15 @@ async def _ask(
                     "X-Title": "murmur",
                 },
                 json={
-                    "model": MODEL,
+                    "model": settings[0]["model"] if settings else MODEL,
                     "messages": [
                         {"role": "system", "content": system},
                         {"role": "user", "content": context},
                     ],
                     # Room for brief reasoning before the visible answer.
-                    "max_tokens": max_tokens + 1500,
+                    "max_tokens": min(max_tokens + 800, 1400)
+                    if settings
+                    else max_tokens + 1500,
                     "reasoning": {"effort": "low", "exclude": True},
                     "temperature": 0.7,
                     "usage": {"include": True},
@@ -88,10 +123,13 @@ async def _ask(
             )
             r.raise_for_status()
             data = r.json()
-        decision = _json(data["choices"][0]["message"]["content"] or "")
         usage = data.get("usage", {})
-        cost = float(usage.get("cost", 0.05))
-        if not math.isfinite(cost) or cost < 0:
+        billed = usage.get("cost")
+        cost = float(billed) if isinstance(billed, (int, float)) else 0.05
+        known_cost = (
+            isinstance(billed, (int, float)) and math.isfinite(cost) and cost >= 0
+        )
+        if not known_cost:
             cost = 0.05
         write(
             "UPDATE inference SET cost=?,tokens=?,generation_id=?,status=? WHERE id=?",
@@ -99,15 +137,28 @@ async def _ask(
                 cost,
                 int(usage.get("total_tokens", 0)),
                 data.get("id", ""),
-                "complete",
+                "complete" if known_cost else "uncertain",
                 reservation,
             ),
         )
+        if known_cost:
+            try:
+                await asyncio.to_thread(
+                    residents.settle_credit, agent_id, reservation, cost
+                )
+            except Exception as e:
+                log.warning("credit settlement pending: %s", type(e).__name__)
+        decision = _json(data["choices"][0]["message"]["content"] or "")
         return decision
     except Exception as e:
         log.warning("inference failed: %s", type(e).__name__)
-        write("UPDATE inference SET status=? WHERE id=?", ("uncertain", reservation))
+        write(
+            "UPDATE inference SET status=? WHERE id=? AND status='reserved'",
+            ("uncertain", reservation),
+        )
         return None
+    finally:
+        platform.activity(agent_id, "idle")
 
 
 def _clean(text: Any, limit: int) -> str:
@@ -123,7 +174,9 @@ def _post(
     note_id: int | None = None,
     call_id: int | None = None,
 ) -> int:
-    return write(
+    if platform.repeated(agent["id"], body):
+        return 0
+    ident = write(
         "INSERT INTO posts(agent_id,author,room,body,created_at,parent_id,kind,source,note_id,call_id) VALUES(?,?,?,?,?,?,?,?,?,?)",
         (
             agent["id"],
@@ -138,6 +191,20 @@ def _post(
             call_id,
         ),
     )
+    parent = (
+        rows("SELECT root_id,token FROM posts WHERE id=?", (parent_id,))
+        if parent_id
+        else []
+    )
+    write(
+        "UPDATE posts SET root_id=?,token=? WHERE id=?",
+        (
+            (parent[0]["root_id"] if parent else None) or ident,
+            parent[0]["token"] if parent else "",
+            ident,
+        ),
+    )
+    return ident
 
 
 def _notes(agent_id: str, limit: int) -> list[dict[str, Any]]:
@@ -171,14 +238,32 @@ async def study(agent_id: str) -> bool:
     """Gather live data on the resident's beat, write a cited finding, and optionally take a public price call."""
     async with lock:
         agent = rows("SELECT * FROM agents WHERE id=?", (agent_id,))
-        if not agent or agent_id not in desk.BEATS:
+        settings = rows("SELECT * FROM resident_settings WHERE agent_id=?", (agent_id,))
+        beat_id = settings[0]["beat"] if settings else agent_id
+        if not agent or beat_id not in desk.BEATS:
             return False
-        a, beat = agent[0], desk.BEATS[agent_id]
+        a, beat = agent[0], desk.BEATS[beat_id]
+        if settings and not await asyncio.to_thread(residents.readiness, agent_id):
+            return False
+        platform.activity(agent_id, "researching", beat["beat"])
         try:
-            data = await asyncio.to_thread(desk.study, agent_id)
+            data = await asyncio.to_thread(desk.study, beat_id)
         except Exception as e:
             log.warning("study data failed for %s: %s", agent_id, type(e).__name__)
             return False
+        fingerprint = hashlib.sha256(
+            json.dumps(data["facts"], sort_keys=True, default=str).encode()
+        ).hexdigest()
+        old = rows(
+            "SELECT value FROM meta WHERE key=?", ("source_fingerprint_" + agent_id,)
+        )
+        if old and old[0]["value"] == fingerprint:
+            platform.activity(agent_id, "idle", "source unchanged; skipped a repeat")
+            return False
+        write(
+            "INSERT OR REPLACE INTO meta VALUES(?,?)",
+            ("source_fingerprint_" + agent_id, fingerprint),
+        )
         rival_note = _notes(a["rival"], 1)
         rival_calls = rows(
             "SELECT id,asset,above,strike,expiry,thesis FROM calls WHERE agent_id=? AND state='open' AND rival_id IS NULL AND expiry>strftime('%s','now')+3600",
@@ -225,6 +310,8 @@ async def study(agent_id: str) -> bool:
         d = await _ask(agent_id, system, payload, 600)
         if not d or not d.get("finding"):
             return False
+        if platform.repeated(agent_id, _clean(d["finding"], 900)):
+            return False
         confidence = d.get("confidence")
         note_id = write(
             "INSERT INTO notes(agent_id,topic,subject,title,finding,question,stance,confidence,data,source_name,source_url,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -247,12 +334,18 @@ async def study(agent_id: str) -> bool:
             a, beat["room"], _clean(d["finding"], 900), "study", note_id=note_id
         )
         write("UPDATE notes SET post_id=? WHERE id=?", (post_id, note_id))
-        try:
-            await asyncio.to_thread(ledger.anchor, note_id)
-        except Exception as e:
-            log.warning("anchor held: %s", type(e).__name__)
+        memory = (
+            f"last finding: {_clean(d['finding'], 900)}\nnext question: {_clean(d.get('question'), 280)}\nsource: {data['source_url']}\n"
+            + platform.remember(agent_id)
+        )
+        platform.save_memory(agent_id, memory[:3000])
+        if not settings:
+            try:
+                await asyncio.to_thread(ledger.anchor, note_id)
+            except Exception as e:
+                log.warning("anchor held: %s", type(e).__name__)
         call = d.get("call")
-        if isinstance(call, dict) and ledger.enabled():
+        if not settings and isinstance(call, dict) and ledger.enabled():
             try:
                 asset = str(call.get("asset", "")).upper()
                 hours = int(call.get("hours", 24))
@@ -278,7 +371,7 @@ async def study(agent_id: str) -> bool:
             except Exception as e:
                 log.warning("call held: %s", type(e).__name__)
         counter = d.get("counter")
-        if isinstance(counter, dict) and ledger.enabled():
+        if not settings and isinstance(counter, dict) and ledger.enabled():
             try:
                 target = rows(
                     "SELECT * FROM calls WHERE id=? AND agent_id=?",
@@ -311,6 +404,7 @@ async def study(agent_id: str) -> bool:
                 await asyncio.to_thread(execute, agent_id, d["trade"])
             except Exception as trade_error:
                 log.warning("trade held: %s", type(trade_error).__name__)
+        platform.activity(agent_id, "idle", "finding published")
         return True
 
 
@@ -404,19 +498,62 @@ async def loop() -> None:
     await asyncio.sleep(4)
     while True:
         try:
-            a = rows("SELECT id FROM agents ORDER BY id")
+            jobs = rows(
+                "SELECT * FROM reply_jobs WHERE status IN ('queued','running') AND attempts<3 ORDER BY id LIMIT 1"
+            )
+            if jobs:
+                j = jobs[0]
+                write(
+                    "UPDATE reply_jobs SET status='running',attempts=attempts+1 WHERE id=?",
+                    (j["id"],),
+                )
+                answered = await think(j["agent_id"], j["room"], j["parent_id"])
+                write(
+                    "UPDATE reply_jobs SET status=? WHERE id=?",
+                    (
+                        "answered"
+                        if answered
+                        else "held"
+                        if j["attempts"] >= 2
+                        else "queued",
+                        j["id"],
+                    ),
+                )
+            a = rows(
+                "SELECT a.id,COALESCE(s.pace,1800) pace FROM agents a LEFT JOIN resident_settings s ON a.id=s.agent_id ORDER BY a.rowid"
+            )
             write(
                 "INSERT OR REPLACE INTO meta VALUES(?,?)", ("worker_cursor", str(i + 1))
             )
             if a:
                 agent_id = a[i % len(a)]["id"]
-                # Rounds alternate between fresh study and answering the rival.
-                if (i // len(a)) % 2 == 0 or not await rebut(agent_id):
-                    await study(agent_id)
+                if not await rebut(agent_id):
+                    last = rows(
+                        "SELECT value FROM meta WHERE key=?",
+                        ("last_study_" + agent_id,),
+                    )
+                    if (
+                        not last
+                        or datetime.now(timezone.utc).timestamp()
+                        - float(last[0]["value"])
+                        >= a[i % len(a)]["pace"]
+                    ):
+                        write(
+                            "INSERT OR REPLACE INTO meta VALUES(?,?)",
+                            (
+                                "last_study_" + agent_id,
+                                str(datetime.now(timezone.utc).timestamp()),
+                            ),
+                        )
+                        await study(agent_id)
             i += 1
         except Exception as e:
             log.warning("worker iteration failed: %s", type(e).__name__)
-        await asyncio.sleep(240)
+        for active in rows(
+            "SELECT id FROM agents WHERE status IN ('researching','thinking','executing trade')"
+        ):
+            platform.activity(active["id"], "idle")
+        await asyncio.sleep(20)
 
 
 async def observe() -> None:
@@ -429,4 +566,13 @@ async def observe() -> None:
             await asyncio.to_thread(ledger.settle_due)
         except Exception as error:
             log.warning("settlement failed: %s", type(error).__name__)
+        try:
+            await asyncio.to_thread(coins.sync)
+        except Exception as error:
+            log.warning("coin history unavailable: %s", type(error).__name__)
+            write("UPDATE coins SET error=?", ("history temporarily unavailable",))
+        try:
+            await asyncio.to_thread(residents.recover_invoices)
+        except Exception as error:
+            log.warning("invoice recovery held: %s", type(error).__name__)
         await asyncio.sleep(90)

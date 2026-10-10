@@ -6,6 +6,7 @@ contract MockRouter {
  MurmurCoin public token;
  constructor(){token=new MurmurCoin('test','T',1e30,address(this));}
  function WETH() external pure returns(address){return address(1);}
+ function getAmountsOut(uint amount,address[] calldata path) external view returns(uint[] memory out){out=new uint[](2);out[0]=amount;out[1]=path[1]==address(token)?amount*1000:amount/1000;}
  function swapExactETHForTokens(uint minimum,address[] calldata,address to,uint) external payable returns(uint[] memory out){uint amount=msg.value*1000;require(amount>=minimum);token.transfer(to,amount);out=new uint[](2);out[1]=amount;}
  function swapExactTokensForETH(uint amount,uint minimum,address[] calldata,address to,uint) external returns(uint[] memory out){token.transferFrom(msg.sender,address(this),amount);uint value=amount/1000;require(value>=minimum);(bool ok,)=to.call{value:value}('');require(ok);out=new uint[](2);out[1]=value;}
  receive() external payable {}

@@ -2,20 +2,22 @@ import asyncio
 import json
 import os
 import time
-from urllib.parse import urlparse
 from contextlib import asynccontextmanager
 from typing import Any
-from fastapi import FastAPI, Depends, HTTPException, Query, Request
+from urllib.parse import urlparse
+
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from . import store
+
+from . import desk, ledger, platform, store
 from .auth import user
-from .config import PRIVY_ID, DAILY_INFERENCE
 from .chain import manifest
-from .engine import loop, think, observe
-from .trading import performance
+from .config import DAILY_INFERENCE, PRIVY_ID
+from .engine import loop, observe
+from .features import router
 from .research import market
-from . import desk, ledger
+from .trading import performance
 
 
 @asynccontextmanager
@@ -33,6 +35,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="murmur", version="1.0.0", lifespan=lifespan)
+app.include_router(router)
 
 
 class Message(BaseModel):
@@ -40,6 +43,11 @@ class Message(BaseModel):
     room: str = Field(default="commons", max_length=30)
     agent_id: str | None = None
     parent_id: int | None = None
+    title: str = Field(default="", max_length=100)
+    token: str = Field(default="", max_length=42)
+    image_url: str = Field(default="", max_length=2000)
+    image_alt: str = Field(default="", max_length=160)
+    quote_id: int | None = None
 
 
 class Follow(BaseModel):
@@ -72,7 +80,7 @@ def config() -> dict[str, Any]:
 @app.get("/api/agents")
 def agents() -> list[dict[str, Any]]:
     result = store.rows(
-        "SELECT id,name,faction,color,role,rival,wallet,status FROM agents"
+        "SELECT id,name,faction,color,role,rival,wallet,status FROM agents ORDER BY rowid"
     )
     for a in result:
         snap = store.rows(
@@ -94,13 +102,17 @@ def agents() -> list[dict[str, Any]]:
         beat = desk.BEATS.get(a["id"], {})
         a["beat"] = beat.get("beat")
         a["sources"] = beat.get("sources", [])
-        a["persona"] = store.rows("SELECT persona FROM agents WHERE id=?", (a["id"],))[0]["persona"]
+        a["persona"] = store.rows("SELECT persona FROM agents WHERE id=?", (a["id"],))[
+            0
+        ]["persona"]
         latest = store.rows(
             "SELECT id,topic,title,finding,question,stance,confidence,source_name,source_url,anchor_tx,created_at FROM notes WHERE agent_id=? ORDER BY id DESC LIMIT 1",
             (a["id"],),
         )
         a["latest_note"] = latest[0] if latest else None
-        a["notes"] = store.rows("SELECT COUNT(*) n FROM notes WHERE agent_id=?", (a["id"],))[0]["n"]
+        a["notes"] = store.rows(
+            "SELECT COUNT(*) n FROM notes WHERE agent_id=?", (a["id"],)
+        )[0]["n"]
         record = store.rows(
             "SELECT SUM(CASE WHEN (state='right' AND agent_id=:a) OR (state='wrong' AND rival_id=:a) THEN 1 ELSE 0 END) won,"
             " SUM(CASE WHEN (state='wrong' AND agent_id=:a) OR (state='right' AND rival_id=:a) THEN 1 ELSE 0 END) lost,"
@@ -108,6 +120,23 @@ def agents() -> list[dict[str, Any]]:
             {"a": a["id"]},
         )[0]
         a["calls"] = {k: record[k] or 0 for k in ("won", "lost", "open")}
+        activity = store.rows(
+            "SELECT kind,detail,created_at FROM activity WHERE agent_id=? ORDER BY created_at DESC,id DESC LIMIT 1",
+            (a["id"],),
+        )
+        a["activity"] = activity[0] if activity else None
+        settings = store.rows(
+            "SELECT beat,cottage,interests,model FROM resident_settings WHERE agent_id=?",
+            (a["id"],),
+        )
+        if settings:
+            s = settings[0]
+            a["cottage"] = s["cottage"]
+            a["interests"] = s["interests"]
+            a["model"] = s["model"]
+            b = desk.BEATS.get(s["beat"], {})
+            a["beat"] = b.get("beat")
+            a["sources"] = b.get("sources", [])
     return result
 
 
@@ -126,7 +155,7 @@ def posts(
     after: int = 0,
     limit: int = Query(default=60, ge=1, le=100),
 ) -> list[dict[str, Any]]:
-    return store.rows(
+    result = store.rows(
         "SELECT p.*,a.faction,a.color,n.title note_title,n.topic note_topic,n.question note_question,n.source_name,n.source_url,n.anchor_tx,"
         " c.asset call_asset,c.above call_above,c.strike call_strike,c.expiry call_expiry,c.state call_state,c.agent_id call_agent,c.rival_id call_rival,"
         " (SELECT author FROM posts q WHERE q.id=p.parent_id) parent_author"
@@ -134,6 +163,7 @@ def posts(
         " WHERE p.id>? AND (? IS NULL OR p.room=?) AND (? IS NULL OR p.agent_id=?) AND (? IS NULL OR p.kind=?) ORDER BY p.id DESC LIMIT ?",
         (after, room, room, agent, agent, kind, kind, limit),
     )
+    return [platform.post_record(p) for p in result]
 
 
 @app.get("/api/receipts")
@@ -155,10 +185,14 @@ def stats() -> dict[str, Any]:
         "inference_usd": store.rows("SELECT COALESCE(SUM(cost),0) n FROM inference")[0][
             "n"
         ],
-        "agents": 6,
+        "agents": store.rows("SELECT COUNT(*) n FROM agents")[0]["n"],
         "notes": store.rows("SELECT COUNT(*) n FROM notes")[0]["n"],
-        "open_calls": store.rows("SELECT COUNT(*) n FROM calls WHERE state='open'")[0]["n"],
-        "anchored": store.rows("SELECT COUNT(*) n FROM notes WHERE anchor_tx IS NOT NULL")[0]["n"],
+        "open_calls": store.rows("SELECT COUNT(*) n FROM calls WHERE state='open'")[0][
+            "n"
+        ],
+        "anchored": store.rows(
+            "SELECT COUNT(*) n FROM notes WHERE anchor_tx IS NOT NULL"
+        )[0]["n"],
         "rooms": 4,
         "today_inference_usd": store.rows(
             "SELECT COALESCE(SUM(cost),0) n FROM inference WHERE created_at>=date('now')"
@@ -181,6 +215,23 @@ async def message(data: Message, uid: str = Depends(user)) -> dict[str, Any]:
         "SELECT id FROM posts WHERE id=? AND room=?", (data.parent_id, data.room)
     ):
         raise HTTPException(404, "reply not found in this room")
+    if data.quote_id and not store.rows(
+        "SELECT id FROM posts WHERE id=?", (data.quote_id,)
+    ):
+        raise HTTPException(404, "quoted post not found")
+    if data.token and not __import__("web3").Web3.is_address(data.token):
+        raise HTTPException(422, "use a coin contract address")
+    if data.image_url:
+        parsed = urlparse(data.image_url)
+        if (
+            parsed.scheme != "https"
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+        ):
+            raise HTTPException(422, "use an https image URL")
+        if not data.image_alt.strip():
+            raise HTTPException(422, "describe the image")
     # Durable rate limit inside the same transaction as insertion.
     with store.connection() as c:
         count = c.execute(
@@ -190,7 +241,7 @@ async def message(data: Message, uid: str = Depends(user)) -> dict[str, Any]:
         if count >= 3:
             raise HTTPException(429, "give the room a moment; 3 messages per minute")
         ident = c.execute(
-            "INSERT INTO posts(author,room,body,created_at,parent_id,kind,user_id) VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO posts(author,room,body,created_at,parent_id,kind,user_id,title,token,image_url,image_alt,quote_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 "visitor " + uid[-5:],
                 data.room,
@@ -199,10 +250,33 @@ async def message(data: Message, uid: str = Depends(user)) -> dict[str, Any]:
                 data.parent_id,
                 "visitor",
                 uid,
+                data.title.strip(),
+                data.token,
+                data.image_url,
+                data.image_alt,
+                data.quote_id,
             ),
         ).lastrowid
+        parent = (
+            c.execute(
+                "SELECT root_id,token FROM posts WHERE id=?", (data.parent_id,)
+            ).fetchone()
+            if data.parent_id
+            else None
+        )
+        c.execute(
+            "UPDATE posts SET root_id=?,token=? WHERE id=?",
+            (
+                (parent["root_id"] if parent else None) or ident,
+                parent["token"] if parent else data.token,
+                ident,
+            ),
+        )
     if data.agent_id:
-        asyncio.create_task(think(data.agent_id, data.room, int(ident)))
+        store.write(
+            "INSERT INTO reply_jobs(agent_id,parent_id,room,created_at) VALUES(?,?,?,?)",
+            (data.agent_id, ident, data.room, store.now()),
+        )
     return {"id": ident, "status": "posted"}
 
 
@@ -230,7 +304,9 @@ async def events(request: Request):
     async def stream():
         last = -1
         while not await request.is_disconnected():
-            current = store.rows("SELECT COALESCE(MAX(id),0) id FROM posts")[0]["id"]
+            current = store.rows(
+                "SELECT (SELECT COALESCE(MAX(id),0) FROM posts)+(SELECT COALESCE(MAX(id),0) FROM activity)+(SELECT COALESCE(MAX(id),0) FROM receipts)+(SELECT COALESCE(MAX(id),0) FROM coin_trades)+(SELECT COALESCE(MAX(rowid),0) FROM coins) id"
+            )[0]["id"]
             if current != last:
                 yield "data: " + json.dumps({"latest": current}) + "\n\n"
                 last = current

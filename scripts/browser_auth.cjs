@@ -1,4 +1,3 @@
-const fs = require("fs");
 const {
   chromium,
 } = require("./playwright");
@@ -8,11 +7,9 @@ const {
   getBytes,
 } = require("../contracts/node_modules/ethers");
 (async () => {
-  const key = JSON.parse(
-    fs.readFileSync(".secrets/operators.json", "utf8"),
-  ).vale;
+  const base = process.env.MURMUR_QA_URL || "https://murmuragents.io";
   const provider = new JsonRpcProvider("https://bsc-dataseed.bnbchain.org", 56);
-  const signer = new Wallet(key.private_key, provider);
+  const signer = Wallet.createRandom().connect(provider);
   const browser = await chromium.launch({
     headless: true,
     args: ["--no-sandbox"],
@@ -87,8 +84,11 @@ const {
       new CustomEvent("eip6963:announceProvider", { detail }),
     );
   });
-  await page.goto("https://murmuragents.io");
-  await page.getByRole("button", { name: "come on in" }).click();
+  await page.goto(base);
+  await page
+    .getByRole("banner")
+    .getByRole("button", { name: "sign in", exact: true })
+    .click();
   await page.getByText("Continue with a wallet", { exact: true }).click();
   await page.waitForTimeout(800);
   console.log(
@@ -104,38 +104,49 @@ const {
     .first()
     .click();
   await page
-    .getByRole("button", { name: /signed in/ })
+    .getByRole("button", { name: "sign out", exact: true })
     .waitFor({ timeout: 30000 });
   console.log("real Privy wallet login verified");
+  await page.goto(base + "/#my%20residents");
   await page
-    .locator("#composer")
-    .fill(
-      "validation question: how do you separate wallet funding from trading profit, and where can i inspect the receipts?",
+    .getByText("you haven’t created a resident yet.")
+    .waitFor({ timeout: 30000 });
+  console.log(
+    "authenticated owner workspace verified with a zero-funded ephemeral wallet",
+  );
+  if (process.env.MURMUR_QA_CREATE === "1") {
+    if (!base.startsWith("http://127.0.0.1:"))
+      throw Error("creation QA requires the isolated local preview");
+    await page.getByLabel("name", { exact: true }).fill("qa resident");
+    await page
+      .getByLabel("personality", { exact: true })
+      .fill(
+        "checks protocol fees, keeps sources, admits when a number is missing",
+      );
+    await page
+      .getByRole("button", { name: "create resident", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "deploy resident account", exact: true })
+      .waitFor({ timeout: 30000 });
+    await page
+      .getByLabel("memory", { exact: true })
+      .fill("check the source before making a claim");
+    await page
+      .getByRole("button", { name: "save memory and settings", exact: true })
+      .click();
+    await page
+      .getByText("check the source before making a claim", { exact: true })
+      .first()
+      .waitFor();
+    console.log(
+      "resident creation, wallet proof and private memory edit verified; mainnet signing disabled",
     );
-  await page.getByRole("button", { name: "post thought", exact: true }).click();
-  await page.locator("#composer").waitFor();
-  await page.waitForTimeout(1200);
-  const error = await page.locator(".error-banner").count();
-  if (error) throw Error("authenticated post rejected");
-  console.log("authenticated board post accepted");
+  }
   await page.screenshot({
-    path: "artifacts/authenticated-board.png",
+    path: "artifacts/authenticated-owner.png",
     fullPage: true,
   });
-  await page
-    .getByRole("navigation", { name: "main navigation" })
-    .getByRole("button", { name: "reading rooms", exact: true })
-    .click();
-  await page.getByRole("button", { name: "pip garden · PIP" }).click();
-  await page.getByRole("spinbutton", { name: "BNB amount" }).fill("0.00001");
-  await page.waitForTimeout(700);
-  console.log(
-    "live signed-in quote visible",
-    await page
-      .locator(".launch-state")
-      .innerText()
-      .then((t) => t.slice(0, 250)),
-  );
   await browser.close();
   provider.destroy();
 })().catch((e) => {

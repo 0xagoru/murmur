@@ -1,91 +1,105 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const {
   chromium,
 } = require("./playwright");
+
 (async () => {
+  const base = process.env.MURMUR_QA_URL || "https://murmuragents.io";
+  fs.mkdirSync("artifacts", { recursive: true });
   const browser = await chromium.launch({
     headless: true,
     args: ["--no-sandbox"],
   });
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1040 },
-    deviceScaleFactor: 1,
   });
   const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  page.on("console", (m) => {
-    if (m.type() === "error") errors.push(m.text());
-  });
-  await page.goto("https://murmuragents.io", { waitUntil: "domcontentloaded" });
-  await page
-    .getByRole("heading", { name: "the town", exact: true })
-    .waitFor({ timeout: 60000 });
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: "artifacts/town-desktop.png", fullPage: true });
-  console.log("desktop loaded", await page.title());
-  console.log(
-    "overflow",
-    await page.evaluate(
-      () => document.documentElement.scrollWidth > innerWidth,
-    ),
-  );
-  await page
-    .getByRole("button", { name: "visit moss", exact: true })
-    .first()
-    .click();
-  await page.getByRole("dialog").waitFor();
-  await page.screenshot({ path: "artifacts/moss-profile.png" });
-  await page.getByRole("button", { name: "close profile" }).click();
-  for (const name of [
-    "residents",
-    "reading rooms",
-    "receipts",
-    "field guide",
-  ]) {
-    await page
-      .getByRole("navigation", { name: "main navigation" })
-      .getByRole("button", { name, exact: true })
-      .click();
-    await page.waitForTimeout(400);
-    console.log(
-      "page",
-      name,
-      "overflow",
-      await page.evaluate(
-        () => document.documentElement.scrollWidth > innerWidth,
-      ),
-    );
-    await page.screenshot({
-      path: "artifacts/" + name.replaceAll(" ", "-") + ".png",
-      fullPage: true,
-    });
+  page.on("pageerror", (error) => errors.push(error.message));
+  const routes = [
+    ["town", "the town"],
+    ["residents", "who lives here"],
+    ["research", "the notebook"],
+    ["calls", "price calls"],
+    ["receipts", "receipts"],
+    ["field guide", "field guide"],
+    ["discussions", "discussions"],
+    ["terminal", "trade terminal"],
+    ["coins", "coins"],
+    ["my residents", "my residents"],
+    ["rankings", "weekly factions"],
+    ["desk", "the desk"],
+  ];
+  try {
+    await page.goto(base, { waitUntil: "domcontentloaded" });
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: width <= 390 ? 844 : 1040 });
+      for (const [route, heading] of routes) {
+        await page.goto(base + "/#" + encodeURIComponent(route));
+        await page
+          .getByRole("heading", { level: 1, name: heading, exact: true })
+          .waitFor({ timeout: 60000 });
+        await page.waitForTimeout(250);
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth > innerWidth,
+          ),
+          false,
+          `${route} overflows at ${width}px`,
+        );
+        await page.screenshot({
+          path: `artifacts/qa-${width}-${route.replaceAll(" ", "-")}.png`,
+          fullPage: true,
+        });
+        if (route === "desk") {
+          await page
+            .getByRole("link", { name: "all discussions ↗", exact: true })
+            .waitFor();
+          assert.equal(
+            await page
+              .getByRole("button", { name: "older discussions", exact: true })
+              .count(),
+            0,
+          );
+          assert.ok(
+            (await page.locator(".thread-post").count()) <= 8,
+            "desk has at most eight discussions",
+          );
+          await page
+            .getByRole("link", { name: "all discussions ↗", exact: true })
+            .click();
+          await page
+            .getByRole("heading", {
+              level: 1,
+              name: "discussions",
+              exact: true,
+            })
+            .waitFor();
+        }
+        console.log(`${width}px ${route}: passed`);
+      }
+      await page.goto(base + "/#town");
+      await page
+        .getByRole("button", { name: "visit moss", exact: true })
+        .first()
+        .click();
+      const dialog = page.getByRole("dialog");
+      await dialog.waitFor();
+      if (width <= 390) {
+        const box = await dialog.boundingBox();
+        assert.ok(
+          box && Math.abs(box.x) < 1 && Math.abs(box.width - width) < 1,
+          "mobile profile spans the viewport",
+        );
+      }
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+    }
+    assert.deepEqual(errors, [], "browser runtime errors");
+  } finally {
+    await browser.close();
   }
-  await page.getByRole("button", { name: "sign in", exact: true }).click();
-  await page.waitForTimeout(1800);
-  console.log(
-    "login modal",
-    await page
-      .locator("body")
-      .innerText()
-      .then((x) => x.slice(-700)),
-  );
-  await page.screenshot({ path: "artifacts/privy-login.png" });
-  await page.keyboard.press("Escape");
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page
-    .getByRole("navigation", { name: "main navigation" })
-    .getByRole("button", { name: "town", exact: true })
-    .click();
-  await page.waitForTimeout(500);
-  await page.screenshot({ path: "artifacts/town-mobile.png", fullPage: true });
-  console.log(
-    "mobile overflow",
-    await page.evaluate(
-      () => document.documentElement.scrollWidth > innerWidth,
-    ),
-  );
-  console.log("errors", JSON.stringify(errors));
-  await browser.close();
-})().catch((e) => {
-  console.error(e);
-  process.exit(1);
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
 });
