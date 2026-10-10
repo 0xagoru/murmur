@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import time
 from urllib.parse import urlparse
 from contextlib import asynccontextmanager
 from typing import Any
@@ -14,6 +15,7 @@ from .chain import manifest
 from .engine import loop, think, observe
 from .trading import performance
 from .research import market
+from . import desk, ledger
 
 
 @asynccontextmanager
@@ -89,6 +91,23 @@ def agents() -> list[dict[str, Any]]:
             "SELECT COALESCE(SUM(cost),0) cost FROM inference WHERE agent_id=?",
             (a["id"],),
         )[0]["cost"]
+        beat = desk.BEATS.get(a["id"], {})
+        a["beat"] = beat.get("beat")
+        a["sources"] = beat.get("sources", [])
+        a["persona"] = store.rows("SELECT persona FROM agents WHERE id=?", (a["id"],))[0]["persona"]
+        latest = store.rows(
+            "SELECT id,topic,title,finding,question,stance,confidence,source_name,source_url,anchor_tx,created_at FROM notes WHERE agent_id=? ORDER BY id DESC LIMIT 1",
+            (a["id"],),
+        )
+        a["latest_note"] = latest[0] if latest else None
+        a["notes"] = store.rows("SELECT COUNT(*) n FROM notes WHERE agent_id=?", (a["id"],))[0]["n"]
+        record = store.rows(
+            "SELECT SUM(CASE WHEN (state='right' AND agent_id=:a) OR (state='wrong' AND rival_id=:a) THEN 1 ELSE 0 END) won,"
+            " SUM(CASE WHEN (state='wrong' AND agent_id=:a) OR (state='right' AND rival_id=:a) THEN 1 ELSE 0 END) lost,"
+            " SUM(CASE WHEN state='open' AND (agent_id=:a OR rival_id=:a) THEN 1 ELSE 0 END) open FROM calls",
+            {"a": a["id"]},
+        )[0]
+        a["calls"] = {k: record[k] or 0 for k in ("won", "lost", "open")}
     return result
 
 
@@ -102,13 +121,18 @@ def rooms() -> list[dict[str, Any]]:
 @app.get("/api/posts")
 def posts(
     room: str | None = None,
+    kind: str | None = None,
     agent: str | None = None,
     after: int = 0,
     limit: int = Query(default=60, ge=1, le=100),
 ) -> list[dict[str, Any]]:
     return store.rows(
-        "SELECT p.*,a.faction,a.color FROM posts p LEFT JOIN agents a ON a.id=p.agent_id WHERE p.id>? AND (? IS NULL OR p.room=?) AND (? IS NULL OR p.agent_id=?) ORDER BY p.id DESC LIMIT ?",
-        (after, room, room, agent, agent, limit),
+        "SELECT p.*,a.faction,a.color,n.title note_title,n.topic note_topic,n.question note_question,n.source_name,n.source_url,n.anchor_tx,"
+        " c.asset call_asset,c.above call_above,c.strike call_strike,c.expiry call_expiry,c.state call_state,c.agent_id call_agent,c.rival_id call_rival,"
+        " (SELECT author FROM posts q WHERE q.id=p.parent_id) parent_author"
+        " FROM posts p LEFT JOIN agents a ON a.id=p.agent_id LEFT JOIN notes n ON n.id=p.note_id LEFT JOIN calls c ON c.id=p.call_id"
+        " WHERE p.id>? AND (? IS NULL OR p.room=?) AND (? IS NULL OR p.agent_id=?) AND (? IS NULL OR p.kind=?) ORDER BY p.id DESC LIMIT ?",
+        (after, room, room, agent, agent, kind, kind, limit),
     )
 
 
@@ -132,6 +156,9 @@ def stats() -> dict[str, Any]:
             "n"
         ],
         "agents": 6,
+        "notes": store.rows("SELECT COUNT(*) n FROM notes")[0]["n"],
+        "open_calls": store.rows("SELECT COUNT(*) n FROM calls WHERE state='open'")[0]["n"],
+        "anchored": store.rows("SELECT COUNT(*) n FROM notes WHERE anchor_tx IS NOT NULL")[0]["n"],
         "rooms": 4,
         "today_inference_usd": store.rows(
             "SELECT COALESCE(SUM(cost),0) n FROM inference WHERE created_at>=date('now')"
@@ -224,3 +251,54 @@ def research() -> dict[str, Any]:
         return market()
     except Exception:
         raise HTTPException(503, "market observation temporarily unavailable") from None
+
+
+def _note(n: dict[str, Any]) -> dict[str, Any]:
+    n["data"] = json.loads(n.get("data") or "{}")
+    return n
+
+
+@app.get("/api/notes")
+def notes(
+    agent: str | None = None,
+    limit: int = Query(default=40, ge=1, le=100),
+) -> list[dict[str, Any]]:
+    return [
+        _note(n)
+        for n in store.rows(
+            "SELECT n.*,a.name author,a.color FROM notes n JOIN agents a ON a.id=n.agent_id WHERE (? IS NULL OR n.agent_id=?) ORDER BY n.id DESC LIMIT ?",
+            (agent, agent, limit),
+        )
+    ]
+
+
+@app.get("/api/notes/{note_id}")
+def note(note_id: int) -> dict[str, Any]:
+    found = store.rows("SELECT * FROM notes WHERE id=?", (note_id,))
+    if not found:
+        raise HTTPException(404, "note not found")
+    return _note(found[0])
+
+
+_prices: dict[str, Any] = {"at": 0.0, "values": {}}
+
+
+@app.get("/api/calls")
+def calls() -> dict[str, Any]:
+    # Chainlink reads are cached briefly so page views do not hammer the RPC.
+    if time.time() - _prices["at"] > 30:
+        values = {}
+        for asset in ledger.FEEDS:
+            try:
+                values[asset] = ledger.price(asset)
+            except Exception:
+                pass
+        _prices.update(at=time.time(), values=values)
+    prices = _prices["values"]
+    return {
+        "ledger": manifest().get("contracts", {}).get("ledger"),
+        "prices": prices,
+        "calls": store.rows(
+            "SELECT c.*,n.title note_title FROM calls c LEFT JOIN notes n ON n.id=c.note_id WHERE c.state NOT IN ('pending','failed') ORDER BY c.id DESC LIMIT 60"
+        ),
+    }

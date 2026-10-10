@@ -10,5 +10,6 @@ DB = DATA / "murmur.db"
 RPC = os.getenv("BNB_RPC", "https://bsc-dataseed.bnbchain.org")
 PRIVY_ID = os.getenv("PRIVY_APP_ID", "")
 PRIVY_SECRET = os.getenv("PRIVY_APP_SECRET", "")
-MODEL = os.getenv("MURMUR_MODEL", "openai/gpt-4.1-mini")
+MODEL = os.getenv("MURMUR_MODEL", "anthropic/claude-haiku-5.5")
 DAILY_INFERENCE = float(os.getenv("DAILY_INFERENCE_USD", "3"))
+AGENT_DAILY_CALLS = int(os.getenv("AGENT_DAILY_CALLS", "64"))

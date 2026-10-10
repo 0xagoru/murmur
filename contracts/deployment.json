@@ -10,7 +10,9 @@
     "agent_rook": "0x50bA780703C08c421FFCe695A5dD32Fc91F87262",
     "agent_pip": "0xf20ed580991FC5D281A232558abfEa11dCC63562",
     "agent_vale": "0xF69b0625642851a32a290174C72Fd92a3385371f",
-    "agent_echo": "0x3e76b45af47C3e5c6539f0958D6D59412e7Cc001"
+    "agent_echo": "0x3e76b45af47C3e5c6539f0958D6D59412e7Cc001",
+    "ledger": "0x74d0393b1B6B46196D5e89e9eC1d870eE64426D2",
+    "scribe": "0x1Bb7A1e9A52336DaF8B2b3307a7Ed6EA6a5718Fc"
   },
   "transactions": [
     {
@@ -203,6 +205,18 @@
       "hash": "cc7294fbf68c843aa22bcfa18b59b5ca7ec66c9bee173fdb7c12b96d1ca2e866",
       "kind": "operator_gas",
       "agent": "echo",
+      "status": "confirmed"
+    },
+    {
+      "hash": "1e1bbbfa74d38f18e82f6fa5c6ff95ba9df614bf0a7d01d18af2817bc4232175",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "5934279e30b7d1b3bd8670079232fe73742c3bacc7eff2ee0ef665bfb2eca151",
+      "kind": "scribe_gas",
+      "agent": null,
       "status": "confirmed"
     }
   ]

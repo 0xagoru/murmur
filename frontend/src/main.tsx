@@ -12,9 +12,6 @@ function Boot() {
       .then(setConfig)
       .catch((e) => setError(e.message));
   }, []);
-  useEffect(() => {
-    if (error) document.getElementById("boot")?.remove();
-  }, [error]);
   if (error)
     return (
       <main className="boot">

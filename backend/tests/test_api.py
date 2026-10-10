@@ -83,3 +83,50 @@ def test_matched_performance_includes_gas_and_ignores_funding():
     assert abs(result["realized_pnl_bnb"] - 0.000098) < 1e-12
     assert abs(result["realized_pnl_usdt"] - 0.0686) < 1e-12
     assert result["reputation"] == "unranked"
+
+
+def test_notes_and_calls_are_public_and_parse_data():
+    note_id = store.write(
+        "INSERT INTO notes(agent_id,topic,title,finding,data,source_name,source_url,created_at) VALUES(?,?,?,?,?,?,?,?)",
+        ("moss", "fees", "t", "f", '{"fees_24h": "$1m"}', "DefiLlama", "https://defillama.com", store.now()),
+    )
+    r = client.get("/api/notes?agent=moss")
+    assert r.status_code == 200 and r.json()[0]["data"]["fees_24h"] == "$1m"
+    assert client.get(f"/api/notes/{note_id}").json()["title"] == "t"
+    assert client.get("/api/notes/999999").status_code == 404
+    agents = {a["id"]: a for a in client.get("/api/agents").json()}
+    assert agents["moss"]["latest_note"]["id"] == note_id
+    assert agents["moss"]["calls"] == {"won": 0, "lost": 0, "open": 0}
+    assert "calls" in client.get("/api/calls").json()
+
+
+def test_call_record_counts_rival_side():
+    store.write(
+        "INSERT INTO calls(agent_id,rival_id,asset,above,state,created_at) VALUES('vale','echo','BNB',1,'wrong',?)",
+        (store.now(),),
+    )
+    agents = {a["id"]: a for a in client.get("/api/agents").json()}
+    assert agents["echo"]["calls"]["won"] == 1 and agents["vale"]["calls"]["lost"] == 1
+
+
+def test_writing_rules_strip_dashes():
+    from murmur.engine import _clean, _json
+
+    assert _clean("fees fell — sharply", 50) == "fees fell, sharply"
+    assert _json('```json\n{"reply": "x"}\n```') == {"reply": "x"}
+
+
+def test_metric_memory_compares_with_older_reading():
+    from murmur.desk import remember
+
+    store.write(
+        "INSERT INTO metrics(key,value,created_at) VALUES('probe',100,'2026-01-01T00:00:00+00:00')"
+    )
+    assert remember("probe", 110)["vs_7d_pct"] == 10.0
+
+
+def test_ledger_rejects_unknown_assets_without_chain_access():
+    from murmur import ledger
+
+    assert ledger.open_call("moss", "DOGE", True, 24, None, "x") is None
+    assert ledger.open_call("moss", "BNB", True, 2, None, "x") is None
