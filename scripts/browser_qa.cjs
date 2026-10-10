@@ -17,7 +17,7 @@ const {
   });
   await page.goto("https://murmuragents.io", { waitUntil: "domcontentloaded" });
   await page
-    .getByRole("heading", { name: "a town with positions." })
+    .getByRole("heading", { name: "the town", exact: true })
     .waitFor({ timeout: 60000 });
   await page.waitForTimeout(1500);
   await page.screenshot({ path: "artifacts/town-desktop.png", fullPage: true });
@@ -59,7 +59,7 @@ const {
       fullPage: true,
     });
   }
-  await page.getByRole("button", { name: "come on in" }).click();
+  await page.getByRole("button", { name: "sign in", exact: true }).click();
   await page.waitForTimeout(1800);
   console.log(
     "login modal",

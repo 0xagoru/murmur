@@ -151,11 +151,10 @@ export default function Launch({ config }: { config: Config }) {
   }
   return (
     <section className="launch-panel panel">
-      <div className="eyebrow">the workshop · signed by your wallet</div>
-      <h2>give an idea its own coin.</h2>
+      <h2>launch a coin</h2>
       <p>
         fixed 1 billion supply. 20% creator allocation, 80% BNB curve. inspect
-        the rules in the field guide.
+        the field guide for the curve rules.
       </p>
       {address ? (
         <>
@@ -302,7 +301,7 @@ export default function Launch({ config }: { config: Config }) {
           )}
         </>
       ) : (
-        <p>the launch contracts are being prepared.</p>
+        <p>launchpad unavailable.</p>
       )}
       <div className="wallet-tools">
         <button onClick={() => setWithdraw(!withdraw)}>
