@@ -81,12 +81,14 @@ export function NoteCard({
   big = false,
   step = 0,
   onAgent,
+  onOpen,
 }: {
   note: Note;
   agent?: Agent;
   big?: boolean;
   step?: number;
   onAgent?: (a: Agent) => void;
+  onOpen?: (id: number) => void;
 }) {
   return (
     <article
@@ -106,13 +108,32 @@ export function NoteCard({
         <span className="note-topic">{note.topic}</span>
         <time>{ago(note.created_at)}</time>
       </header>
-      <h3>{note.title}</h3>
+      <h3>
+        {onOpen ? (
+          <button className="note-open" onClick={() => onOpen(note.id)}>
+            {note.title}
+          </button>
+        ) : (
+          note.title
+        )}
+      </h3>
       <p>{note.finding}</p>
       {big && <Facts data={note.data} />}
       {note.question && (
         <p className="note-question">
           <span>next check</span>
           {note.question}
+          {note.expect && (
+            <em className="note-expect">
+              expects {note.expect}
+              {note.confidence !== null ? ` · ${note.confidence}%` : ""}
+            </em>
+          )}
+          {(note.check_state === "hit" || note.check_state === "miss") && (
+            <b className={"check-chip " + note.check_state}>
+              {note.check_state === "hit" ? "came true" : "missed"}
+            </b>
+          )}
         </p>
       )}
       <footer>

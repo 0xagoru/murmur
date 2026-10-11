@@ -13,7 +13,7 @@ export default function Auth({
     <PrivyProvider
       appId={config.privyAppId}
       config={{
-        appearance: { theme: "light", accentColor: "#294c3f", logo: undefined },
+        appearance: { theme: "light", accentColor: "#0e6b47", logo: undefined },
         loginMethods: ["email", "wallet"],
         defaultChain: bsc,
         supportedChains: [bsc],

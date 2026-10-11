@@ -156,38 +156,89 @@ def security() -> dict[str, Any]:
         candidates = [p["token"] for p in trending()["facts"]["trending_pools_now"] if p["token"] not in audited]
         source = "the top trending token rook has not audited today"
     token = candidates[0].lower()
+    return {
+        "topic": "contract audit · " + (audit(token).get("symbol") or token[:10]),
+        "subject": token,
+        "facts": {"why_this_token": source, **audit(token)},
+        "source_name": "GoPlus token security",
+        "source_url": f"https://gopluslabs.io/token-security/56/{token}",
+    }
+
+
+_audits: dict[str, tuple[float, dict[str, Any]]] = {}
+
+
+def audit(token: str) -> dict[str, Any]:
+    """GoPlus security facts for one BNB Chain token, cached for five minutes."""
+    token = token.lower()
+    if token in _audits and time.time() - _audits[token][0] < 300:
+        return _audits[token][1]
     report = _get(f"https://api.gopluslabs.io/api/v1/token_security/56?contract_addresses={token}")
     r = (report.get("result") or {}).get(token, {})
     holders = r.get("holders") or []
     flag = lambda k: {"1": True, "0": False}.get(str(r.get(k)), None)
+    facts = {
+        "token": token,
+        "symbol": r.get("token_symbol"),
+        "name": r.get("token_name"),
+        "holder_count": r.get("holder_count"),
+        "top_10_holders_pct": _num(sum(float(h.get("percent") or 0) for h in holders[:10]) * 100),
+        "top_holder_is_contract": bool(holders and holders[0].get("is_contract")),
+        "top_holders": [
+            {
+                "pct": _num(float(h.get("percent") or 0) * 100),
+                "is_contract": bool(h.get("is_contract")),
+                "locked": bool(h.get("is_locked")),
+                "tag": h.get("tag") or None,
+            }
+            for h in holders[:5]
+        ],
+        "buy_tax_pct": _num(float(r.get("buy_tax") or 0) * 100),
+        "sell_tax_pct": _num(float(r.get("sell_tax") or 0) * 100),
+        "honeypot": flag("is_honeypot"),
+        "mintable": flag("is_mintable"),
+        "owner_can_change_balance": flag("owner_change_balance"),
+        "hidden_owner": flag("hidden_owner"),
+        "can_take_back_ownership": flag("can_take_back_ownership"),
+        "trading_cooldown": flag("trading_cooldown"),
+        "blacklist": flag("is_blacklisted"),
+        "open_source": flag("is_open_source"),
+        "proxy": flag("is_proxy"),
+        "owner_address": r.get("owner_address") or None,
+        "lp_holder_count": r.get("lp_holder_count"),
+        "lp_locked_pct": _num(
+            sum(float(h.get("percent") or 0) for h in (r.get("lp_holders") or []) if h.get("is_locked")) * 100
+        ),
+        "creator_pct": _num(float(r.get("creator_percent") or 0) * 100),
+        "known": bool(r),
+    }
+    _audits[token] = (time.time(), facts)
+    return facts
+
+
+def market(token: str) -> dict[str, Any]:
+    """Liquidity, volume and trader counts across a token's pools on GeckoTerminal."""
+    token = token.lower()
+    try:
+        info = _get(f"https://api.geckoterminal.com/api/v2/networks/bsc/tokens/{token}")["data"]["attributes"]
+        pools = [_pool(p) for p in _get(f"https://api.geckoterminal.com/api/v2/networks/bsc/tokens/{token}/pools?page=1")["data"][:6]]
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            return {"known": False, "token": token}
+        raise
     return {
-        "topic": "contract audit · " + (r.get("token_symbol") or token[:10]),
-        "subject": token,
-        "facts": {
-            "why_this_token": source,
-            "token": token,
-            "symbol": r.get("token_symbol"),
-            "holder_count": r.get("holder_count"),
-            "top_10_holders_pct": _num(sum(float(h.get("percent") or 0) for h in holders[:10]) * 100),
-            "top_holder_is_contract": bool(holders and holders[0].get("is_contract")),
-            "buy_tax_pct": _num(float(r.get("buy_tax") or 0) * 100),
-            "sell_tax_pct": _num(float(r.get("sell_tax") or 0) * 100),
-            "honeypot": flag("is_honeypot"),
-            "mintable": flag("is_mintable"),
-            "owner_can_change_balance": flag("owner_change_balance"),
-            "hidden_owner": flag("hidden_owner"),
-            "can_take_back_ownership": flag("can_take_back_ownership"),
-            "trading_cooldown": flag("trading_cooldown"),
-            "blacklist": flag("is_blacklisted"),
-            "open_source": flag("is_open_source"),
-            "proxy": flag("is_proxy"),
-            "lp_locked_pct": _num(
-                sum(float(h.get("percent") or 0) for h in (r.get("lp_holders") or []) if h.get("is_locked")) * 100
-            ),
-            "creator_pct": _num(float(r.get("creator_percent") or 0) * 100),
-        },
-        "source_name": "GoPlus token security",
-        "source_url": f"https://gopluslabs.io/token-security/56/{token}",
+        "known": True,
+        "token": token,
+        "name": info.get("name"),
+        "symbol": info.get("symbol"),
+        "price_usd": _num(info.get("price_usd"), 8),
+        "market_cap": _usd(info.get("market_cap_usd")),
+        "fdv": _usd(info.get("fdv_usd")),
+        "total_liquidity": _usd(info.get("total_reserve_in_usd")),
+        "total_liquidity_usd": _num(info.get("total_reserve_in_usd"), 0),
+        "volume_24h": _usd((info.get("volume_usd") or {}).get("h24")),
+        "pools": pools,
+        "source_url": f"https://www.geckoterminal.com/bsc/tokens/{token}",
     }
 
 

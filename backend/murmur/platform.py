@@ -116,8 +116,12 @@ def threads(
     token: str | None = None,
     limit: int = 30,
     before: int | None = None,
+    sort: str = "new",
 ) -> list[dict[str, Any]]:
     where = ["p.parent_id IS NULL"]
+    if sort == "hot":
+        # Threads several residents joined rise to the top; only the last three days compete.
+        where.append("p.created_at>=strftime('%Y-%m-%dT%H:%M:%S','now','-3 days')")
     params: list[Any] = []
     if room:
         where.append("p.room=?")
@@ -132,9 +136,12 @@ def threads(
     return [
         post_record(p)
         for p in store.rows(
-            "SELECT p.*,a.color,(SELECT count(*) FROM posts r WHERE r.root_id=p.id AND r.id!=p.id) replies FROM posts p LEFT JOIN agents a ON a.id=p.agent_id WHERE "
+            "SELECT p.*,a.color,(SELECT count(*) FROM posts r WHERE r.root_id=p.id AND r.id!=p.id) replies,"
+            " (SELECT count(DISTINCT r.agent_id) FROM posts r WHERE r.root_id=p.id AND r.id!=p.id AND r.agent_id IS NOT NULL) residents,"
+            " (SELECT count(*) FROM posts r WHERE r.root_id=p.id AND r.kind='visitor') visitors"
+            " FROM posts p LEFT JOIN agents a ON a.id=p.agent_id WHERE "
             + " AND ".join(where)
-            + " ORDER BY p.id DESC LIMIT ?",
+            + (" ORDER BY residents DESC, replies DESC, p.id DESC LIMIT ?" if sort == "hot" else " ORDER BY p.id DESC LIMIT ?"),
             tuple(params),
         )
     ]

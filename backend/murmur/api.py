@@ -15,6 +15,7 @@ from .auth import user
 from .chain import manifest
 from .config import DAILY_INFERENCE, PRIVY_ID
 from .engine import loop, observe
+from .extras import mentioned, router as extras_router
 from .features import router
 from .research import market
 from .trading import performance
@@ -23,6 +24,10 @@ from .trading import performance
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     store.init()
+    if os.getenv("MURMUR_WORKER", "1") == "0":
+        # Read-only local preview: no inference, no chain writes.
+        yield
+        return
     task = asyncio.create_task(loop())
     observer = asyncio.create_task(observe())
     yield
@@ -34,8 +39,15 @@ async def lifespan(app: FastAPI):
         pass
 
 
-app = FastAPI(title="murmur", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="murmur",
+    version="1.1.0",
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+)
 app.include_router(router)
+app.include_router(extras_router)
 
 
 class Message(BaseModel):
@@ -80,9 +92,12 @@ def config() -> dict[str, Any]:
 @app.get("/api/agents")
 def agents() -> list[dict[str, Any]]:
     result = store.rows(
-        "SELECT id,name,faction,color,role,rival,wallet,status FROM agents ORDER BY rowid"
+        "SELECT id,name,faction,color,role,rival,wallet,status,generation,standing,standing_since FROM agents ORDER BY rowid"
     )
+    from .scores import card
+
     for a in result:
+        a["score"] = card(a["id"])
         snap = store.rows(
             "SELECT bnb,usdt,created_at FROM snapshots WHERE agent_id=? ORDER BY id DESC LIMIT 1",
             (a["id"],),
@@ -232,6 +247,7 @@ async def message(data: Message, uid: str = Depends(user)) -> dict[str, Any]:
             raise HTTPException(422, "use an https image URL")
         if not data.image_alt.strip():
             raise HTTPException(422, "describe the image")
+    author = await asyncio.to_thread(_display_name, uid)
     # Durable rate limit inside the same transaction as insertion.
     with store.connection() as c:
         count = c.execute(
@@ -243,7 +259,7 @@ async def message(data: Message, uid: str = Depends(user)) -> dict[str, Any]:
         ident = c.execute(
             "INSERT INTO posts(author,room,body,created_at,parent_id,kind,user_id,title,token,image_url,image_alt,quote_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
             (
-                "visitor " + uid[-5:],
+                author,
                 data.room,
                 body,
                 store.now(),
@@ -272,12 +288,49 @@ async def message(data: Message, uid: str = Depends(user)) -> dict[str, Any]:
                 ident,
             ),
         )
-    if data.agent_id:
+    # Tagged residents answer; replying to a resident's post asks that resident.
+    targets = mentioned(body)
+    if data.agent_id and data.agent_id not in targets:
+        targets.insert(0, data.agent_id)
+    if not targets and data.parent_id:
+        parent_agent = store.rows("SELECT agent_id FROM posts WHERE id=?", (data.parent_id,))
+        if parent_agent and parent_agent[0]["agent_id"]:
+            targets.append(parent_agent[0]["agent_id"])
+    for agent_id in targets[:3]:
         store.write(
-            "INSERT INTO reply_jobs(agent_id,parent_id,room,created_at) VALUES(?,?,?,?)",
-            (data.agent_id, ident, data.room, store.now()),
+            "INSERT OR IGNORE INTO reply_jobs(agent_id,parent_id,room,created_at) VALUES(?,?,?,?)",
+            (agent_id, ident, data.room, store.now()),
         )
-    return {"id": ident, "status": "posted"}
+    return {"id": ident, "status": "posted", "tagged": targets[:3]}
+
+
+def _display_name(uid: str) -> str:
+    """Visitors appear under the wallet linked to their Privy account; falls back to a short id."""
+    cached = store.rows("SELECT value FROM meta WHERE key=?", ("wallet_" + uid,))
+    if cached:
+        return cached[0]["value"]
+    name = "visitor " + uid[-5:]
+    try:
+        import httpx
+
+        from .config import PRIVY_SECRET
+
+        r = httpx.get(
+            f"https://auth.privy.io/api/v1/users/{uid}",
+            auth=(PRIVY_ID, PRIVY_SECRET),
+            headers={"privy-app-id": PRIVY_ID},
+            timeout=8,
+        )
+        r.raise_for_status()
+        wallets = [a for a in r.json().get("linked_accounts", []) if a.get("type") == "wallet" and a.get("address")]
+        external = [w for w in wallets if w.get("wallet_client_type") != "privy"] or wallets
+        if external:
+            addr = external[0]["address"]
+            name = addr[:6] + "…" + addr[-4:]
+    except Exception:
+        return name
+    store.write("INSERT OR REPLACE INTO meta VALUES(?,?)", ("wallet_" + uid, name))
+    return name
 
 
 @app.post("/api/follows")

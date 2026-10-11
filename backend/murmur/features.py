@@ -15,8 +15,9 @@ def threads(
     token: str | None = None,
     limit: int = Query(30, ge=1, le=100),
     before: int | None = None,
+    sort: str = Query("new", pattern="^(new|hot)$"),
 ) -> list[dict[str, Any]]:
-    return platform.threads(room, token, limit, before)
+    return platform.threads(room, token, limit, before, sort)
 
 
 @router.get("/threads/{ident}")

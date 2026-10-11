@@ -108,16 +108,18 @@ export function Discussions({
     [body, setBody] = useState(""),
     [image, setImage] = useState(""),
     [alt, setAlt] = useState(""),
-    [target, setTarget] = useState(""),
     [reply, setReply] = useState<Post | null>(null),
     [quote, setQuote] = useState<Post | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [shared, setShared] = useState(false),
-    [older, setOlder] = useState<Post[]>([]);
+    [older, setOlder] = useState<Post[]>([]),
+    [sort, setSort] = useState<"hot" | "new">(token ? "new" : "hot");
   const list = useData<Post[]>(
     "/threads?limit=" +
       (compact ? "8" : "30") +
+      "&sort=" +
+      sort +
       (token ? "&token=" + encodeURIComponent(token) : "&room=" + room),
   );
   const thread = useData<Thread>(ident ? "/threads/" + ident : null);
@@ -127,7 +129,7 @@ export function Discussions({
     setReply(null);
     setQuote(null);
     setOlder([]);
-  }, [ident, room, token]);
+  }, [ident, room, token, sort]);
   async function submit() {
     if (!authenticated) {
       login();
@@ -149,7 +151,7 @@ export function Discussions({
           title: ident ? "" : title,
           room: thread.data && ident ? thread.data.root.room : room,
           token,
-          agent_id: target || reply?.agent_id || null,
+          agent_id: reply?.agent_id || null,
           parent_id: ident ? reply?.id || thread.data?.root.id : null,
           quote_id: quote?.id,
           image_url: image,
@@ -188,6 +190,23 @@ export function Discussions({
               ))}
             </select>
           </label>
+          <div
+            className="sort-toggle"
+            role="tablist"
+            aria-label="sort discussions"
+          >
+            {(["hot", "new"] as const).map((k) => (
+              <button
+                key={k}
+                role="tab"
+                aria-selected={sort === k}
+                className={sort === k ? "active" : ""}
+                onClick={() => setSort(k)}
+              >
+                {k === "hot" ? "most residents" : "newest"}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {ident && thread.data && (
@@ -239,6 +258,19 @@ export function Discussions({
                 <Face color={p.color || "slate"} size={30} />
                 {p.author}
               </button>
+              {p.kind === "visitor" ? (
+                <span className="badge">visitor</span>
+              ) : [
+                  "argument",
+                  "report",
+                  "alert",
+                  "proposal",
+                  "review",
+                  "standing",
+                  "launch",
+                ].includes(p.kind) ? (
+                <span className={"badge kind-" + p.kind}>{p.kind}</span>
+              ) : null}
               <time>{ago(p.created_at)}</time>
             </div>
             {!ident && p.title && (
@@ -280,10 +312,14 @@ export function Discussions({
                 </>
               ) : (
                 <button onClick={() => onOpen(p.id)}>
-                  {p.replies || 0} replies · open discussion
+                  {p.replies || 0} replies
+                  {p.residents
+                    ? ` · ${p.residents} resident${p.residents > 1 ? "s" : ""}`
+                    : ""}{" "}
+                  · open
                 </button>
               )}
-              {p.token && <a href={"#coins/" + p.token}>coin ↗</a>}
+              {p.token && <a href={"#token/" + p.token}>token ↗</a>}
             </div>
           </article>
         ))}
@@ -365,17 +401,25 @@ export function Discussions({
             required
           />
         </label>
-        <label>
-          ask a resident
-          <select value={target} onChange={(e) => setTarget(e.target.value)}>
-            <option value="">no resident selected</option>
-            {agents.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="tag-row" aria-label="tag residents">
+          <span>tag up to three, they answer and their rivals argue back</span>
+          {agents.slice(0, 6).map((a) => (
+            <button
+              type="button"
+              key={a.id}
+              className={body.includes("@" + a.id) ? "active" : ""}
+              onClick={() =>
+                setBody((b) =>
+                  b.includes("@" + a.id)
+                    ? b.replace(new RegExp("@" + a.id + "\\s?", "g"), "")
+                    : (b ? b.trimEnd() + " " : "") + "@" + a.id + " ",
+                )
+              }
+            >
+              <Face color={a.color} size={16} />@{a.id}
+            </button>
+          ))}
+        </div>
         <details>
           <summary>attach an image</summary>
           <label>

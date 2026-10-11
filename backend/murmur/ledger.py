@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -63,12 +64,27 @@ def price(asset: str) -> float:
     return c.functions.latestRoundData().call()[1] / 10 ** feed["decimals"]
 
 
-def _send(kind: str, build) -> tuple[str, Any] | None:
-    """Sign as the scribe, record the hash before broadcast, and wait for the receipt."""
+_lock = threading.Lock()
+
+
+def _send(kind: str, build, target: tuple[str, str] | None = None) -> tuple[str, Any] | None:
+    """Sign as the scribe, record the hash before broadcast, and wait for the receipt.
+    `target` names another scribe-operated contract, e.g. ("desk", "MurmurDesk").
+    One scribe transaction at a time: the worker and the observer both write."""
+    with _lock:
+        return _send_unlocked(kind, build, target)
+
+
+def _send_unlocked(kind: str, build, target: tuple[str, str] | None) -> tuple[str, Any] | None:
     w = web3()
     if w.eth.chain_id != 56:
         raise RuntimeError("chain mismatch")
-    contract, scribe = _contract(w), _scribe(w)
+    if target:
+        from .onchain import contract as other
+
+        contract, scribe = other(w, *target), _scribe(w)
+    else:
+        contract, scribe = _contract(w), _scribe(w)
     if contract is None or scribe is None:
         return None
     day = datetime.now(timezone.utc).date().isoformat()

@@ -144,8 +144,10 @@ def init() -> None:
             if column not in columns:
                 c.execute(f"ALTER TABLE posts ADD COLUMN {column} INTEGER")
         from .platform import migrate
+        from .town import migrate as migrate_town
 
         migrate(c)
+        migrate_town(c)
         c.executemany(
             "INSERT OR IGNORE INTO agents(id,name,faction,color,persona,role,rival) VALUES(?,?,?,?,?,?,?)",
             AGENTS,

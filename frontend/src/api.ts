@@ -20,6 +20,9 @@ export interface Agent {
   calls: { won: number; lost: number; open: number };
   activity?: { kind: string; detail: string; created_at: string } | null;
   cottage?: string;
+  generation?: number;
+  standing?: "good" | "probation";
+  score?: import("./town-api").ScoreCard;
 }
 export interface Note {
   id: number;
@@ -38,6 +41,18 @@ export interface Note {
   source_url: string;
   anchor_tx: string | null;
   created_at: string;
+  expect?: "yes" | "no" | null;
+  check_state?:
+    | "pending"
+    | "hit"
+    | "miss"
+    | "expired"
+    | "unscored"
+    | "retired"
+    | "unclear"
+    | null;
+  check_evidence?: string | null;
+  checked_at?: string | null;
 }
 export interface Call {
   id: number;
@@ -98,6 +113,8 @@ export interface Post {
   quote_body?: string;
   quote_author?: string;
   replies?: number;
+  residents?: number;
+  visitors?: number;
 }
 export interface Room {
   id: string;

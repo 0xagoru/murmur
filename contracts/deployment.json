@@ -12,7 +12,9 @@
     "agent_vale": "0xF69b0625642851a32a290174C72Fd92a3385371f",
     "agent_echo": "0x3e76b45af47C3e5c6539f0958D6D59412e7Cc001",
     "ledger": "0x74d0393b1B6B46196D5e89e9eC1d870eE64426D2",
-    "scribe": "0x1Bb7A1e9A52336DaF8B2b3307a7Ed6EA6a5718Fc"
+    "scribe": "0x1Bb7A1e9A52336DaF8B2b3307a7Ed6EA6a5718Fc",
+    "arena": "0x9acC7A87c57eA0057Eaa54f704F18B46894D8C74",
+    "desk": "0x4f4180e1732dD5cF8cD1145F042207F2c790736D"
   },
   "transactions": [
     {
@@ -218,6 +220,109 @@
       "kind": "scribe_gas",
       "agent": null,
       "status": "confirmed"
+    },
+    {
+      "hash": "7167cdf72dbeaa7369a1368202dc4046939ec957beeb5d0f66da537d5572144e",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "e4c11c169eb70914ff42a92852db5838d1c4f37d38e250e4422ac45a8186b793",
+      "kind": "deployment",
+      "agent": null,
+      "status": "confirmed"
+    },
+    {
+      "hash": "f6e4bf44b2855d20d47a0a854a75fa0a136b7fedf4393704af85af14ecb580aa",
+      "kind": "scribe_gas",
+      "agent": null,
+      "status": "confirmed",
+      "amount": "0.0202947962"
+    },
+    {
+      "hash": "d8b752db69d0ced9131854b5a350dea41792024bb9686aceb50d40241e55c1d3",
+      "kind": "operator_gas",
+      "agent": "moss",
+      "status": "confirmed",
+      "amount": "0.00181550725"
+    },
+    {
+      "hash": "13cfb7fed811c2501980d3df99e2bd42320c0b1f831861ca9d3d90d91760fafe",
+      "kind": "funding",
+      "agent": "moss",
+      "status": "confirmed",
+      "amount": "0.006000996367697712"
+    },
+    {
+      "hash": "2d903e7efe9508810b0c470e918a02659b74bea4c01e57e902ee718396b227fc",
+      "kind": "operator_gas",
+      "agent": "flicker",
+      "status": "confirmed",
+      "amount": "0.0018"
+    },
+    {
+      "hash": "c3229ca8afa6a9b7a5588ed6c6f4a0112d841af80961f7cfe77f7d0871180c94",
+      "kind": "funding",
+      "agent": "flicker",
+      "status": "confirmed",
+      "amount": "0.006"
+    },
+    {
+      "hash": "4ff2bce1ae40556742d0ff87310e10b54f73e19e18f90d87b84cf617d04871d5",
+      "kind": "operator_gas",
+      "agent": "rook",
+      "status": "confirmed",
+      "amount": "0.0018"
+    },
+    {
+      "hash": "c70412b27189a4e124fc313bbd400608d7d749ddeffe32ff54bf3d4bae9ba272",
+      "kind": "funding",
+      "agent": "rook",
+      "status": "confirmed",
+      "amount": "0.006"
+    },
+    {
+      "hash": "a3b5bf86e1498a17f94bf3cf52027d7088159c4b160d3e62c62369d407429021",
+      "kind": "operator_gas",
+      "agent": "pip",
+      "status": "confirmed",
+      "amount": "0.001843789550000001"
+    },
+    {
+      "hash": "5e489afcd2ac950f9ecd3944fb8d291688546ff916b65900cf7abd997302fbcb",
+      "kind": "funding",
+      "agent": "pip",
+      "status": "confirmed",
+      "amount": "0.006"
+    },
+    {
+      "hash": "3a533e8cf9b82c6495b3c6ffc7bcf189dd7a9b4461de16350575ad6677eedc87",
+      "kind": "operator_gas",
+      "agent": "vale",
+      "status": "confirmed",
+      "amount": "0.0018"
+    },
+    {
+      "hash": "b85de8b29adf2e4d4e8c45c54771c0d6ef210ff7020d358ad7d4722094530d3e",
+      "kind": "funding",
+      "agent": "vale",
+      "status": "confirmed",
+      "amount": "0.006"
+    },
+    {
+      "hash": "df58ac49e0dde1631f3a3dd8d52ee9fe7e4bf39c90644be2e5bf612653669605",
+      "kind": "operator_gas",
+      "agent": "echo",
+      "status": "confirmed",
+      "amount": "0.0018"
+    },
+    {
+      "hash": "4cfc803bb4be2c0a0e319fca14eaebd5c3bd4a34613a07d3ea640191f64126fd",
+      "kind": "funding",
+      "agent": "echo",
+      "status": "confirmed",
+      "amount": "0.006"
     }
   ]
 }

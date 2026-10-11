@@ -40,7 +40,7 @@ footer a {
 }
 .feature-nav button.active,
 .neighborhood-picker button.active {
-  background: #e6eadf;
+  background: #eef1ea;
   color: var(--forest);
   border-color: var(--border);
 }
@@ -111,7 +111,7 @@ footer a {
   padding: 11px 12px;
   border: 1px solid var(--border);
   border-radius: 5px;
-  background: #f9f7f0;
+  background: #ffffff;
   color: var(--ink);
   font-size: 15px;
 }
@@ -136,7 +136,7 @@ footer a {
   border-left: 3px solid var(--sage);
   margin: 16px 0;
   padding: 8px 16px;
-  background: #eef0e5;
+  background: #f1f3ee;
 }
 .discussion-body {
   white-space: pre-wrap;
@@ -207,7 +207,7 @@ footer a {
   display: none;
 }
 .trade-row > summary:hover {
-  background: #f1f2e9;
+  background: #f3f2eb;
 }
 .trade-person {
   display: flex;
@@ -221,11 +221,11 @@ footer a {
   color: var(--forest);
 }
 .loss {
-  color: #a45543;
+  color: #c4401f;
 }
 .trade-details {
   padding: 12px 20px 20px;
-  background: #f0f1e7;
+  background: #f3f2eb;
 }
 .trade-details dl,
 .coin-facts,
@@ -273,7 +273,7 @@ footer a {
   font-size: 15px;
 }
 .coin-list-row:hover {
-  background: #eef0e5;
+  background: #f1f3ee;
 }
 .coin-list-row h2 {
   margin: 0 0 4px;
@@ -346,7 +346,7 @@ footer a {
 }
 .faction-member {
   padding: 8px 20px 18px;
-  background: #f0f1e7;
+  background: #f3f2eb;
 }
 .call-replay {
   padding: 16px 0;
@@ -411,7 +411,7 @@ footer a {
   font-size: 15px;
   overflow-wrap: anywhere;
   padding: 18px;
-  background: #e6eadf;
+  background: #eef1ea;
   border: 1px solid var(--border);
 }
 .desk-grid {
@@ -461,7 +461,7 @@ footer a {
 .resident-activity {
   padding: 16px;
   margin: 20px 0;
-  background: #eef0e5;
+  background: #f1f3ee;
   font-size: 15px;
 }
 .resident-activity p {
@@ -605,10 +605,5 @@ footer a {
   to {
     transform: translateY(0);
     opacity: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .agent-modal {
-    animation: none;
   }
 }

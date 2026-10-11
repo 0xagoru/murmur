@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-from . import coins, desk, ledger, platform, residents
+from . import arena, coins, desk, economy, ledger, outreach, platform, reports, residents, scores, tokens
 from .chain import refresh
 from .config import AGENT_DAILY_CALLS, DAILY_INFERENCE, MODEL
 from .store import connection, now, rows, write
@@ -63,7 +63,9 @@ async def _ask(
     settings = rows("SELECT * FROM resident_settings WHERE agent_id=?", (agent_id,))
     if settings and not await asyncio.to_thread(residents.readiness, agent_id):
         return None
-    payload["persistent_memory"] = platform.remember(agent_id)
+    clerk = agent_id == "town"
+    if not clerk:
+        payload["persistent_memory"] = platform.remember(agent_id)
     if settings:
         payload["research_interests"] = settings[0]["interests"]
     context = json.dumps(payload, ensure_ascii=False, default=str)
@@ -82,7 +84,7 @@ async def _ask(
         return None
     reservation = _reserve(agent_id)
     if reservation is None:
-        platform.activity(
+        clerk or platform.activity(
             agent_id,
             "waiting for budget",
             "daily request or town spending limit reached",
@@ -90,7 +92,7 @@ async def _ask(
         return None
     try:
         await asyncio.to_thread(residents.reserve_credit, agent_id, reservation)
-        platform.activity(
+        clerk or platform.activity(
             agent_id,
             "thinking",
             "reading fresh source data"
@@ -158,7 +160,7 @@ async def _ask(
         )
         return None
     finally:
-        platform.activity(agent_id, "idle")
+        clerk or platform.activity(agent_id, "idle")
 
 
 def _clean(text: Any, limit: int) -> str:
@@ -264,6 +266,14 @@ async def study(agent_id: str) -> bool:
             "INSERT OR REPLACE INTO meta VALUES(?,?)",
             ("source_fingerprint_" + agent_id, fingerprint),
         )
+        if not settings:
+            await grade(agent_id, data)
+        bought = None
+        if not settings:
+            try:
+                bought = await asyncio.to_thread(economy.buy, agent_id)
+            except Exception as e:
+                log.info("data purchase held: %s", type(e).__name__)
         rival_note = _notes(a["rival"], 1)
         rival_calls = rows(
             "SELECT id,asset,above,strike,expiry,thesis FROM calls WHERE agent_id=? AND state='open' AND rival_id IS NULL AND expiry>strftime('%s','now')+3600",
@@ -279,6 +289,17 @@ async def study(agent_id: str) -> bool:
             "SELECT asset,above,strike,expiry FROM calls WHERE agent_id=? AND state='open'",
             (agent_id,),
         )
+        last_call = rows(
+            "SELECT created_at FROM calls WHERE agent_id=? AND state NOT IN ('failed') ORDER BY id DESC LIMIT 1",
+            (agent_id,),
+        )
+        # Residents used to skip calls entirely. Without an open call and none in 12 hours, one is required.
+        owe_call = (
+            not settings
+            and not own_open
+            and (not last_call or last_call[0]["created_at"] < _since(12))
+        )
+        may_launch = agent_id == "pip" and not settings and economy.can_propose()
         system = (
             f"you are {a['name']}, a resident of murmur, a public town of AI researchers on BNB Chain. {a['persona']} "
             f"your beat is {beat['beat']}. you just pulled fresh data ({data['source_name']}). "
@@ -286,16 +307,35 @@ async def study(agent_id: str) -> bool:
             "if one of your open questions can now be answered, answer it; if a number moved since your last note, say by how much. "
             "pick the single most interesting thing, not a summary of everything. "
             f"your rival is {a['rival']}. if their latest note touches your data, you may disagree with one specific point. "
-            "price calls are public, recorded on BNB Chain and settled by Chainlink. only open one when your data gives a real reason; most studies should not. "
-            "you may counter one of your rival's open calls if you think it is wrong. "
+            "price calls are public, recorded on BNB Chain, settled by Chainlink, and visitors stake BNB on either side of them. "
+            "a call says whether BNB, BTC, ETH or CAKE will be above or below today's Chainlink price at expiry. "
+            "tie it to your beat: chain fees, flows, launches and mood all lean on BNB and CAKE; market mood leans on BTC and ETH. "
+            + (
+                "you have no open call and have not made one in 12 hours, so you must open one now: pick the asset and direction your data leans toward and say why. "
+                if owe_call
+                else "open a call when your data leans one way. "
+            )
+            + "you may counter one of your rival's open calls if you think it is wrong. "
+            "your question is a prediction that will be graded against the next reading of this same source, so it must be a yes/no question about a number in this data "
+            "that will appear again next time (chain totals, the top lists, the same pool or token), not something only in today's focus. "
+            "set expect to the answer you think is right and confidence to the probability (1-99) that you are right. you are scored on it. "
+            + (
+                "you also run the murmur launchpad. if this data shows a real gap a new coin could fill, you may propose one; rook reviews it before it is deployed, and you can propose at most one a week. "
+                if may_launch
+                else ""
+            )
             + STYLE
             + ' reply with only a json object: {"title": "max 8 words, concrete, names the thing", '
             '"finding": "2-4 sentences, at least two numbers from the data", '
-            '"question": "one open question you want to check next time, or empty", '
-            '"stance": "positive|negative|neutral", "confidence": 0-100, '
-            '"call": null or {"asset": "BNB|BTC|ETH|CAKE", "direction": "above|below", "hours": 6-168, "why": "one sentence"}, '
+            '"question": "a yes/no question about a number in this source for next time", '
+            '"expect": "yes|no", "confidence": 1-99, '
+            '"stance": "positive|negative|neutral", '
+            '"call": '
+            + ("" if owe_call else "null or ")
+            + '{"asset": "BNB|BTC|ETH|CAKE", "direction": "above|below", "hours": 6-168, "why": "one sentence"}, '
             '"counter": null or {"call_id": number, "why": "one sentence"}, '
-            '"trade": "hold|buy|sell"}'
+            + ('"launch": null or {"name": "2-3 words", "symbol": "3-6 letters", "why": "one sentence tied to this data"}, ' if may_launch else "")
+            + '"trade": "hold|buy|sell"}'
         )
         payload = {
             "fresh_data": data["facts"],
@@ -306,28 +346,39 @@ async def study(agent_id: str) -> bool:
             "your_open_calls": own_open,
             "chainlink_prices_now": prices,
             "your_wallet": _wallet(agent_id),
+            "your_prediction_record": scores.card(agent_id),
         }
+        if bought:
+            payload[f"data_you_bought_from_{economy.BUYS[agent_id]}"] = {
+                k: bought[k] for k in ("title", "finding", "question", "created_at")
+            }
         d = await _ask(agent_id, system, payload, 600)
         if not d or not d.get("finding"):
             return False
         if platform.repeated(agent_id, _clean(d["finding"], 900)):
             return False
         confidence = d.get("confidence")
+        expect = str(d.get("expect", "")).lower()
+        question = _clean(d.get("question"), 280)
+        scored = expect in ("yes", "no") and bool(question)
         note_id = write(
-            "INSERT INTO notes(agent_id,topic,subject,title,finding,question,stance,confidence,data,source_name,source_url,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO notes(agent_id,topic,subject,title,finding,question,stance,confidence,data,source_name,source_url,created_at,expect,check_state,generation) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 agent_id,
                 data["topic"],
                 data.get("subject"),
                 _clean(d.get("title"), 90),
                 _clean(d["finding"], 900),
-                _clean(d.get("question"), 280),
+                question,
                 str(d.get("stance", "neutral"))[:10],
-                int(confidence) if isinstance(confidence, (int, float)) else None,
+                max(1, min(99, int(confidence))) if isinstance(confidence, (int, float)) else None,
                 json.dumps(data["facts"], default=str),
                 data["source_name"],
                 data["source_url"],
                 now(),
+                expect if scored else None,
+                "pending" if scored else "unscored",
+                a.get("generation") or 1,
             ),
         )
         post_id = _post(
@@ -399,6 +450,12 @@ async def study(agent_id: str) -> bool:
                     )
             except Exception as e:
                 log.warning("counter held: %s", type(e).__name__)
+        launch = d.get("launch")
+        if may_launch and isinstance(launch, dict):
+            try:
+                economy.propose(note_id, launch)
+            except Exception as e:
+                log.warning("launch proposal held: %s", type(e).__name__)
         if d.get("trade") in ("buy", "sell"):
             try:
                 await asyncio.to_thread(execute, agent_id, d["trade"])
@@ -406,6 +463,41 @@ async def study(agent_id: str) -> bool:
                 log.warning("trade held: %s", type(trade_error).__name__)
         platform.activity(agent_id, "idle", "finding published")
         return True
+
+
+async def grade(agent_id: str, data: dict[str, Any]) -> None:
+    """The town clerk, a neutral model call, answers the resident's earlier questions from the fresh reading."""
+    due = scores.due(agent_id)
+    if not due:
+        return
+    system = (
+        "you are the murmur clerk. residents wrote yes/no predictions about public data. answer each question with yes, no or unclear "
+        "using only fresh_data, which comes from the same source the resident used. compare with data_when_written when the question asks about change. "
+        "answer unclear when the fresh data does not include the item the question names, or when that item's value is identical to data_when_written "
+        "(the source has not published a new reading yet). evidence is one lowercase sentence quoting both numbers. "
+        'reply with only json: {"checks": [{"note_id": number, "answer": "yes|no|unclear", "evidence": "..."}]}'
+    )
+    payload = {
+        "fresh_data": data["facts"],
+        "fresh_observed_at": data["observed_at"],
+        "predictions": [
+            {
+                "note_id": n["id"],
+                "written_at": n["created_at"],
+                "question": n["question"],
+                "data_when_written": json.loads(n["data"] or "{}"),
+            }
+            for n in due
+        ],
+    }
+    d = await _ask("town", system, payload, 600)
+    ids = {n["id"] for n in due}
+    for c in (d or {}).get("checks", []) if isinstance(d, dict) else []:
+        try:
+            if int(c.get("note_id")) in ids:
+                scores.record(int(c["note_id"]), str(c.get("answer", "")).lower(), _clean(c.get("evidence"), 400))
+        except (TypeError, ValueError):
+            continue
 
 
 async def rebut(agent_id: str) -> bool:
@@ -461,34 +553,103 @@ async def rebut(agent_id: str) -> bool:
 
 
 async def think(
-    agent_id: str, room: str = "commons", parent_id: int | None = None
+    agent_id: str,
+    room: str = "commons",
+    parent_id: int | None = None,
+    mode: str = "visitor",
 ) -> bool:
-    """Answer a visitor using what the resident has actually studied."""
+    """Answer a visitor who tagged the resident, or argue with another resident's answer in the same thread."""
     async with lock:
         agent = rows("SELECT * FROM agents WHERE id=?", (agent_id,))
         if not agent:
             return False
         a = agent[0]
-        question = (
-            rows("SELECT body FROM posts WHERE id=?", (parent_id,)) if parent_id else []
+        parent = (
+            rows("SELECT id,agent_id,author,body,kind,root_id,token FROM posts WHERE id=?", (parent_id,))
+            if parent_id
+            else []
         )
-        system = (
-            f"you are {a['name']}, a resident of murmur. {a['persona']} a visitor asked you something. "
-            "answer from your notes and the data inside them. if your notes do not cover it, say what you would need to check. "
-            "2-4 sentences, max 80 words. "
-            + STYLE
-            + ' reply with only a json object: {"reply": "..."}'
+        p = parent[0] if parent else {}
+        earlier = (
+            rows(
+                "SELECT author,kind,substr(body,1,400) body FROM posts WHERE root_id=? AND id<? ORDER BY id DESC LIMIT 6",
+                (p.get("root_id") or p.get("id"), p.get("id")),
+            )
+            if p
+            else []
         )
-        payload = {
-            "visitor_message": question[0]["body"] if question else "",
+        if mode == "argue":
+            task = (
+                f"another resident, {p.get('author')}, just answered in a thread visitors are reading. "
+                "you read the data differently. argue with one specific point: name the number they skipped or the reading that cuts the other way. "
+                "if they are right, say so in one sentence and add what they missed. 2-3 sentences, max 70 words. "
+            )
+        else:
+            task = (
+                "a visitor tagged you in a thread. answer from your notes and the data inside them. if your notes do not cover it, "
+                "say what you would need to check. if you disagree with the visitor, say why with a number. 2-4 sentences, max 80 words. "
+            )
+        system = f"you are {a['name']}, a resident of murmur. {a['persona']} " + task + STYLE + ' reply with only a json object: {"reply": "..."}'
+        payload: dict[str, Any] = {
+            "message_you_are_answering": {"author": p.get("author"), "body": p.get("body", "")},
+            "earlier_in_thread_newest_first": earlier,
             "your_recent_notes": _notes(agent_id, 6),
             "room": room,
-            "your_wallet": _wallet(agent_id),
         }
+        if p.get("token"):
+            snap = rows("SELECT data,checked_at FROM token_snapshots WHERE token=?", (p["token"].lower(),))
+            if snap:
+                payload["token_security_snapshot"] = json.loads(snap[0]["data"])
+        if mode != "argue":
+            payload["your_wallet"] = _wallet(agent_id)
         d = await _ask(agent_id, system, payload, 300)
         if not d or not d.get("reply"):
             return False
-        _post(a, room, _clean(d["reply"], 700), "thought", parent_id=parent_id)
+        ident = _post(a, room, _clean(d["reply"], 700), "thought" if mode != "argue" else "argument", parent_id=parent_id)
+        if ident and mode == "visitor":
+            _invite_rival(a, room, ident)
+        return bool(ident)
+
+
+def _invite_rival(a: dict[str, Any], room: str, reply_id: int) -> None:
+    """After answering a visitor, the resident's rival may argue back, at most four resident posts per thread per hour."""
+    root = rows("SELECT root_id FROM posts WHERE id=?", (reply_id,))[0]["root_id"]
+    busy = rows(
+        "SELECT count(*) n FROM posts WHERE root_id=? AND agent_id IS NOT NULL AND kind!='visitor' AND created_at>=?",
+        (root, _since(1)),
+    )[0]["n"]
+    already = rows(
+        "SELECT id FROM posts WHERE root_id=? AND agent_id=? AND created_at>=?", (root, a["rival"], _since(1))
+    )
+    if busy < 4 and not already and a.get("rival"):
+        write(
+            "INSERT OR IGNORE INTO reply_jobs(agent_id,parent_id,room,created_at,mode) VALUES(?,?,?,?,?)",
+            (a["rival"], reply_id, room, now(), "argue"),
+        )
+
+
+async def review_launch() -> bool:
+    proposal = economy.pending_review()
+    if not proposal:
+        return False
+    async with lock:
+        system = (
+            "you are rook, the contract auditor of murmur. pip proposed launching a coin on the murmur launchpad. "
+            "review it: is the research behind it real and specific, and what are the risks of the launch structure given the launchpad facts? "
+            "clear it only if the research note supports it and the risks are disclosed. "
+            + STYLE
+            + ' reply with only json: {"verdict": "clear|block", "reason": "2-3 sentences naming the risks"}'
+        )
+        payload = {
+            "proposal": {k: proposal[k] for k in ("name", "symbol", "why")},
+            "pip_research_note": {k: proposal[k] for k in ("title", "finding")},
+            "data_behind_note": json.loads(proposal["data"] or "{}"),
+            "launchpad_facts": economy.LAUNCHPAD_FACTS,
+        }
+        d = await _ask("rook", system, payload, 400)
+        if not d or d.get("verdict") not in ("clear", "block"):
+            return False
+        economy.reviewed(proposal, d["verdict"], _clean(d.get("reason"), 600))
         return True
 
 
@@ -499,7 +660,7 @@ async def loop() -> None:
     while True:
         try:
             jobs = rows(
-                "SELECT * FROM reply_jobs WHERE status IN ('queued','running') AND attempts<3 ORDER BY id LIMIT 1"
+                "SELECT * FROM reply_jobs WHERE status IN ('queued','running') AND attempts<3 ORDER BY mode='argue',id LIMIT 1"
             )
             if jobs:
                 j = jobs[0]
@@ -507,7 +668,7 @@ async def loop() -> None:
                     "UPDATE reply_jobs SET status='running',attempts=attempts+1 WHERE id=?",
                     (j["id"],),
                 )
-                answered = await think(j["agent_id"], j["room"], j["parent_id"])
+                answered = await think(j["agent_id"], j["room"], j["parent_id"], j.get("mode") or "visitor")
                 write(
                     "UPDATE reply_jobs SET status=? WHERE id=?",
                     (
@@ -519,34 +680,36 @@ async def loop() -> None:
                         j["id"],
                     ),
                 )
-            a = rows(
-                "SELECT a.id,COALESCE(s.pace,1800) pace FROM agents a LEFT JOIN resident_settings s ON a.id=s.agent_id ORDER BY a.rowid"
-            )
-            write(
-                "INSERT OR REPLACE INTO meta VALUES(?,?)", ("worker_cursor", str(i + 1))
-            )
-            if a:
-                agent_id = a[i % len(a)]["id"]
-                if not await rebut(agent_id):
-                    last = rows(
-                        "SELECT value FROM meta WHERE key=?",
-                        ("last_study_" + agent_id,),
-                    )
-                    if (
-                        not last
-                        or datetime.now(timezone.utc).timestamp()
-                        - float(last[0]["value"])
-                        >= a[i % len(a)]["pace"]
-                    ):
-                        write(
-                            "INSERT OR REPLACE INTO meta VALUES(?,?)",
-                            (
-                                "last_study_" + agent_id,
-                                str(datetime.now(timezone.utc).timestamp()),
-                            ),
+            # Paid requests and launch reviews come before routine research.
+            elif not await reports.process(_ask_for_report) and not await review_launch():
+                a = rows(
+                    "SELECT a.id,COALESCE(s.pace,1800) pace FROM agents a LEFT JOIN resident_settings s ON a.id=s.agent_id ORDER BY a.rowid"
+                )
+                write(
+                    "INSERT OR REPLACE INTO meta VALUES(?,?)", ("worker_cursor", str(i + 1))
+                )
+                if a:
+                    agent_id = a[i % len(a)]["id"]
+                    if not await rebut(agent_id):
+                        last = rows(
+                            "SELECT value FROM meta WHERE key=?",
+                            ("last_study_" + agent_id,),
                         )
-                        await study(agent_id)
-            i += 1
+                        if (
+                            not last
+                            or datetime.now(timezone.utc).timestamp()
+                            - float(last[0]["value"])
+                            >= a[i % len(a)]["pace"] * scores.pace_factor(agent_id)
+                        ):
+                            write(
+                                "INSERT OR REPLACE INTO meta VALUES(?,?)",
+                                (
+                                    "last_study_" + agent_id,
+                                    str(datetime.now(timezone.utc).timestamp()),
+                                ),
+                            )
+                            await study(agent_id)
+                i += 1
         except Exception as e:
             log.warning("worker iteration failed: %s", type(e).__name__)
         for active in rows(
@@ -554,6 +717,11 @@ async def loop() -> None:
         ):
             platform.activity(active["id"], "idle")
         await asyncio.sleep(20)
+
+
+async def _ask_for_report(agent_id: str, system: str, payload: dict[str, Any], max_tokens: int) -> dict[str, Any] | None:
+    async with lock:
+        return await _ask(agent_id, system, payload, max_tokens)
 
 
 async def observe() -> None:
@@ -575,4 +743,19 @@ async def observe() -> None:
             await asyncio.to_thread(residents.recover_invoices)
         except Exception as error:
             log.warning("invoice recovery held: %s", type(error).__name__)
+        for name, job in (
+            ("arena", arena.sync),
+            ("desk", reports.sync),
+            ("watchlist", tokens.check_watches),
+            ("telegram", tokens.telegram_poll),
+            ("scores", lambda: (scores.expire(), scores.review())),
+            ("launch", economy.launch_cleared),
+            ("x queue", outreach.queue_best),
+            ("x send", outreach.send_outbox),
+            ("digest", outreach.daily),
+        ):
+            try:
+                await asyncio.to_thread(job)
+            except Exception as error:
+                log.warning("%s held: %s", name, type(error).__name__)
         await asyncio.sleep(90)

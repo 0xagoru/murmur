@@ -1,0 +1,256 @@
+/* Mood lighting, residents walking to rooms, and the 24 hour replay bar. */
+.town-scene .light rect,
+.town-scene .lamps {
+  transition: opacity 1.2s var(--ease);
+}
+.town-scene .light-multiply {
+  mix-blend-mode: multiply;
+}
+.town-scene .light-screen {
+  mix-blend-mode: screen;
+}
+.town-scene .light-soft {
+  mix-blend-mode: soft-light;
+}
+.lamp-lift {
+  transition: transform 0.6s var(--ease);
+}
+.town-scene svg:has(.cottage[data-i="0"]:hover) .lamps[data-i="0"] .lamp-lift,
+.town-scene
+  svg:has(.cottage[data-i="0"]:focus-visible)
+  .lamps[data-i="0"]
+  .lamp-lift,
+.town-scene svg:has(.cottage[data-i="1"]:hover) .lamps[data-i="1"] .lamp-lift,
+.town-scene
+  svg:has(.cottage[data-i="1"]:focus-visible)
+  .lamps[data-i="1"]
+  .lamp-lift,
+.town-scene svg:has(.cottage[data-i="2"]:hover) .lamps[data-i="2"] .lamp-lift,
+.town-scene
+  svg:has(.cottage[data-i="2"]:focus-visible)
+  .lamps[data-i="2"]
+  .lamp-lift,
+.town-scene svg:has(.cottage[data-i="3"]:hover) .lamps[data-i="3"] .lamp-lift,
+.town-scene
+  svg:has(.cottage[data-i="3"]:focus-visible)
+  .lamps[data-i="3"]
+  .lamp-lift,
+.town-scene svg:has(.cottage[data-i="4"]:hover) .lamps[data-i="4"] .lamp-lift,
+.town-scene
+  svg:has(.cottage[data-i="4"]:focus-visible)
+  .lamps[data-i="4"]
+  .lamp-lift,
+.town-scene svg:has(.cottage[data-i="5"]:hover) .lamps[data-i="5"] .lamp-lift,
+.town-scene
+  svg:has(.cottage[data-i="5"]:focus-visible)
+  .lamps[data-i="5"]
+  .lamp-lift {
+  transform: translateY(-5px);
+}
+.at-home {
+  transition: opacity 0.5s var(--ease);
+}
+.at-home.out {
+  opacity: 0;
+}
+.goer {
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+  pointer-events: none;
+}
+.goer[data-away] {
+  opacity: 1;
+}
+.goer-face {
+  transition: transform 0.35s var(--ease);
+}
+.goer[data-left] .goer-face {
+  transform: scaleX(-1);
+}
+.goer-bob {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.goer[data-moving] .goer-bob {
+  animation: goer-step 0.52s ease-in-out infinite alternate;
+}
+@keyframes goer-step {
+  from {
+    transform: translateY(0) scale(1.02, 0.98);
+  }
+  to {
+    transform: translateY(-2.5px) scale(0.98, 1.03);
+  }
+}
+.map-label.small {
+  font-size: 11.5px;
+}
+.map-label.light {
+  fill: #fbf9f3;
+}
+.map-note {
+  pointer-events: none;
+}
+.map-note.due {
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
+}
+.map-note.due.on {
+  opacity: 1;
+}
+.says {
+  pointer-events: none;
+}
+.say {
+  transform-box: fill-box;
+  opacity: 0;
+  transform: translateY(5px) scale(0.85);
+  transition:
+    opacity 0.45s var(--ease),
+    transform 0.6s var(--ease);
+}
+.say-dot {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: think 1.5s ease-in-out var(--n) infinite;
+}
+.say.on {
+  opacity: 1;
+  transform: none;
+}
+.replay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+.replay-play {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  transition:
+    background 0.3s var(--ease),
+    transform 0.3s var(--ease);
+}
+.replay-play:hover {
+  background: #eef1ea;
+  transform: translateY(-1px);
+}
+.replay-track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  cursor: pointer;
+  touch-action: none;
+  outline-offset: 2px;
+}
+.replay-rail,
+.replay-fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+.replay-rail {
+  right: 0;
+  background: #10201a1a;
+}
+.replay-fill {
+  background: #10201a55;
+}
+.replay-ticks {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: 4px;
+  height: 7px;
+  pointer-events: none;
+  opacity: 0;
+  animation: replay-in 0.8s var(--ease) forwards;
+}
+.replay-ticks line {
+  stroke-width: 1px;
+}
+@keyframes replay-in {
+  to {
+    opacity: 0.9;
+  }
+}
+.replay-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  pointer-events: none;
+  transition: transform 0.3s var(--ease);
+}
+.replay-track:hover .replay-thumb,
+.replay-track:active .replay-thumb {
+  transform: scale(1.2);
+}
+.replay.is-live .replay-thumb {
+  border-color: #1fa45a;
+}
+.replay-time {
+  flex: none;
+  min-width: 66px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.replay-live {
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  font:
+    12px "DM Mono",
+    monospace;
+  gap: 2px;
+  color: var(--muted);
+  transition:
+    background 0.3s var(--ease),
+    color 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+.replay-live .live-dot {
+  background: #b9beb4;
+  box-shadow: none;
+  transition: background 0.3s var(--ease);
+}
+.replay.is-live .replay-live {
+  color: var(--ink);
+  border-color: #1fa45a55;
+}
+.replay.is-live .replay-live .live-dot {
+  background: #1fa45a;
+  box-shadow: 0 0 0 3px #1fa45a22;
+}
+@media (max-width: 420px) {
+  .replay {
+    gap: 7px;
+    padding: 8px 10px;
+  }
+  .replay-time {
+    min-width: 0;
+    font-size: 11px;
+  }
+  .replay-live {
+    padding: 0 8px;
+  }
+}
