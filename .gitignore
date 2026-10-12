@@ -7,7 +7,7 @@ dist/
 __pycache__/
 *.db*
 .secrets/
-.superdesign/tmp/
+.superdesign/
 artifacts/
 forge-out/
 cache/
@@ -16,3 +16,6 @@ cache/
 !contracts/artifacts/*.json
 
 deploy-backups/
+deploy/
+AGENTS.local.md
+frontend/releases/
