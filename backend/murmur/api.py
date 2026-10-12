@@ -15,6 +15,7 @@ from .auth import user
 from .chain import manifest
 from .config import DAILY_INFERENCE, PRIVY_ID
 from .engine import loop, observe
+from .agent import router as agent_router
 from .extras import mentioned, router as extras_router
 from .features import router
 from .research import market
@@ -48,6 +49,7 @@ app = FastAPI(
 )
 app.include_router(router)
 app.include_router(extras_router)
+app.include_router(agent_router)
 
 
 class Message(BaseModel):

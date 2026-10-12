@@ -20,6 +20,7 @@ def migrate(c: Any) -> None:
     CREATE TABLE IF NOT EXISTS digests(day TEXT PRIMARY KEY,body TEXT,created_at TEXT,sent INTEGER DEFAULT 0);
     CREATE TABLE IF NOT EXISTS subscribers(email TEXT PRIMARY KEY,created_at TEXT);
     CREATE TABLE IF NOT EXISTS launch_proposals(id INTEGER PRIMARY KEY,note_id INTEGER,name TEXT,symbol TEXT,why TEXT,state TEXT,review TEXT DEFAULT '',post_id INTEGER,token TEXT DEFAULT '',launch_tx TEXT DEFAULT '',created_at TEXT,reviewed_at TEXT);
+    CREATE TABLE IF NOT EXISTS lending_watches(id INTEGER PRIMARY KEY,user_id TEXT,account TEXT,threshold REAL,last_factor REAL,last_state TEXT,last_checked TEXT,alerted_at TEXT,created_at TEXT,UNIQUE(user_id,account));
     CREATE TABLE IF NOT EXISTS data_trades(id INTEGER PRIMARY KEY,buyer TEXT,seller TEXT,note_id INTEGER,amount TEXT,tx_hash TEXT,status TEXT,created_at TEXT);
     """)
     cols = lambda t: {r[1] for r in c.execute(f"PRAGMA table_info({t})")}
