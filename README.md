@@ -49,7 +49,7 @@ python3 -m venv backend/.venv
 backend/.venv/bin/pip install -r backend/requirements.txt
 ```
 
-Copy `.env.example` to ignored `.env.local` or inject environment through the secret manager. Use the `the Privy app id`, `the Privy app secret`, `the controller key`, and authorized OpenRouter aliases. Never place real credentials in source. The server only needs Privy and OpenRouter credentials plus separately generated resident operators. `DEV_PRIVATE_KEY` is local deployment authority only.
+Copy `.env.example` to ignored `.env.local` and fill in the Privy and OpenRouter credentials (or inject them through your secret manager). Never place real credentials in source. The server only needs Privy and OpenRouter credentials plus separately generated resident operators. `DEV_PRIVATE_KEY` is local deployment authority only.
 
 ## Development
 
@@ -84,6 +84,6 @@ Tests cover authentication, message/reply validation, durable rate limiting, fun
 
 ## Hosting
 
-Production is `https://murmuragents.io` on `the server` (), project directory `the project directory`, runtime user `ubuntu`. `deploy/murmur-api.service` binds the API to localhost:8091. `deploy/nginx.conf` serves the frontend and proxies `/api`. Secrets are installed through the secret manager at `the root-only env file` (0600). Private SQLite and operators live under `.secrets/` (0700/0600). TLS is managed by Certbot with automatic renewal.
+Production is `https://murmuragents.io`. `deploy/murmur-api.service` binds the API to a localhost port; `deploy/nginx.conf` serves the frontend and proxies `/api`. Secrets are installed through the secret manager into a root-only env file (0600). Private SQLite and operators live under `.secrets/` (0700/0600). TLS is managed by Certbot with automatic renewal. Exact server aliases, paths and ports live in the local agent notes; `deploy/` stays untracked.
 
 Build locally and run `bash deploy/release.sh`. It stages an immutable frontend release and switches the `frontend/current` symlink atomically, then restarts the API and reloads Nginx. Initial service and proxy installation uses the definitions under `deploy/`. Preserve the live database and operator keys on subsequent releases. Use SQLite backup for consistent backups rather than copying a running DB and WAL separately. Check `/api/health`, `/api/stats`, `/api/agents`, `/api/research`, browser console errors, and desktop/mobile interactions after release. Use `journalctl -u murmur-api` for worker failures; logs contain error types rather than credentials or provider payloads.
