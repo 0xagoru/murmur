@@ -36,10 +36,12 @@ export function VerdictChip({ verdict }: { verdict?: string }) {
   if (!verdict) return null;
   return (
     <span className={"audit-verdict " + (tone[verdict as Verdict] || "")}>
-      {verdict}
+      {cap(verdict)}
     </span>
   );
 }
+
+const cap = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
 
 const pending = (state: ResearchRequest["state"]) =>
   state === "open" || state === "working";
@@ -69,14 +71,17 @@ function pyJson(v: unknown): string {
 }
 
 const yesNo = (v: unknown) =>
-  v === true ? "yes" : v === false ? "no" : "not available";
-const pct = (v: unknown) => (typeof v === "number" ? v + "%" : "not available");
+  v === true ? "Yes" : v === false ? "No" : "Not available";
+const pct = (v: unknown) => (typeof v === "number" ? v + "%" : "Not available");
 const text = (v: unknown) =>
   v === null || v === undefined || v === ""
-    ? "not available"
+    ? "Not available"
     : typeof v === "number"
       ? v.toLocaleString("en-US")
       : String(v);
+
+// Figures and addresses read in the ledger typewriter; words stay in the body face.
+const numeric = (v: string) => /^[\d$<>~.+-]|^0x/.test(v);
 
 type PoolRow = {
   pool?: string;
@@ -108,67 +113,67 @@ function DataTable({ report }: { report: Report }) {
     ] as const
   ).some((k) => typeof g[k] === "boolean");
   const contract: [string, string][] = [
-    ["buy / sell tax", pct(g.buy_tax_pct) + " / " + pct(g.sell_tax_pct)],
-    ["honeypot", yesNo(g.honeypot)],
-    ["mintable", yesNo(g.mintable)],
+    ["Buy / sell tax", pct(g.buy_tax_pct) + " / " + pct(g.sell_tax_pct)],
+    ["Honeypot", yesNo(g.honeypot)],
+    ["Mintable", yesNo(g.mintable)],
     [
-      "owner powers",
+      "Owner powers",
       powers.length
-        ? powers.join(", ")
+        ? cap(powers.join(", "))
         : known
-          ? "none found"
-          : "not available",
+          ? "None found"
+          : "Not available",
     ],
     [
-      "owner",
+      "Owner",
       typeof g.owner_address === "string" && g.owner_address
         ? short(g.owner_address)
-        : "none listed",
+        : "None listed",
     ],
-    ["source verified", yesNo(g.open_source)],
-    ["holders", text(g.holder_count)],
-    ["top 10 holders", pct(g.top_10_holders_pct)],
-    ["creator holds", pct(g.creator_pct)],
+    ["Source verified", yesNo(g.open_source)],
+    ["Holders", text(g.holder_count)],
+    ["Top 10 holders", pct(g.top_10_holders_pct)],
+    ["Creator holds", pct(g.creator_pct)],
     ["LP locked", pct(g.lp_locked_pct)],
   ];
   const market: [string, string][] = [
     [
-      "price",
+      "Price",
       typeof m.price_usd === "number"
         ? "$" + m.price_usd.toPrecision(4)
-        : "not available",
+        : "Not available",
     ],
-    ["liquidity", text(m.total_liquidity)],
-    ["volume 24h", text(m.volume_24h)],
-    ["market cap", text(m.market_cap)],
-    ["fdv", text(m.fdv)],
+    ["Liquidity", text(m.total_liquidity)],
+    ["Volume 24h", text(m.volume_24h)],
+    ["Market cap", text(m.market_cap)],
+    ["FDV", text(m.fdv)],
   ];
   const pools = (Array.isArray(m.pools) ? m.pools : []) as PoolRow[];
   return (
     <div className="audit-data">
       <div>
-        <h4>contract, GoPlus</h4>
+        <h4>Contract, from GoPlus</h4>
         <dl>
           {contract.map(([k, v]) => (
             <div key={k}>
               <dt>{k}</dt>
-              <dd>{v}</dd>
+              <dd className={numeric(v) ? "num" : undefined}>{v}</dd>
             </div>
           ))}
         </dl>
       </div>
       <div>
-        <h4>market, GeckoTerminal</h4>
+        <h4>Market, from GeckoTerminal</h4>
         {m.known === false ? (
           <p className="arena-fine">
-            GeckoTerminal has no pools for this token.
+            GeckoTerminal lists no pools for this token.
           </p>
         ) : (
           <dl>
             {market.map(([k, v]) => (
               <div key={k}>
                 <dt>{k}</dt>
-                <dd>{v}</dd>
+                <dd className={numeric(v) ? "num" : undefined}>{v}</dd>
               </div>
             ))}
           </dl>
@@ -179,10 +184,10 @@ function DataTable({ report }: { report: Report }) {
               <li key={(p.url || "") + i}>
                 {p.url ? (
                   <a href={p.url} target="_blank" rel="noreferrer">
-                    {p.pool || "pool"} <ArrowUpRight size={11} />
+                    {p.pool || "Pool"} <ArrowUpRight size={11} />
                   </a>
                 ) : (
-                  <span>{p.pool || "pool"}</span>
+                  <span>{p.pool || "Pool"}</span>
                 )}
                 <code>{p.liquidity || "?"}</code>
                 <code>{p.volume_24h ? p.volume_24h + " 24h" : ""}</code>
@@ -225,26 +230,26 @@ function Verify({ r }: { r: ResearchRequest }) {
     recovered.toLowerCase() === r.signer.toLowerCase();
   return (
     <section className="audit-verify">
-      <h3>verification</h3>
+      <h3>Check this report</h3>
       <dl>
         <div>
-          <dt>report hash</dt>
+          <dt>Report hash</dt>
           <dd>
             <code>
-              {r.report_hash ? short(r.report_hash) : "not computed yet"}
+              {r.report_hash ? short(r.report_hash) : "Not computed yet"}
             </code>
             {r.report_hash && (
-              <CopyButton value={r.report_hash} label="copy report hash" />
+              <CopyButton value={r.report_hash} label="Copy report hash" />
             )}
             {hashOk && (
               <span className="audit-ok">
-                recomputed in your browser, matches
+                Matches, recomputed in your browser
               </span>
             )}
           </dd>
         </div>
         <div>
-          <dt>scribe signer</dt>
+          <dt>Scribe signer</dt>
           <dd>
             {r.signer ? (
               <a
@@ -255,26 +260,26 @@ function Verify({ r }: { r: ResearchRequest }) {
                 {short(r.signer)} <ArrowUpRight size={12} />
               </a>
             ) : (
-              "not listed"
+              "Not listed"
             )}
           </dd>
         </div>
         <div>
-          <dt>signature</dt>
+          <dt>Signature</dt>
           <dd>
             <code>
               {signature
                 ? signature.slice(0, 12) + "…" + signature.slice(-8)
-                : "none"}
+                : "None"}
             </code>
             {signature && (
-              <CopyButton value={signature} label="copy signature" />
+              <CopyButton value={signature} label="Copy signature" />
             )}
             {signerOk && (
-              <span className="audit-ok">recovers to the scribe</span>
+              <span className="audit-ok">Recovers to the scribe</span>
             )}
             {recovered && r.signer && !signerOk && (
-              <span className="audit-bad">recovers to {short(recovered)}</span>
+              <span className="audit-bad">Recovers to {short(recovered)}</span>
             )}
           </dd>
         </div>
@@ -287,7 +292,7 @@ function Verify({ r }: { r: ResearchRequest }) {
                 target="_blank"
                 rel="noreferrer"
               >
-                fulfil tx {short(r.fulfil_tx)} <ArrowUpRight size={12} />
+                Fulfil tx {short(r.fulfil_tx)} <ArrowUpRight size={12} />
               </a>
             ) : r.desk ? (
               <a
@@ -295,18 +300,18 @@ function Verify({ r }: { r: ResearchRequest }) {
                 target="_blank"
                 rel="noreferrer"
               >
-                {short(r.desk)}, fulfil tx not sent yet{" "}
+                {short(r.desk)}, no fulfil tx yet{" "}
                 <ArrowUpRight size={12} />
               </a>
             ) : (
-              "not deployed"
+              "Not deployed"
             )}
           </dd>
         </div>
       </dl>
       <p className="arena-fine">
-        recompute keccak256 of the report JSON (sorted keys, no spaces) and
-        compare with the Fulfilled event.
+        To check it yourself, take keccak256 of the report JSON with sorted
+        keys and no spaces, then compare it with the Fulfilled event.
       </p>
     </section>
   );
@@ -318,21 +323,21 @@ function Share({ r }: { r: ResearchRequest }) {
     ? r.report.symbol +
       " audit on murmur: " +
       r.report.rook.verdict +
-      ". hashed and published on BNB Chain."
+      ". Hashed and published on BNB Chain."
     : "murmur report #" + r.id;
   return (
     <section className="audit-share">
       <img
         src={"/api/share/report/" + r.id + ".png"}
-        alt={"share card for report " + r.id}
+        alt={"Share card for report " + r.id}
         loading="lazy"
         onError={(e) => (e.currentTarget.style.visibility = "hidden")}
       />
       <div>
-        <h3>share</h3>
+        <h3>Share</h3>
         <p className="audit-url">
           <code>{url.replace("https://", "")}</code>
-          <CopyButton value={url} label="copy link" />
+          <CopyButton value={url} label="Copy link" />
         </p>
         <a
           className="text-button"
@@ -345,7 +350,7 @@ function Share({ r }: { r: ResearchRequest }) {
           target="_blank"
           rel="noreferrer"
         >
-          post on X <ArrowUpRight size={13} />
+          Post on X <ArrowUpRight size={13} />
         </a>
       </div>
     </section>
@@ -392,7 +397,7 @@ function ReportPage({
     return (
       <section className="audit-page">
         <a className="text-button" href="#audits">
-          all reports
+          All reports
         </a>
         {error && <p className="arena-tx error">{error}</p>}
       </section>
@@ -407,12 +412,12 @@ function ReportPage({
   return (
     <section className="audit-page">
       <a className="text-button" href="#audits">
-        all reports
+        All reports
       </a>
       <div className="audit-title" data-reveal>
         <div>
           <h2>
-            {rep ? rep.symbol : "report"} <span>#{r.id}</span>
+            {rep ? rep.symbol : "Report"} <span>#{r.id}</span>
           </h2>
           <p>
             <button
@@ -422,10 +427,10 @@ function ReportPage({
             >
               <code>{short(r.token)}</code>
             </button>
-            <CopyButton value={r.token} label="copy token address" />
+            <CopyButton value={r.token} label="Copy token address" />
             <span>
-              requested by <code>{short(r.requester)}</code> · paid{" "}
-              {bnb(r.paid_bnb)} BNB · {ago(r.created_at)}
+              Requested by <code>{short(r.requester)}</code> · paid{" "}
+              <code>{bnb(r.paid_bnb)}</code> BNB · <time>{ago(r.created_at)}</time>
             </span>
             {r.request_tx && (
               <a
@@ -433,7 +438,7 @@ function ReportPage({
                 target="_blank"
                 rel="noreferrer"
               >
-                request tx <ArrowUpRight size={12} />
+                Request tx <ArrowUpRight size={12} />
               </a>
             )}
           </p>
@@ -444,21 +449,21 @@ function ReportPage({
       {pending(r.state) && (
         <div className="audit-progress panel" data-reveal>
           <div className="audit-steps">
-            <span className="done">paid</span>
+            <span className="done">Paid</span>
             <span className={r.state === "working" ? "now" : ""}>
               rook and pip reading
             </span>
-            <span>signed and published</span>
+            <span>Signed and published</span>
           </div>
           <p>
-            rook and pip are working on it. {span(since(r.created_at))} since
-            the request.
-            {r.error ? " last attempt: " + r.error + "." : ""}
+            rook and pip are on it.{" "}
+            <time>{span(since(r.created_at))}</time> since the request.
+            {r.error ? " Last attempt: " + r.error + "." : ""}
           </p>
           {mineToRefund && (
             <p>
-              no report after 24 hours. you can refund {bnb(r.paid_bnb)} BNB
-              yourself.{" "}
+              There is still no report after 24 hours, so you can take back{" "}
+              {bnb(r.paid_bnb)} BNB yourself.{" "}
               <button
                 className="primary small"
                 disabled={tx.busy}
@@ -479,12 +484,12 @@ function ReportPage({
                     },
                     async () => {
                       await load();
-                      return "refunded. the page updates once the indexer reads the event.";
+                      return "Refunded. This page updates once the indexer reads the event.";
                     },
                   );
                 }}
               >
-                refund
+                Refund
               </button>
             </p>
           )}
@@ -495,7 +500,7 @@ function ReportPage({
       {(r.state === "refunded" || r.state === "failed") && (
         <div className="audit-progress panel">
           <p>
-            {r.state === "refunded" ? "refunded" : "failed"}
+            {r.state === "refunded" ? "Refunded" : "Failed"}
             {r.error ? ": " + r.error : ""}.
           </p>
           {r.refund_tx && (
@@ -505,7 +510,7 @@ function ReportPage({
               target="_blank"
               rel="noreferrer"
             >
-              refund tx {short(r.refund_tx)} <ArrowUpRight size={12} />
+              Refund tx {short(r.refund_tx)} <ArrowUpRight size={12} />
             </a>
           )}
         </div>
@@ -515,7 +520,7 @@ function ReportPage({
         <div className="audit-body">
           <div className="audit-read">
             <section data-reveal>
-              <h3>rook, contract</h3>
+              <h3>rook on the contract</h3>
               {flags.length > 0 && (
                 <ol className="audit-flags">
                   {flags.map((f, i) => (
@@ -526,11 +531,11 @@ function ReportPage({
               <p>{rep.rook.summary}</p>
             </section>
             <section data-reveal style={{ ["--d" as string]: 1 }}>
-              <h3>pip, liquidity and holders</h3>
+              <h3>pip on liquidity and holders</h3>
               <p>{rep.pip.summary}</p>
               {rep.pip.watch && (
                 <p className="audit-watch">
-                  <b>watch</b> {rep.pip.watch}
+                  <b>Watch</b> {rep.pip.watch}
                 </p>
               )}
             </section>
@@ -548,7 +553,7 @@ function ReportPage({
                     className="text-button"
                     onClick={() => onThread(r.post_id as number)}
                   >
-                    discussion <ArrowUpRight size={12} />
+                    Discussion <ArrowUpRight size={12} />
                   </button>
                 )}
               </p>
@@ -631,13 +636,13 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
             });
             if (ids.length) {
               location.hash = "report/" + ids[0];
-              return "request #" + ids[0] + " confirmed.";
+              return "Request #" + ids[0] + " confirmed.";
             }
           } catch {
             await new Promise((ok) => setTimeout(ok, 2500));
           }
         }
-        return "paid. the request shows in the list below within a minute.";
+        return "Paid. Your request will appear in the list within a minute.";
       },
     );
   }
@@ -647,12 +652,12 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
     <section className="audit-page">
       <div className="audit-desk">
         <div className="audit-ask" data-reveal>
-          <h2>token reports</h2>
+          <h2>Request a report</h2>
           <p>
-            rook audits the contract with GoPlus data, pip reads liquidity and
-            holders from GeckoTerminal. the report is hashed, signed and
-            published to MurmurDesk on BNB Chain. if no report is written within
-            a day you can refund yourself.
+            rook audits the contract using GoPlus data while pip reads
+            liquidity and holders from GeckoTerminal. Each report is hashed,
+            signed and published to MurmurDesk on BNB Chain. If nothing is
+            written within a day, you can refund yourself.
           </p>
           <form
             className="audit-form"
@@ -664,8 +669,8 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
             <input
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              placeholder="token contract 0x…"
-              aria-label="token contract address"
+              placeholder="Token contract 0x…"
+              aria-label="Token contract address"
               spellCheck={false}
               autoComplete="off"
             />
@@ -674,13 +679,13 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
               disabled={tx.busy || (authenticated && (!valid || fee === null))}
             >
               {authenticated
-                ? "pay " + (feeBnb !== null ? feeBnb : "…") + " BNB and request"
-                : "sign in to request"}
+                ? "Pay " + (feeBnb !== null ? feeBnb : "…") + " BNB and request"
+                : "Sign in to request"}
             </button>
           </form>
           {token && !valid && (
             <p className="arena-fine">
-              a BNB Chain contract address is 0x followed by 40 hex characters.
+              A BNB Chain contract address is 0x followed by 40 hex characters.
             </p>
           )}
           <TxLine state={tx.state} />
@@ -698,8 +703,9 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
               ) : (
                 "not deployed"
               )}{" "}
-              · fee {feeBnb ?? "?"} BNB, read from the contract ·{" "}
-              {requests.filter((q) => q.state === "done").length} published
+              · fee <code>{feeBnb ?? "?"}</code> BNB, read from the contract ·{" "}
+              <code>{requests.filter((q) => q.state === "done").length}</code>{" "}
+              published
             </p>
           )}
           {error && <p className="arena-tx error">{error}</p>}
@@ -709,10 +715,11 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
           data-reveal
           style={{ ["--d" as string]: 1 }}
         >
-          <h3>recent requests</h3>
+          <h3>Recent requests</h3>
           {list && !requests.length && (
             <p className="calls-empty">
-              no requests yet. the first report will show here.
+              Nobody has requested a report yet. The first one will be listed
+              here.
             </p>
           )}
           <ul>
@@ -724,7 +731,7 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
                   </span>
                   <VerdictChip verdict={q.report?.rook.verdict} />
                   {!q.report && (
-                    <span className={"audit-state " + q.state}>{q.state}</span>
+                    <span className={"audit-state " + q.state}>{cap(q.state)}</span>
                   )}
                   <code>{short(q.token)}</code>
                   <time>{ago(q.created_at)}</time>
@@ -732,7 +739,7 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
                 {onToken && (
                   <button
                     className="audit-copy"
-                    aria-label="open token page"
+                    aria-label="Open token page"
                     onClick={() => onToken(q.token)}
                   >
                     <ArrowUpRight size={13} />

@@ -49,37 +49,37 @@ export function NotePage({
       <aside className="note-page-side">
         {note.expect && (
           <section className="panel note-grade" data-reveal>
-            <h3>prediction</h3>
+            <h3>Prediction</h3>
             <p>{note.question}</p>
             <div className="data-pair">
-              <span>expected</span>
+              <span>Expected</span>
               <strong>
                 {note.expect}
-                {note.confidence !== null ? ` at ${note.confidence}%` : ""}
+                {note.confidence !== null ? `, ${note.confidence}% sure` : ""}
               </strong>
             </div>
             <div className="data-pair">
-              <span>result</span>
+              <span>Result</span>
               <strong className={"check-text " + (note.check_state || "")}>
                 {note.check_state === "hit"
-                  ? "came true"
+                  ? "Came true"
                   : note.check_state === "miss"
-                    ? "missed"
+                    ? "Missed"
                     : note.check_state === "expired"
-                      ? "expired unchecked"
-                      : "waiting for the next reading"}
+                      ? "Expired before it was checked"
+                      : "Waiting for the next reading"}
               </strong>
             </div>
             {note.check_evidence && (
-              <p className="tiny">clerk: {note.check_evidence}</p>
+              <p className="note-aside">Clerk: {note.check_evidence}</p>
             )}
             {note.checked_at && (
-              <time className="tiny">graded {ago(note.checked_at)}</time>
+              <time className="note-aside">Graded {ago(note.checked_at)}</time>
             )}
           </section>
         )}
         <section className="panel" data-reveal style={{ ["--d" as string]: 1 }}>
-          <h3>the data it read</h3>
+          <h3>The data it read</h3>
           <Facts data={note.data} limit={14} />
           <a
             className="text-button"
@@ -91,7 +91,7 @@ export function NotePage({
           </a>
         </section>
         <section className="panel" data-reveal style={{ ["--d" as string]: 2 }}>
-          <h3>record</h3>
+          <h3>Record</h3>
           {note.anchor_tx ? (
             <a
               className="data-pair"
@@ -99,19 +99,19 @@ export function NotePage({
               target="_blank"
               rel="noreferrer"
             >
-              <span>anchored</span>
+              <span>Anchor tx</span>
               <code>{note.anchor_tx.slice(0, 12)}…</code>
               <ArrowUpRight size={12} />
             </a>
           ) : (
-            <p className="tiny">anchor pending</p>
+            <p className="note-aside">Not anchored onchain yet.</p>
           )}
           {note.post_id ? (
             <button
               className="text-button"
               onClick={() => (location.hash = "discussions/" + note.post_id)}
             >
-              discussion <ArrowUpRight size={12} />
+              Discussion <ArrowUpRight size={12} />
             </button>
           ) : null}
           {token && (
@@ -119,7 +119,7 @@ export function NotePage({
               className="text-button"
               onClick={() => (location.hash = "token/" + token)}
             >
-              token page <ArrowUpRight size={12} />
+              Token page <ArrowUpRight size={12} />
             </button>
           )}
         </section>

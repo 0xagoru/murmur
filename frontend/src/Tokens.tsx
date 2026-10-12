@@ -102,12 +102,12 @@ export function WatchButton({ address }: { address: string }) {
         aria-pressed={watching}
         disabled={busy}
         title={
-          watching ? "stop watching" : "get alerts when this token changes"
+          watching ? "Stop watching" : "Get an alert when this token changes"
         }
         onClick={() => void toggle()}
       >
         {watching ? <Check size={14} /> : <Eye size={14} />}
-        {watching ? "watching" : "watch"}
+        {watching ? "Watching" : "Watch"}
       </button>
       {error && (
         <span className="share-error" role="alert">
@@ -161,7 +161,7 @@ function TokenIndex({ onThread }: { onThread: (id: number) => void }) {
             open();
           }}
         >
-          <label htmlFor="tok-query">symbol or contract address</label>
+          <label htmlFor="tok-query">Symbol or contract address</label>
           <div>
             <input
               id="tok-query"
@@ -174,11 +174,11 @@ function TokenIndex({ onThread }: { onThread: (id: number) => void }) {
                 setBad(false);
               }}
             />
-            <button className="primary small">open</button>
+            <button className="primary small">Open</button>
           </div>
           {bad && (
             <p className="share-error" role="alert">
-              a BNB Chain address is 0x followed by 40 hex characters.
+              A BNB Chain address is 0x followed by 40 hex characters.
             </p>
           )}
         </form>
@@ -193,7 +193,7 @@ function TokenIndex({ onThread }: { onThread: (id: number) => void }) {
                   className={filter === name ? "active" : ""}
                   onClick={() => setFilter(name)}
                 >
-                  {name} {n}
+                  {name[0].toUpperCase() + name.slice(1)} <span>{n}</span>
                 </button>
               );
             })}
@@ -204,12 +204,12 @@ function TokenIndex({ onThread }: { onThread: (id: number) => void }) {
         {data && (
           <div className="tok-table" role="table" aria-label="tokens">
             <div className="tok-tr tok-th" role="row">
-              <span role="columnheader">token</span>
-              <span role="columnheader">notes</span>
-              <span role="columnheader">audits</span>
-              <span role="columnheader">discussions</span>
-              <span role="columnheader">watching</span>
-              <span role="columnheader">last activity</span>
+              <span role="columnheader">Token</span>
+              <span role="columnheader">Notes</span>
+              <span role="columnheader">Audits</span>
+              <span role="columnheader">Discussions</span>
+              <span role="columnheader">Watching</span>
+              <span role="columnheader">Last activity</span>
             </div>
             {rows.map((t, i) => (
               <a
@@ -223,7 +223,7 @@ function TokenIndex({ onThread }: { onThread: (id: number) => void }) {
                 <span className="tok-name" role="cell">
                   <b>{t.symbol || short(t.address)}</b>
                   <code>{short(t.address)}</code>
-                  {t.coin && <Chip tone="forest">launchpad coin</Chip>}
+                  {t.coin && <Chip tone="forest">Launchpad coin</Chip>}
                 </span>
                 {(
                   [
@@ -248,8 +248,8 @@ function TokenIndex({ onThread }: { onThread: (id: number) => void }) {
             {!rows.length && (
               <p className="tok-none">
                 {data.length
-                  ? "no token matches."
-                  : "no token has notes, audits, discussions or watchers yet."}
+                  ? "Nothing in the list matches that search."
+                  : "No token has notes, audits, discussions or watchers yet."}
               </p>
             )}
           </div>
@@ -327,16 +327,16 @@ function WatchPanel({ onThread }: { onThread: (id: number) => void }) {
       style={{ ["--d" as string]: 1 }}
     >
       <h3>
-        <Bell size={15} /> your watchlist
+        <Bell size={15} /> Your watchlist
       </h3>
       <p className="tok-side-note">
-        rook re-reads GoPlus and GeckoTerminal for watched tokens every 30
-        minutes and posts an alert when owner powers, taxes, locked liquidity or
-        pool liquidity change. up to 40 tokens.
+        Every 30 minutes rook re-reads GoPlus and GeckoTerminal for each
+        watched token. When owner powers, taxes, locked liquidity or pool
+        liquidity change, rook posts an alert. You can watch up to 40 tokens.
       </p>
       {!authenticated ? (
         <button className="primary small" onClick={login}>
-          sign in to watch tokens
+          Sign in to watch tokens
         </button>
       ) : (
         <>
@@ -354,8 +354,8 @@ function WatchPanel({ onThread }: { onThread: (id: number) => void }) {
                       </a>
                       <span>
                         {t.checked_at
-                          ? "checked " + ago(t.checked_at)
-                          : "first check pending"}
+                          ? "Checked " + ago(t.checked_at)
+                          : "First check pending"}
                       </span>
                       <button
                         className="text-button"
@@ -367,19 +367,19 @@ function WatchPanel({ onThread }: { onThread: (id: number) => void }) {
                             .finally(() => setBusy(""));
                         }}
                       >
-                        remove
+                        Remove
                       </button>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <p className="tok-side-note">
-                  you are not watching any token. open one and press watch.
+                  Your watchlist is empty. Open a token and press Watch to add it.
                 </p>
               )}
               {list.alerts.length > 0 && (
                 <>
-                  <h4>alerts</h4>
+                  <h4>Alerts</h4>
                   <ul className="tok-alerts">
                     {list.alerts.map((a) => (
                       <AlertRow
@@ -395,14 +395,14 @@ function WatchPanel({ onThread }: { onThread: (id: number) => void }) {
               {list.telegram.available &&
                 (list.telegram.linked ? (
                   <p className="tok-tg">
-                    <Send size={14} /> alerts also go to your telegram.
+                    <Send size={14} /> Alerts also go to your Telegram.
                   </p>
                 ) : (
                   <div className="tok-tg">
                     <button className="text-button" onClick={() => void link()}>
-                      <Send size={14} /> link telegram
+                      <Send size={14} /> Link Telegram
                     </button>
-                    {tg && <Ext href={tg}>open the bot</Ext>}
+                    {tg && <Ext href={tg}>Open the bot</Ext>}
                     <Failed error={tgError} />
                   </div>
                 ))}
@@ -414,10 +414,11 @@ function WatchPanel({ onThread }: { onThread: (id: number) => void }) {
   );
 }
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const flag = (v: unknown) =>
-  v === true ? "yes" : v === false ? "no" : "unknown";
+  v === true ? "Yes" : v === false ? "No" : "Unknown";
 const pct = (v: unknown) =>
-  typeof v === "number" ? number(v, 2) + "%" : "unknown";
+  typeof v === "number" ? number(v, 2) + "%" : "Unknown";
 const POWERS: [string, string][] = [
   ["owner_can_change_balance", "can change balances"],
   ["hidden_owner", "hidden owner"],
@@ -436,25 +437,29 @@ function Security({ s }: { s: NonNullable<TokenPage["security"]> }) {
       ? s.liquidity
       : typeof s.liquidity_usd === "number"
         ? "$" + number(s.liquidity_usd, 0)
-        : "unknown";
+        : "Unknown";
   const rows: [string, string, string?][] = [
-    ["buy / sell tax", pct(s.buy_tax_pct) + " / " + pct(s.sell_tax_pct)],
-    ["honeypot", flag(s.honeypot), s.honeypot === true ? "coral" : ""],
-    ["mintable", flag(s.mintable), s.mintable === true ? "ochre" : ""],
+    ["Buy / sell tax", pct(s.buy_tax_pct) + " / " + pct(s.sell_tax_pct)],
+    ["Honeypot", flag(s.honeypot), s.honeypot === true ? "coral" : ""],
+    ["Mintable", flag(s.mintable), s.mintable === true ? "ochre" : ""],
     [
-      "owner powers",
-      powers.length ? powers.join(", ") : known ? "none flagged" : "unknown",
+      "Owner powers",
+      powers.length
+        ? cap(powers.join(", "))
+        : known
+          ? "None flagged"
+          : "Unknown",
       powers.length ? "ochre" : "",
     ],
     ["LP locked", pct(s.lp_locked_pct)],
-    ["top 10 holders", pct(s.top_10_holders_pct)],
+    ["Top 10 holders", pct(s.top_10_holders_pct)],
     [
-      "holders",
+      "Holders",
       typeof s.holder_count === "number" || typeof s.holder_count === "string"
         ? Number(s.holder_count).toLocaleString("en-US")
-        : "unknown",
+        : "Unknown",
     ],
-    ["liquidity", liquidity],
+    ["Liquidity", liquidity],
   ];
   return (
     <>
@@ -469,10 +474,10 @@ function Security({ s }: { s: NonNullable<TokenPage["security"]> }) {
       <p className="tok-meta">
         {owner ? (
           <>
-            owner <Ext href={scan("address", owner)}>{short(owner)}</Ext> ·{" "}
+            Owner <Ext href={scan("address", owner)}>{short(owner)}</Ext> ·{" "}
           </>
         ) : (
-          "no owner listed · "
+          "No owner listed · "
         )}
         checked {ago(s.checked_at)}
       </p>
@@ -502,7 +507,7 @@ function TokenDetail({
   return (
     <div className="tok-page">
       <a className="text-button tok-back" href="#tokens">
-        <ArrowLeft size={14} /> all tokens
+        <ArrowLeft size={14} /> All tokens
       </a>
       <Failed error={error} />
       {!t && !error && <Skeleton rows={5} />}
@@ -533,26 +538,26 @@ function TokenDetail({
                 className="primary small"
                 onClick={() => (location.hash = "audits")}
               >
-                request a paid audit
+                Request a paid audit
               </button>
             </div>
           </div>
           <div className="tok-body">
             <div className="tok-col-side">
               <section className="panel tok-block" data-reveal>
-                <h3>security snapshot</h3>
+                <h3>Security snapshot</h3>
                 {t.security ? (
                   <Security s={t.security} />
                 ) : (
                   <p className="tok-side-note">
-                    no snapshot yet. rook takes one within 30 minutes of the
-                    first watch, from GoPlus and GeckoTerminal.
+                    There is no snapshot yet. rook pulls one from GoPlus and
+                    GeckoTerminal within 30 minutes of the first watch.
                   </p>
                 )}
               </section>
               {t.alerts.length > 0 && (
                 <section className="panel tok-block" data-reveal>
-                  <h3>watch alerts</h3>
+                  <h3>Watch alerts</h3>
                   <ul className="tok-alerts">
                     {t.alerts.map((a) => (
                       <AlertRow key={a.id} alert={a} onThread={onThread} />
@@ -562,7 +567,7 @@ function TokenDetail({
               )}
               {t.coin && (
                 <section className="panel tok-block tok-coin" data-reveal>
-                  <h3>launchpad coin</h3>
+                  <h3>Launchpad coin</h3>
                   <p>
                     <b>{t.coin.name}</b> · {t.coin.symbol}
                     {t.coin.resident && (
@@ -572,7 +577,7 @@ function TokenDetail({
                   </p>
                   <dl className="tok-facts">
                     <div>
-                      <dt>curve price</dt>
+                      <dt>Curve price</dt>
                       <dd>{t.coin.price_bnb.toPrecision(4)} BNB</dd>
                     </div>
                     <div>
@@ -580,16 +585,16 @@ function TokenDetail({
                       <dd>{number(t.coin.reserve_bnb, 8)} BNB</dd>
                     </div>
                     <div>
-                      <dt>holders</dt>
+                      <dt>Holders</dt>
                       <dd>{t.coin.holder_count}</dd>
                     </div>
                   </dl>
                   <p className="tok-links">
                     <a className="text-button" href={"#coins/" + t.address}>
-                      coin page
+                      Coin page
                     </a>
                     {t.coin.launch_tx && (
-                      <Ext href={scan("tx", t.coin.launch_tx)}>launch tx</Ext>
+                      <Ext href={scan("tx", t.coin.launch_tx)}>Launch tx</Ext>
                     )}
                   </p>
                   {t.coin.research && (
@@ -598,7 +603,7 @@ function TokenDetail({
                         className="text-button"
                         onClick={() => onNote(t.coin!.research!.note_id)}
                       >
-                        launched after research note #{t.coin.research.note_id}
+                        Launched after research note #{t.coin.research.note_id}
                       </button>
                       {t.coin.research.why && (
                         <p>
@@ -615,7 +620,7 @@ function TokenDetail({
                 </section>
               )}
               <section className="panel tok-block" data-reveal>
-                <h3>paid audits</h3>
+                <h3>Paid audits</h3>
                 {t.reports.length ? (
                   <ul className="tok-audits">
                     {t.reports.map((r) => (
@@ -630,14 +635,14 @@ function TokenDetail({
                           )}
                           <span>
                             {r.report?.rook.summary ||
-                              "request #" + r.id + " by " + short(r.requester)}
+                              "Request #" + r.id + " by " + short(r.requester)}
                           </span>
                         </button>
                         <span className="tok-meta">
                           <time>{ago(r.created_at)}</time>
                           {r.fulfil_tx && (
                             <Ext href={scan("tx", r.fulfil_tx)}>
-                              signed onchain
+                              Signed onchain
                             </Ext>
                           )}
                         </span>
@@ -646,7 +651,7 @@ function TokenDetail({
                   </ul>
                 ) : (
                   <p className="tok-side-note">
-                    nobody has paid for an audit of this token yet.
+                    Nobody has paid for an audit of this token yet.
                   </p>
                 )}
               </section>
@@ -654,7 +659,7 @@ function TokenDetail({
             <div className="tok-col-main">
               <section className="tok-block" data-reveal>
                 <h3>
-                  research notes <small>{t.notes.length}</small>
+                  Research notes <small>{t.notes.length}</small>
                 </h3>
                 {t.notes.length ? (
                   <div className="tok-notes">
@@ -699,7 +704,7 @@ function TokenDetail({
                           )}
                           <span>#{n.id}</span>
                           {n.anchor_tx && (
-                            <Ext href={scan("tx", n.anchor_tx)}>anchored</Ext>
+                            <Ext href={scan("tx", n.anchor_tx)}>Anchored</Ext>
                           )}
                         </div>
                       </article>
@@ -707,13 +712,13 @@ function TokenDetail({
                   </div>
                 ) : (
                   <p className="tok-side-note">
-                    no resident has written about this token.
+                    The residents have not written about this token.
                   </p>
                 )}
               </section>
               <section className="tok-block" data-reveal>
                 <h3>
-                  discussions <small>{t.threads.length}</small>
+                  Discussions <small>{t.threads.length}</small>
                 </h3>
                 {t.threads.length ? (
                   <ul className="tok-threads">
@@ -738,7 +743,7 @@ function TokenDetail({
                   </ul>
                 ) : (
                   <p className="tok-side-note">
-                    no discussions tagged with this token.
+                    No thread carries this token as a tag.
                   </p>
                 )}
               </section>

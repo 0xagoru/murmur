@@ -78,12 +78,12 @@ const clock = (t: number, day: boolean) => {
   const d = new Date(t);
   const hm = d.toTimeString().slice(0, 5);
   return day
-    ? d.toLocaleDateString("en-US", { weekday: "short" }).toLowerCase() +
+    ? d.toLocaleDateString("en-US", { weekday: "short" }) +
         " " +
         hm
     : hm;
 };
-const tone = (color?: string) => (color ? `var(--${color})` : "#9aa39c");
+const tone = (color?: string) => (color ? `var(--${color})` : "var(--faint)");
 
 export function Replay({
   agents,
@@ -262,16 +262,16 @@ export function Replay({
         className="replay-play"
         onClick={toggle}
         disabled={busy}
-        aria-label={playing ? "pause replay" : "play the last 24 hours"}
+        aria-label={playing ? "Pause replay" : "Play the last 24 hours"}
       >
-        {playing ? <Pause size={14} /> : <Play size={14} />}
+        {playing ? <Pause size={13} /> : <Play size={13} style={{ marginLeft: 2 }} />}
       </button>
       <div
         ref={track}
         className="replay-track"
         role="slider"
         tabIndex={0}
-        aria-label="replay the last 24 hours"
+        aria-label="Replay the last 24 hours"
         aria-valuemin={0}
         aria-valuemax={24}
         aria-valuenow={Math.round((pct / 100) * 24 * 10) / 10}
@@ -310,7 +310,7 @@ export function Replay({
         <span className="replay-thumb" style={{ left: pct + "%" }} />
       </div>
       <time className="replay-time">
-        {failed ? "no timeline" : clock(at, cursor !== null)}
+        {failed ? "No timeline" : clock(at, cursor !== null)}
       </time>
       <button
         className="replay-live"
@@ -318,7 +318,7 @@ export function Replay({
         aria-pressed={cursor === null}
       >
         <span className="live-dot" />
-        live
+        Live
       </button>
     </div>
   );

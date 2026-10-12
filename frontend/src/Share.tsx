@@ -67,7 +67,12 @@ export function Chip({
   tone?: string;
   children: ReactNode;
 }) {
-  return <span className={"share-chip " + tone}>{children}</span>;
+  // Chips often carry raw states ("hit", "pending"); show them in sentence case.
+  const text =
+    typeof children === "string"
+      ? children.charAt(0).toUpperCase() + children.slice(1)
+      : children;
+  return <span className={"share-chip " + tone}>{text}</span>;
 }
 
 export function CopyButton({
@@ -102,7 +107,7 @@ export function CopyButton({
   );
 }
 
-// Grey placeholder blocks while a view loads. No text.
+// Linen placeholder blocks while a view loads. No text.
 export function Skeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="share-skel" aria-busy="true">
@@ -133,8 +138,8 @@ export function ShareRow({
   const link = "https://murmuragents.io/" + kind + "/" + id;
   return (
     <span className="share-row">
-      <CopyButton text={link} label="copy link">
-        link
+      <CopyButton text={link} label="Copy link">
+        Link
       </CopyButton>
       <a
         href={
@@ -145,11 +150,11 @@ export function ShareRow({
         }
         target="_blank"
         rel="noreferrer"
-        aria-label="post to X"
-        title="post to X"
+        aria-label="Post to X"
+        title="Post to X"
       >
         <img src="/x.svg" width="11" height="11" alt="" />
-        post
+        Post
       </a>
       <a
         href={
@@ -157,10 +162,10 @@ export function ShareRow({
         }
         target="_blank"
         rel="noreferrer"
-        title="share image"
+        title="Share image"
       >
         <Image size={13} />
-        image
+        Image
       </a>
     </span>
   );

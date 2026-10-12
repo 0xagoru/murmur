@@ -75,29 +75,29 @@ export function human(e: unknown): string {
         : String(e);
   const m = raw.toLowerCase();
   if (/user rejected|user denied|rejected the request|user cancel|4001/.test(m))
-    return "you rejected the request in your wallet.";
+    return "You turned down the request in your wallet.";
   if (/insufficient funds|exceeds the balance|insufficient balance/.test(m))
-    return "not enough BNB in this wallet for the amount plus gas.";
-  if (m.includes("backing closed")) return "backing on this call has closed.";
-  if (m.includes("call not open")) return "this call is no longer open.";
+    return "This wallet does not hold enough BNB for the amount plus gas.";
+  if (m.includes("backing closed")) return "Backing on this call has closed.";
+  if (m.includes("call not open")) return "This call is no longer open.";
   if (m.includes("stake out of range"))
-    return "stakes are 0.001 to 0.5 BNB per wallet per call, counting what you already staked.";
+    return "Each wallet can stake 0.001 to 0.5 BNB per call, including what it has already staked.";
   if (m.includes("nothing to claim"))
-    return "nothing to claim for this wallet.";
+    return "This wallet has nothing to claim.";
   if (/'claimed'|reason: claimed|reverted with reason string 'claimed'/.test(m))
-    return "already claimed.";
+    return "Already claimed.";
   if (m.includes("not a contract"))
-    return "that address is not a contract on BNB Chain.";
+    return "That address is not a contract on BNB Chain.";
   if (m.includes("not yet"))
-    return "a refund opens 24 hours after the request.";
+    return "Refunds open 24 hours after the request.";
   if (m.includes("not open"))
-    return "this request is already fulfilled or refunded.";
+    return "This request was already fulfilled or refunded.";
   if (/chain mismatch|switch.*chain|unsupported chain/.test(m))
-    return "switch your wallet to BNB Chain and try again.";
+    return "Switch your wallet to BNB Chain and try again.";
   if (reason && !/reverted: 0x$|^execution reverted$/.test(reason))
     return reason + ".";
   if (reason || m.includes("reverted"))
-    return "the contract rejected this transaction.";
+    return "The contract rejected this transaction.";
   const first =
     (e instanceof BaseError ? e.shortMessage : raw).split("\n")[0] || raw;
   return first.slice(0, 180);
@@ -110,7 +110,7 @@ export function useWallet() {
   const w = authenticated ? wallets[0] : undefined;
   const address = w?.address as Hex | undefined;
   const signer = useCallback(async () => {
-    if (!w) throw new Error("connect a wallet first");
+    if (!w) throw new Error("Connect a wallet first.");
     await w.switchChain(56);
     const provider = await w.getEthereumProvider();
     return createWalletClient({
@@ -138,15 +138,15 @@ export function useTx() {
       after?: (hash: Hex) => Promise<string | void>,
     ) => {
       let hash: Hex | undefined;
-      setState({ tone: "wait", text: "confirm in your wallet." });
+      setState({ tone: "wait", text: "Confirm in your wallet." });
       try {
         hash = await send();
-        setState({ tone: "wait", text: "sent. waiting for BNB Chain.", hash });
+        setState({ tone: "wait", text: "Sent. Waiting for BNB Chain to include it.", hash });
         const receipt = await chain.waitForTransactionReceipt({ hash });
         if (receipt.status !== "success")
           throw new Error("transaction reverted");
         const done = await after?.(hash);
-        setState({ tone: "ok", text: done || "confirmed.", hash });
+        setState({ tone: "ok", text: done || "Confirmed.", hash });
       } catch (e) {
         setState({ tone: "error", text: human(e), hash });
       }
@@ -172,7 +172,7 @@ export function TxLine({ state }: { state: TxState }) {
 
 export function CopyButton({
   value,
-  label = "copy",
+  label = "Copy",
 }: {
   value: string;
   label?: string;
@@ -218,21 +218,21 @@ function Pool({ call, fee }: { call: ArenaCall; fee: number }) {
       </div>
       <div className="arena-sides">
         <div>
-          <span>with {call.name}</span>
+          <span>With {call.name}</span>
           <b>{bnb(r)} BNB</b>
           <small>
             {mr && w > 0
-              ? "pays " + mr.toFixed(2) + "x"
-              : "no payout multiple yet"}
+              ? "Pays " + mr.toFixed(2) + "x"
+              : "No multiple yet"}
           </small>
         </div>
         <div>
-          <span>against {call.name}</span>
+          <span>Against {call.name}</span>
           <b>{bnb(w)} BNB</b>
           <small>
             {mw && r > 0
-              ? "pays " + mw.toFixed(2) + "x"
-              : "no payout multiple yet"}
+              ? "Pays " + mw.toFixed(2) + "x"
+              : "No multiple yet"}
           </small>
         </div>
       </div>
@@ -248,7 +248,7 @@ function Backers({ call }: { call: ArenaCall }) {
         <li key={b.tx_hash + b.backer}>
           <code>{short(b.backer)}</code>
           <span className={b.agent_right ? "with" : "against"}>
-            {b.agent_right ? "with" : "against"}
+            {b.agent_right ? "With" : "Against"}
           </span>
           <code>{bnb(weiBnb(b.amount))}</code>
           <time>{ago(b.created_at)}</time>
@@ -256,7 +256,7 @@ function Backers({ call }: { call: ArenaCall }) {
             href={scan("tx", b.tx_hash)}
             target="_blank"
             rel="noreferrer"
-            aria-label="transaction on BscScan"
+            aria-label="Transaction on BscScan"
           >
             <ArrowUpRight size={12} />
           </a>
@@ -314,14 +314,14 @@ function CallCard({
   };
   const result =
     call.state === "void"
-      ? "void"
+      ? "Void"
       : call.state === "right"
         ? call.name + " was right"
         : call.state === "wrong"
           ? call.name + " was wrong"
           : backable
-            ? "open"
-            : "backing closed";
+            ? "Open"
+            : "Backing closed";
 
   function back(right: boolean) {
     if (!authenticated) return login();
@@ -344,7 +344,7 @@ function CallCard({
         await api("/arena/sync", { method: "POST" }).catch(() => undefined);
         await onDone();
         return (
-          "staked " +
+          "Staked " +
           amount +
           " BNB " +
           (right ? "with " : "against ") +
@@ -368,7 +368,7 @@ function CallCard({
         <button
           className="arena-who"
           onClick={() => by && onAgent(by)}
-          aria-label={"open " + call.name}
+          aria-label={"Open " + call.name + "'s room"}
         >
           <Face color={call.color} size={30} />
           {rival && (
@@ -384,14 +384,23 @@ function CallCard({
           </strong>
           <span className="arena-times">
             {settled ? (
-              <>expired {ago(call.expiry)}</>
+              <>
+                Expired <time>{ago(call.expiry)}</time>
+              </>
             ) : (
               <>
-                expires in {span(call.expiry - now)}
+                Expires in <time>{span(call.expiry - now)}</time>
                 {backable ? (
-                  <> · backing closes in {span(call.closes_at - now)}</>
+                  <>
+                    {" "}
+                    · backing closes in{" "}
+                    <time>{span(call.closes_at - now)}</time>
+                  </>
                 ) : (
-                  <> · backing closed {ago(call.closes_at)}</>
+                  <>
+                    {" "}
+                    · backing closed <time>{ago(call.closes_at)}</time>
+                  </>
                 )}
               </>
             )}
@@ -409,17 +418,18 @@ function CallCard({
       <div className="arena-mark">
         {mark !== undefined && move !== null && (
           <span>
-            {settled ? "settled at " : "now "}
+            {settled ? "Settled at " : "Now "}
             <code>{usd(mark)}</code>{" "}
             <em className={ahead ? "up" : "down"}>
               {move >= 0 ? "+" : ""}
               {move.toFixed(2)}%
             </em>{" "}
-            vs strike <code>{usd(call.strike)}</code>
+            against a strike of <code>{usd(call.strike)}</code>
           </span>
         )}
         <span>
-          {call.pool.backers} {call.pool.backers === 1 ? "backer" : "backers"}
+          <code>{call.pool.backers}</code>{" "}
+          {call.pool.backers === 1 ? "backer" : "backers"}
         </span>
       </div>
       <p className="arena-thesis">{call.thesis}</p>
@@ -434,22 +444,23 @@ function CallCard({
           className="text-button arena-note"
           onClick={() => onNote(call.note_id as number)}
         >
-          {call.note_title ? "note: " + call.note_title : "read the note"}
+          {call.note_title ? "Note: " + call.note_title : "Read the note"}
           <ArrowUpRight size={13} />
         </button>
       )}
       <Pool call={call} fee={board.fee_pct} />
       {(call.pool.right_bnb === 0) !== (call.pool.wrong_bnb === 0) && (
         <p className="arena-fine">
-          one-sided pools are refunded in full at settlement.
+          If only one side holds stakes at settlement, every stake is
+          refunded in full.
         </p>
       )}
       {held > 0 && (
         <p className="arena-fine">
-          your stake:{" "}
+          Your stake:{" "}
           {[
-            mine?.right ? bnb(mine.right) + " BNB with" : "",
-            mine?.wrong ? bnb(mine.wrong) + " BNB against" : "",
+            mine?.right ? bnb(mine.right) + " BNB with " + call.name : "",
+            mine?.wrong ? bnb(mine.wrong) + " BNB against " + call.name : "",
           ]
             .filter(Boolean)
             .join(", ")}
@@ -467,7 +478,7 @@ function CallCard({
               step="0.001"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              aria-label="stake in BNB"
+              aria-label="Stake in BNB"
             />
           </label>
           <button
@@ -475,37 +486,39 @@ function CallCard({
             disabled={tx.busy || (authenticated && !valid)}
             onClick={() => back(true)}
           >
-            with {call.name}
+            With {call.name}
           </button>
           <button
             className="primary small arena-against"
             disabled={tx.busy || (authenticated && !valid)}
             onClick={() => back(false)}
           >
-            against {call.name}
+            Against {call.name}
           </button>
           <p className="arena-fine">
             {!valid
               ? held > 0
-                ? "stake " +
+                ? "You can add " +
                   board.min_stake +
                   " to " +
                   bnb(board.max_stake - held) +
                   " BNB more on this call."
-                : "stake " +
+                : "Enter a stake from " +
                   board.min_stake +
                   " to " +
                   board.max_stake +
                   " BNB."
-              : "at the current pool, " +
+              : "With the pool as it stands, " +
                 amount +
                 " BNB returns " +
                 bnb(estimate(true) || 0) +
-                " with " +
+                " if " +
                 call.name +
-                " if right, or " +
+                " is right, or " +
                 bnb(estimate(false) || 0) +
-                " against if wrong."}
+                " on the other side if " +
+                call.name +
+                " is wrong."}
           </p>
         </div>
       )}
@@ -514,15 +527,17 @@ function CallCard({
       <div className="arena-links">
         {call.open_tx && (
           <a href={scan("tx", call.open_tx)} target="_blank" rel="noreferrer">
-            opened <ArrowUpRight size={12} />
+            Opening tx <ArrowUpRight size={12} />
           </a>
         )}
         {call.settle_tx && (
           <a href={scan("tx", call.settle_tx)} target="_blank" rel="noreferrer">
-            settled <ArrowUpRight size={12} />
+            Settlement tx <ArrowUpRight size={12} />
           </a>
         )}
-        <span>ledger call #{call.chain_id}</span>
+        <span>
+          Ledger call <code>#{call.chain_id}</code>
+        </span>
       </div>
     </article>
   );
@@ -589,7 +604,13 @@ function Stakes({
   if (!stakes.length)
     return (
       <p className="arena-fine">
-        no stakes from {address ? short(address) : "this wallet"} yet.
+        {address ? (
+          <>
+            No stakes from <code>{short(address)}</code> yet.
+          </>
+        ) : (
+          "No stakes from this wallet yet."
+        )}
       </p>
     );
   const seen = new Set<number>();
@@ -615,8 +636,12 @@ function Stakes({
                 {s.state === "open"
                   ? now < s.expiry
                     ? "expires in " + span(s.expiry - now)
-                    : "awaiting settlement"
-                  : s.state}
+                    : "waiting to settle"
+                  : s.state === "right"
+                    ? "call was right"
+                    : s.state === "wrong"
+                      ? "call was wrong"
+                      : s.state}
               </span>
             </div>
             {s.claim ? (
@@ -625,7 +650,7 @@ function Stakes({
                 target="_blank"
                 rel="noreferrer"
               >
-                claimed {bnb(weiBnb(s.claim.payout))} <ArrowUpRight size={12} />
+                Claimed {bnb(weiBnb(s.claim.payout))} <ArrowUpRight size={12} />
               </a>
             ) : claimable && board.arena ? (
               <button
@@ -649,17 +674,17 @@ function Stakes({
                         () => undefined,
                       );
                       await onDone();
-                      return "claimed " + bnb(weiBnb(q.payout)) + " BNB.";
+                      return "Claimed " + bnb(weiBnb(q.payout)) + " BNB.";
                     },
                   )
                 }
               >
-                claim {bnb(weiBnb(q.payout))} BNB
+                Claim {bnb(weiBnb(q.payout))} BNB
               </button>
             ) : first && q?.claimed ? (
-              <span className="arena-fine">claimed</span>
+              <span className="arena-fine">Claimed</span>
             ) : first && q?.ready && q.payout === 0n ? (
-              <span className="arena-fine">lost</span>
+              <span className="arena-fine">Lost</span>
             ) : null}
           </li>
         );
@@ -754,15 +779,15 @@ export function Arena({
       <div className="arena-head" data-reveal>
         <div>
           <p>
-            back a side of a resident's price call with BNB. MurmurLedger
-            settles each call from Chainlink at expiry, and backing closes
-            halfway through the call window.
+            Put BNB behind either side of a resident's price call.
+            MurmurLedger settles every call from the Chainlink price at
+            expiry. Backing closes halfway through the call window.
           </p>
         </div>
         {board && (
           <dl className="arena-facts">
             <div>
-              <dt>contract</dt>
+              <dt>Contract</dt>
               <dd>
                 {board.arena ? (
                   <a
@@ -773,60 +798,65 @@ export function Arena({
                     {short(board.arena)} <ArrowUpRight size={12} />
                   </a>
                 ) : (
-                  "not deployed"
+                  "Not deployed"
                 )}
               </dd>
             </div>
             <div>
-              <dt>volume</dt>
-              <dd>{bnb(board.volume_bnb)} BNB</dd>
-            </div>
-            <div>
-              <dt>fee</dt>
-              <dd>{board.fee_pct}% of winnings</dd>
-            </div>
-            <div>
-              <dt>stake</dt>
+              <dt>Volume</dt>
               <dd>
-                {board.min_stake} to {board.max_stake} BNB
+                <code>{bnb(board.volume_bnb)}</code> BNB
+              </dd>
+            </div>
+            <div>
+              <dt>Fee</dt>
+              <dd>
+                <code>{board.fee_pct}%</code> of winnings
+              </dd>
+            </div>
+            <div>
+              <dt>Stake</dt>
+              <dd>
+                <code>{board.min_stake}</code> to <code>{board.max_stake}</code>{" "}
+                BNB
               </dd>
             </div>
           </dl>
         )}
       </div>
       <p className="arena-legal">
-        stakes are real BNB. only take part where this is legal for you.
+        Stakes are real BNB. Only take part where that is legal for you.
       </p>
       {error && (
-        <p className="arena-tx error">arena data unavailable: {error}</p>
+        <p className="arena-tx error">The calls did not load: {error}</p>
       )}
       {board && (
         <div className="arena-layout">
           <div className="arena-main">
             <div className="arena-group">
-              <h3>open for backing</h3>
+              <h3>Open for backing</h3>
               {open.length ? (
                 open.map(card)
               ) : (
                 <p className="calls-empty" data-reveal>
-                  no open calls right now. residents open one at least every 12
+                  No calls are open. Every resident opens one at least every 12
                   hours.
                 </p>
               )}
             </div>
             {waiting.length > 0 && (
               <div className="arena-group">
-                <h3>backing closed, awaiting settlement</h3>
+                <h3>Backing closed, waiting to settle</h3>
                 {waiting.map(card)}
               </div>
             )}
             {settled.length > 0 && (
               <div className="arena-group">
-                <h3>settled</h3>
+                <h3>Settled</h3>
                 {shown.map(card)}
                 {settled.length > shown.length && (
                   <button className="text-button" onClick={() => setMore(true)}>
-                    show {settled.length - shown.length} older calls
+                    Show {settled.length - shown.length} older calls
                   </button>
                 )}
               </div>
@@ -837,7 +867,7 @@ export function Arena({
             data-reveal
             style={{ ["--d" as string]: 2 }}
           >
-            <h3>your stakes</h3>
+            <h3>Your stakes</h3>
             {address ? (
               <Stakes
                 stakes={stakes}
@@ -849,13 +879,13 @@ export function Arena({
             ) : (
               <p className="arena-fine">
                 {authenticated
-                  ? "connect a wallet to see your stakes."
-                  : "sign in to back a side and see your stakes."}
+                  ? "Connect a wallet to see your stakes."
+                  : "Sign in to back a side. Your stakes will be listed here."}
                 {!authenticated && (
                   <>
                     {" "}
                     <button className="text-button" onClick={login}>
-                      sign in
+                      Sign in
                     </button>
                   </>
                 )}
@@ -863,23 +893,24 @@ export function Arena({
             )}
             <dl className="arena-rules">
               <div>
-                <dt>winners</dt>
+                <dt>Winners</dt>
                 <dd>
-                  split the losing side pro rata, minus {board.fee_pct}% of
-                  winnings
+                  Split the losing side pro rata, less {board.fee_pct}% of
+                  winnings.
                 </dd>
               </div>
               <div>
-                <dt>refunds</dt>
+                <dt>Refunds</dt>
                 <dd>
-                  void calls, one-sided pools, and calls still unsettled 7 days
-                  after expiry
+                  Void calls, one-sided pools and any call still unsettled 7
+                  days after expiry.
                 </dd>
               </div>
               <div>
-                <dt>claims</dt>
+                <dt>Claims</dt>
                 <dd>
-                  after settlement, from this panel or the contract directly
+                  Open after settlement, from this panel or straight from the
+                  contract.
                 </dd>
               </div>
             </dl>

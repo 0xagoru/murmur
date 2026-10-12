@@ -3,159 +3,258 @@ import { api, type Agent } from "./api";
 import type { Mood } from "./town-api";
 import { Replay, type Dest, type ReplayFrame } from "./Replay";
 import "./town-extras.css";
+import { Resident, RESIDENT_IDS, Stitches, THREAD, pattern } from "./Stitch";
+
+// The map is one old house drawn as an embroidered cutaway: attic lookout, three floors, three rooms each.
 const W = 820,
-  H = 470;
-const plots = [
-  { x: 170, y: 120 },
-  { x: 560, y: 104 },
-  { x: 706, y: 236 },
-  { x: 300, y: 300 },
-  { x: 104, y: 340 },
-  { x: 548, y: 362 },
-];
-const commons = { x: 400, y: 210 };
-const roads = [
-  "M-20 252Q210 186 352 196T840 312",
-  "M384-20Q398 120 390 214T468 500",
-  "M96 500Q200 326 352 294T690-20",
-];
-const signs = [
-  { id: "research", name: "reading room", left: true, top: true },
-  { id: "launches", name: "the workshop", left: false, top: true },
-  { id: "risk", name: "watchtower", left: false, top: false },
-];
-const pond = { x: 760, y: 392, rx: 62, ry: 42 };
+  H = 640;
+// Floor lines, where feet stand.
+const GROUND = 572,
+  FIRST = 448,
+  SECOND = 324,
+  ATTIC = 200;
+const SOIL = 588;
+const WALL_L = 90,
+  WALL_R = 730;
+const APEX: Pt = [410, 44];
+const EAVE_L: Pt = [52, 206],
+  EAVE_R: Pt = [768, 206];
+// Underside of the roof, which is also the lookout's sloped ceiling.
+const RAFTER_L: Pt = [WALL_L, ATTIC],
+  RAFTER_R: Pt = [WALL_R, ATTIC],
+  RIDGE: Pt = [410, 86];
 type Pt = [number, number];
-const sample = (d: string) => {
-  const [x0, y0, cx, cy, x1, y1, x2, y2] = d.match(/-?\d+/g)!.map(Number);
-  const q = (a: Pt, c: Pt, b: Pt) =>
-    Array.from({ length: 41 }, (_, i): Pt => {
-      const t = i / 40,
-        u = 1 - t;
-      return [
-        u * u * a[0] + 2 * u * t * c[0] + t * t * b[0],
-        u * u * a[1] + 2 * u * t * c[1] + t * t * b[1],
-      ];
-    });
-  return [
-    ...q([x0, y0], [cx, cy], [x1, y1]),
-    ...q([x1, y1], [2 * x1 - cx, 2 * y1 - cy], [x2, y2]),
-  ];
+type Thread = { b: string; o: string; h: string; a: string };
+const CELL = 3.4; // one stitch on the map, in viewBox units
+const INK = "#2b2219";
+const HOUSE_THREAD: Thread = {
+  o: "#6c5137",
+  b: "#b85c38",
+  h: "#e2b056",
+  a: "#5f8a3c",
 };
-const roadPoints = roads.flatMap(sample);
-// Where residents stand when they visit a room; the watchtower doubles as the risk room.
+const SAGE_FRAME = "#8ba16d";
+
+interface Room {
+  key: string;
+  floor: number;
+  x0: number;
+  x1: number;
+  home?: number;
+  label?: string;
+  labelX?: number;
+}
+const ceilingOf = (floor: number) =>
+  floor === GROUND ? FIRST : floor === FIRST ? SECOND : ATTIC;
+const ROOMS: Room[] = [
+  { key: "rook", floor: SECOND, x0: WALL_L, x1: 295, home: 210 },
+  { key: "flicker", floor: SECOND, x0: 295, x1: 525, home: 410, labelX: 362 },
+  { key: "echo", floor: SECOND, x0: 525, x1: WALL_R, home: 646 },
+  { key: "moss", floor: FIRST, x0: WALL_L, x1: 295, home: 200 },
+  { key: "research", floor: FIRST, x0: 295, x1: 525, label: "Reading room" },
+  { key: "vale", floor: FIRST, x0: 525, x1: WALL_R, home: 640 },
+  { key: "pip", floor: GROUND, x0: WALL_L, x1: 275, home: 182 },
+  { key: "commons", floor: GROUND, x0: 275, x1: 545, label: "Sitting room", labelX: 388 },
+  { key: "launches", floor: GROUND, x0: 545, x1: WALL_R, label: "Workshop" },
+];
+// Rooms a new neighbourhood's residents move into, in order, when their name is not a room.
+const MOVE_IN = ["rook", "flicker", "echo", "moss", "vale", "pip"];
+// Stairs between floors, bottom then top; the last one is the ladder to the lookout.
+const STAIRS: [Pt, Pt][] = [
+  [
+    [296, GROUND],
+    [398, FIRST],
+  ],
+  [
+    [420, FIRST],
+    [510, SECOND],
+  ],
+  [
+    [326, SECOND],
+    [340, ATTIC],
+  ],
+];
+// Where residents stand when they visit a shared room; the lookout doubles as the risk room.
 const spots: Record<Dest, Pt[]> = {
   research: [
-    [100, 96],
-    [76, 102],
-    [52, 96],
-    [118, 104],
-  ],
-  launches: [
-    [700, 96],
-    [724, 102],
-    [676, 102],
-    [748, 96],
-  ],
-  risk: [
-    [652, 352],
-    [676, 357],
-    [630, 346],
-    [700, 346],
+    [318, FIRST],
+    [358, FIRST],
+    [398, FIRST],
+    [476, FIRST],
   ],
   commons: [
-    [446, 224],
-    [354, 226],
-    [424, 246],
-    [376, 248],
+    [424, GROUND],
+    [470, GROUND],
+    [516, GROUND],
+    [378, GROUND],
+  ],
+  launches: [
+    [580, GROUND],
+    [622, GROUND],
+    [664, GROUND],
+    [706, GROUND],
+  ],
+  risk: [
+    [380, ATTIC],
+    [426, ATTIC],
+    [472, ATTIC],
+    [518, ATTIC],
   ],
 };
-const homeAt = (i: number): Pt => [plots[i].x + 55, plots[i].y + 41];
-// Footpaths off the roads, so nobody cuts through a cottage on the way to a room.
-const paths: Pt[] = [
-  [634, 318],
-  [636, 340],
-  [330, 62],
-  [236, 64],
-  [160, 72],
-  [676, 56],
-];
-const graph = (() => {
-  const nodes: Pt[] = [];
-  const edges: [number, number][] = [];
-  const road: number[] = [];
-  roads.forEach((d, r) => {
-    const pts = sample(d);
-    pts.forEach((p, i) => {
-      nodes.push(p);
-      road.push(r);
-      if (i) edges.push([nodes.length - 2, nodes.length - 1]);
-    });
+// Small stitched furniture, one character per stitch: o outline, b body, h light, a accent.
+const GLYPH: Record<string, string[]> = {
+  lamp: ["..hhh..", ".hhhhh.", "hhhhhhh", "...o...", "...o...", "...o...", "...o...", "...o...", "..ooo.."],
+  desklamp: [".hhh.", "hhhhh", "..o..", "..o..", ".ooo."],
+  desk: ["ooooooooooo", "o.........o", "o.........o", "o.........o", "o.........o"],
+  seeds: ["a...a...a", "b.b.b.b.b", ".b..b..b.", "ooooooooo"],
+  map: ["ooooooooo", "o..a....o", "o.aaa.h.o", "o..a..hho", "o.....h.o", "ooooooooo"],
+  magnifier: [".ooo...", "o.h.o..", "o...o..", ".ooo...", "....o..", ".....o."],
+  radio: [".....o..", "....o...", "oooooooo", "ohh.a.ao", "ohh....o", "oooooooo"],
+  shelf: ["ooooooooooo", "bha.bab.hab", "ooooooooooo", "a.hbb.ahb.b", "ooooooooooo"],
+  sofa: [".bbbbbbbbbbb.", "bbhhhhhhhhhbb", "bbbbbbbbbbbbb", "o...........o"],
+  bench: ["ooooooooooooo", "o.....hh....o", "o...........o", "o...........o"],
+  hammer: ["oooo", ".o..", ".o..", ".o.."],
+  saw: ["ooooooo", "ooooo..", "o......"],
+  frame: ["ooooo", "ohaho", "obhbo", "ooooo"],
+  clock: [".ooo.", "o.h.o", "o.hho", "o...o", ".ooo."],
+  crate: ["oooooo", "oh..ho", "o.hh.o", "oh..ho", "oooooo"],
+  chest: [".oooooo.", "ohhhhhho", "oooaoooo", "obbbbbbo", "oooooooo"],
+  telescope: ["......hh", "....hhh.", "..hhh...", "hh..o...", "...o.o..", "..o...o.", ".o.....o"],
+};
+interface Item {
+  g: string;
+  x: number;
+  up?: number;
+  lit?: boolean;
+}
+const FURNITURE: Record<string, Item[]> = {
+  rook: [
+    { g: "frame", x: 132, up: 58 },
+    { g: "desk", x: 136 },
+    { g: "magnifier", x: 132, up: 17 },
+  ],
+  flicker: [
+    { g: "clock", x: 474, up: 58 },
+    { g: "desk", x: 474 },
+    { g: "desklamp", x: 482, up: 17, lit: true },
+  ],
+  echo: [
+    { g: "frame", x: 580, up: 58 },
+    { g: "desk", x: 580 },
+    { g: "radio", x: 578, up: 17 },
+    { g: "lamp", x: 706, lit: true },
+  ],
+  moss: [
+    { g: "clock", x: 140, up: 58 },
+    { g: "seeds", x: 138 },
+    { g: "lamp", x: 264, lit: true },
+  ],
+  vale: [
+    { g: "map", x: 580, up: 52 },
+    { g: "desk", x: 696 },
+    { g: "desklamp", x: 700, up: 17, lit: true },
+  ],
+  pip: [
+    { g: "frame", x: 126, up: 58 },
+    { g: "seeds", x: 126 },
+    { g: "lamp", x: 246, lit: true },
+  ],
+  research: [{ g: "shelf", x: 352, up: 52 }],
+  commons: [
+    { g: "sofa", x: 476 },
+    { g: "lamp", x: 528, lit: true },
+  ],
+  launches: [
+    { g: "bench", x: 686 },
+    { g: "crate", x: 590 },
+    { g: "hammer", x: 600, up: 50 },
+    { g: "saw", x: 626, up: 52 },
+  ],
+};
+const WINDOWS = ROOMS.filter((r) => !r.label).map((r, i) => ({
+  x: r.x1 - 42,
+  y: ceilingOf(r.floor) + 22,
+  curtain: i % 2 === 0,
+}));
+const roomFor = (agents: Agent[]) => {
+  const taken = new Set<string>();
+  const out = new Map<string, Room>();
+  agents.forEach((a) => {
+    const own = ROOMS.find((r) => r.key === a.id && r.home !== undefined);
+    if (own && !taken.has(own.key)) {
+      taken.add(own.key);
+      out.set(a.id, own);
+    }
   });
-  const onRoad = nodes.length;
-  for (let i = 0; i < onRoad; i++)
-    for (let j = i + 1; j < onRoad; j++)
-      if (road[i] !== road[j] && dist(nodes[i], nodes[j]) < 14)
-        edges.push([i, j]);
-  const extra = [
-    ...paths,
-    ...Object.values(spots).flat(),
-    ...plots.map((_, i) => homeAt(i)),
-  ];
-  extra.forEach((p) => nodes.push(p));
-  const links = nodes.map((): number[] => []);
-  edges.forEach(([a, b]) => (links[a].push(b), links[b].push(a)));
-  for (let i = onRoad; i < nodes.length; i++) link(i);
-  function link(i: number) {
-    let best = -1;
-    for (let j = 0; j < onRoad; j++)
-      if (
-        onMap(nodes[j]) &&
-        (best < 0 || dist(nodes[i], nodes[j]) < dist(nodes[i], nodes[best]))
-      )
-        best = j;
-    const add = (j: number) => {
-      if (j === i || links[i].includes(j)) return;
-      links[i].push(j);
-      links[j].push(i);
-    };
-    add(best);
-    for (let j = onRoad; j < nodes.length; j++)
-      if (dist(nodes[i], nodes[j]) < 90) add(j);
-  }
-  return { nodes, links, onRoad };
-})();
+  agents.forEach((a) => {
+    if (out.has(a.id)) return;
+    const k = MOVE_IN.find((k) => !taken.has(k));
+    if (!k) return;
+    taken.add(k);
+    out.set(a.id, ROOMS.find((r) => r.key === k)!);
+  });
+  return out;
+};
+
 function dist(a: Pt, b: Pt) {
   return Math.hypot(a[0] - b[0], a[1] - b[1]);
 }
-function onMap(p: Pt) {
-  return p[0] > 0 && p[0] < W && p[1] > 0 && p[1] < H;
+// Walkable graph: every floor is a line, the stairs join them.
+const graph = (() => {
+  const nodes: Pt[] = [];
+  const at = (p: Pt) => {
+    const i = nodes.findIndex((n) => dist(n, p) < 0.5);
+    if (i >= 0) return i;
+    nodes.push(p);
+    return nodes.length - 1;
+  };
+  ROOMS.forEach((r) => r.home !== undefined && at([r.home, r.floor]));
+  Object.values(spots).flat().forEach(at);
+  STAIRS.flat().forEach(at);
+  const edges: [number, number][] = [];
+  [GROUND, FIRST, SECOND, ATTIC].forEach((y) => {
+    const row = nodes
+      .map((p, i) => ({ p, i }))
+      .filter((n) => n.p[1] === y)
+      .sort((l, r) => l.p[0] - r.p[0]);
+    row.forEach((n, k) => k && edges.push([row[k - 1].i, n.i]));
+  });
+  STAIRS.forEach(([a, b]) => edges.push([at(a), at(b)]));
+  return { nodes, edges };
+})();
+// Where a point sits on the walk, as the nearest edge and the spot on it.
+function attach(p: Pt) {
+  let best = { d: Infinity, a: 0, b: 0, q: p };
+  for (const [a, b] of graph.edges) {
+    const A = graph.nodes[a],
+      B = graph.nodes[b];
+    const dx = B[0] - A[0],
+      dy = B[1] - A[1];
+    const t = Math.max(
+      0,
+      Math.min(1, ((p[0] - A[0]) * dx + (p[1] - A[1]) * dy) / (dx * dx + dy * dy || 1)),
+    );
+    const q: Pt = [A[0] + dx * t, A[1] + dy * t];
+    const d = dist(p, q);
+    if (d < best.d) best = { d, a, b, q };
+  }
+  return best;
 }
-// Shortest walk between two points over roads and footpaths.
+// Shortest walk along floors and stairs.
 function route(from: Pt, to: Pt): Pt[] {
-  if (dist(from, to) < 40) return [from, to];
-  const nodes = [...graph.nodes, from, to];
-  const links = graph.links.map((l) => [...l]);
-  links.push([], []);
+  const s0 = attach(from),
+    e0 = attach(to);
+  if (s0.a === e0.a && s0.b === e0.b) return [from, s0.q, e0.q, to];
+  const nodes = [...graph.nodes, s0.q, e0.q];
   const s = nodes.length - 2,
     e = nodes.length - 1;
-  for (const i of [s, e]) {
-    let best = -1;
-    for (let j = 0; j < graph.nodes.length; j++)
-      if (
-        onMap(nodes[j]) &&
-        (best < 0 || dist(nodes[i], nodes[j]) < dist(nodes[i], nodes[best]))
-      )
-        best = j;
-    const near = graph.nodes
-      .map((_, j) => j)
-      .filter(
-        (j) =>
-          j === best || (j >= graph.onRoad && dist(nodes[i], nodes[j]) < 90),
-      );
-    near.forEach((j) => (links[i].push(j), links[j].push(i)));
-  }
-  if (dist(from, to) < 90) (links[s].push(e), links[e].push(s));
+  const links = nodes.map((): number[] => []);
+  const join = (a: number, b: number) => (links[a].push(b), links[b].push(a));
+  graph.edges.forEach(([a, b]) => join(a, b));
+  join(s, s0.a);
+  join(s, s0.b);
+  join(e, e0.a);
+  join(e, e0.b);
   const cost = nodes.map(() => Infinity),
     prev = nodes.map(() => -1),
     done = nodes.map(() => false);
@@ -174,132 +273,185 @@ function route(from: Pt, to: Pt): Pt[] {
   if (prev[e] < 0) return [from, to];
   const out: Pt[] = [];
   for (let i = e; i >= 0; i = prev[i]) out.unshift(nodes[i]);
-  return out.filter((p, i) => !i || dist(p, out[i - 1]) > 0.5);
+  return [from, ...out, to].filter((p, i, all) => !i || dist(p, all[i - 1]) > 0.5);
 }
-// Trees are placed once, deterministically, clear of roads, cottages, signs and water.
-const trees = (() => {
-  let seed = 7;
-  const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-  const out: { x: number; y: number; big: boolean; tone: number }[] = [];
-  for (let gy = 0; gy < H + 30; gy += 44)
-    for (let gx = 0; gx < W + 30; gx += 44) {
-      const x = gx + rand() * 30 - 15,
-        y = gy + rand() * 30 - 15;
-      const clear =
-        x > 10 &&
-        x < W - 10 &&
-        y > 40 &&
-        y < H - 6 &&
-        roadPoints.every(([rx, ry]) => Math.hypot(rx - x, ry - y) > 30) &&
-        plots.every(
-          (p) => x < p.x - 74 || x > p.x + 86 || y < p.y - 60 || y > p.y + 96,
-        ) &&
-        Math.hypot(x - commons.x, y - commons.y) > 80 &&
-        signs.every(
-          (s) =>
-            (s.left ? x > 190 : x < W - 190) || (s.top ? y > 90 : y < H - 70),
-        ) &&
-        ((x - pond.x) / (pond.rx + 22)) ** 2 +
-          ((y - pond.y) / (pond.ry + 30)) ** 2 >
-          1 &&
-        out.every((t) => Math.hypot(t.x - x, t.y - y) > 34);
-      if (clear && rand() > 0.42)
-        out.push({ x, y, big: rand() > 0.62, tone: Math.floor(rand() * 3) });
+// Deterministic scatter for stones, grass and flowers.
+const rng = (seed: number) => () =>
+  ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const stones = (() => {
+  const rand = rng(11);
+  const out: { x: number; y: number; w: number; h: number }[] = [];
+  const band = (x0: number, x1: number, y0: number, y1: number, rows: number) => {
+    const rh = (y1 - y0) / rows;
+    for (let r = 0; r < rows; r++) {
+      let x = x0 + (r % 2 ? -rand() * 8 : 0);
+      while (x < x1 - 4) {
+        const w = Math.min(x1 - x, 14 + rand() * 18);
+        if (w > 5)
+          out.push({ x: Math.max(x0, x) + 1, y: y0 + r * rh + 1, w: w - 2, h: rh - 2 });
+        x += w;
+      }
     }
+  };
+  band(72, WALL_L, ATTIC + 6, SOIL, 29);
+  band(WALL_R, 748, ATTIC + 6, SOIL, 29);
+  band(72, 748, GROUND + 1, SOIL, 1);
+  band(556, 588, 84, 132, 4);
   return out;
 })();
-// Trees grow outward from the commons.
-const growOrder = trees
-  .map((t, i) => ({ i, d: Math.hypot(t.x - commons.x, t.y - commons.y) }))
-  .sort((l, r) => l.d - r.d)
-  .reduce<number[]>((m, t, n) => ((m[t.i] = n), m), []);
-const tones = ["#5fa463", "#7cb86f", "#4f9459"];
-const pill = (name: string) => name.length * 7.3 + 34;
+const meadow = (() => {
+  const rand = rng(5);
+  const grass: { x: number; y: number; h: number; lean: number }[] = [];
+  const knots: { x: number; y: number; c: string }[] = [];
+  for (let x = 22; x < W - 18; x += 9 + rand() * 12) {
+    const y = SOIL + 4 + rand() * 40;
+    if (y > H - 46 && (x < 300 || x > 520)) continue;
+    grass.push({ x, y, h: 5 + rand() * 6, lean: rand() * 4 - 2 });
+  }
+  const tones = ["#cf7a52", "#e2b056", "#a585aa", "#efd08d", "#c9604a"];
+  [
+    [30, 70],
+    [752, 800],
+    [300, 520],
+  ].forEach(([a, b], n) => {
+    for (let k = 0; k < (n === 2 ? 5 : 7); k++)
+      knots.push({
+        x: a + rand() * (b - a),
+        y: n === 2 ? SOIL + 8 + rand() * 8 : SOIL - 6 - rand() * 46,
+        c: tones[Math.floor(rand() * tones.length)],
+      });
+  });
+  return { grass, knots };
+})();
 const delay = (s: number) => ({ ["--d" as string]: s.toFixed(2) + "s" });
+const BY_COLOR: Record<string, string> = {
+  sage: "moss",
+  coral: "flicker",
+  slate: "rook",
+  ochre: "pip",
+  lavender: "vale",
+  blue: "echo",
+};
+const who = (id: string, color: string) =>
+  RESIDENT_IDS.includes(id) ? id : (BY_COLOR[color] ?? "moss");
+// A resident's stitched portrait. House residents are recognised by color, so callers only pass the color.
 export function Face({
   color = "sage",
   size = 36,
+  id,
 }: {
   color?: string;
   size?: number;
+  id?: string;
 }) {
+  const who = id && RESIDENT_IDS.includes(id) ? id : (BY_COLOR[color] ?? "moss");
+  return <Resident id={who} color={color} size={size} className={"face " + color} />;
+}
+// A cross-stitch glyph drawn with an explicit thread set.
+function Cross({ rows, t }: { rows: string[]; t: Thread }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 60 60"
-      className={"face " + color}
-      aria-hidden="true"
-    >
-      <path
-        d="M10 33C10 13 19 7 30 7s21 7 21 26c0 15-9 21-21 21S10 48 10 33"
-        fill="currentColor"
-      />
-      <path
-        d="M19 8l-2-5m22 5 3-5"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      <circle cx="23" cy="29" r="2" fill="#10201a" />
-      <circle cx="38" cy="29" r="2" fill="#10201a" />
-      <path
-        d="M27 38q4 3 8 0"
-        stroke="#10201a"
-        fill="none"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <ellipse cx="17" cy="35" rx="4" ry="2" fill="#ffffff" opacity=".45" />
-    </svg>
+    <g transform={`scale(${CELL})`} strokeWidth={0.34} strokeLinecap="round">
+      {rows.flatMap((r, y) =>
+        [...r].map((ch, x) =>
+          ch === "." ? null : (
+            <path
+              key={x + "-" + y}
+              d={`M${x + 0.16} ${y + 0.16}L${x + 0.84} ${y + 0.84}M${x + 0.84} ${y + 0.16}L${x + 0.16} ${y + 0.84}`}
+              stroke={t[ch as keyof Thread] ?? INK}
+            />
+          ),
+        ),
+      )}
+    </g>
   );
 }
-// Same outline as the logo: a pitched roof in the resident's color and an arched door.
-function Cottage({ a }: { a: Agent }) {
-  const tall = a.cottage === "tall";
+function Glyph({ item, floor, t }: { item: Item; floor: number; t: Thread }) {
+  const rows = GLYPH[item.g];
+  const w = rows[0].length * CELL,
+    h = rows.length * CELL;
   return (
-    <>
-      <ellipse cx="4" cy="42" rx="58" ry="10" fill="#2f6b3a" opacity=".16" />
-      {tall && (
-        <rect x="18" y="-38" width="11" height="22" rx="1.5" fill="#10201a" />
+    <g transform={`translate(${item.x - w / 2},${floor - (item.up ?? 0) - h})`}>
+      <Cross rows={rows} t={t} />
+    </g>
+  );
+}
+// A room name in the serif; shared rooms get a small stitched arrow because they open a page.
+function Label({
+  x,
+  y,
+  scale,
+  text,
+  shared,
+  arrow = true,
+  color,
+}: {
+  x: number;
+  y: number;
+  scale: number;
+  text: string;
+  shared?: boolean;
+  arrow?: boolean;
+  color?: string;
+}) {
+  const ref = useRef<SVGTextElement>(null);
+  const [w, setW] = useState(text.length * 8);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setW(el.getComputedTextLength());
+    measure();
+    document.fonts?.ready.then(measure);
+  }, [text]);
+  return (
+    <g transform={`translate(${x},${y}) scale(${scale})`}>
+      <text
+        ref={ref}
+        className={"map-label " + (shared ? "room-label" : "room-name")}
+        style={color ? { fill: color } : undefined}
+      >
+        {text}
+      </text>
+      {shared && arrow && (
+        <path
+          d={`M${w + 5} -2.5l6.5-6.5m-4.5 0h4.5v4.5`}
+          stroke="#6c5f50"
+          strokeWidth="1.2"
+          fill="none"
+          strokeLinecap="round"
+        />
       )}
-      <path
-        d="M-38 40V-2L0-33 38-2v42z"
-        fill="#fffdf7"
-        stroke="#10201a"
-        strokeWidth="2.4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M-46 2 0-37 46 2"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M-10 40V23a10 10 0 0 1 20 0v17z" fill="currentColor" />
-      <rect
-        x="-29"
-        y="8"
-        width="11"
-        height="11"
-        rx="2"
-        fill="#cfe9f3"
-        stroke="#10201a"
-        strokeWidth="1.6"
-      />
-      <rect
-        x="18"
-        y="8"
-        width="11"
-        height="11"
-        rx="2"
-        fill="#cfe9f3"
-        stroke="#10201a"
-        strokeWidth="1.6"
-      />
-    </>
+    </g>
+  );
+}
+// A run of stitches along a path: running stitch is dashed, backstitch nearly solid.
+const RUN = { strokeDasharray: "5 4", strokeLinecap: "round" as const };
+const BACK = { strokeDasharray: "7 1.4", strokeLinecap: "round" as const };
+function Stairs({ a, b, ladder }: { a: Pt; b: Pt; ladder?: boolean }) {
+  const n = ladder ? 7 : 8;
+  const dx = b[0] - a[0],
+    dy = b[1] - a[1];
+  if (ladder)
+    return (
+      <g stroke="#7a5a3a" strokeWidth="1.6" fill="none" {...BACK}>
+        <path d={`M${a[0] - 9} ${a[1]}L${b[0] - 9} ${b[1]}M${a[0] + 9} ${a[1]}L${b[0] + 9} ${b[1]}`} />
+        {Array.from({ length: n }, (_, k) => {
+          const f = (k + 0.6) / n;
+          const x = a[0] + dx * f,
+            y = a[1] + dy * f;
+          return <path key={k} d={`M${x - 9} ${y}h18`} strokeDasharray="none" />;
+        })}
+      </g>
+    );
+  const dir = Math.sign(dx);
+  const step = Math.abs(dx) / n,
+    rise = dy / n;
+  let d = `M${a[0]} ${a[1]}`;
+  for (let k = 0; k < n; k++) d += `v${rise}h${dir * step}`;
+  return (
+    <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <path d={`M${a[0]} ${a[1]}L${b[0]} ${b[1]}`} stroke="#7a5a3a" strokeWidth="1.4" {...RUN} />
+      <path d={d} stroke="#7a5a3a" strokeWidth="1.6" {...BACK} />
+    </g>
   );
 }
 // Light follows the fear and greed index: dusk when scared, golden afternoon when greedy.
@@ -389,10 +541,12 @@ interface Goer {
   dur: number;
   moving: boolean;
   left: boolean;
+  step: number;
 }
-// Walks residents between their cottage and wherever they are needed, one frame at a time.
+// Walks residents between their room and wherever they are needed, one frame at a time.
 function useGoers(
   homes: Agent[],
+  homeOf: (id: string) => Pt,
   goals: Record<string, Pt>,
   speed: number,
   instant: boolean,
@@ -403,42 +557,36 @@ function useGoers(
   const frame = useRef(0);
   const [away, setAway] = useState<string[]>([]);
   const awayKey = useRef("");
+  const home = useRef(homeOf);
+  home.current = homeOf;
   const paint = (id: string, g: Goer) => {
     const [x, y] = g.pos;
     const fig = figs.current.get(id),
       say = says.current.get(id);
-    fig?.setAttribute(
-      "transform",
-      `translate(${x.toFixed(1)},${y.toFixed(1)})`,
-    );
+    fig?.setAttribute("transform", `translate(${x.toFixed(1)},${y.toFixed(1)})`);
     if (say) {
       // Bubbles slide to stay inside the map.
-      const [x0, y0, x1, y1] = (say.dataset.box ?? "0,0,0,0")
-        .split(",")
-        .map(Number);
+      const [x0, y0, x1, y1] = (say.dataset.box ?? "0,0,0,0").split(",").map(Number);
       const sx = Math.min(Math.max(x, 4 - x0), W - 4 - x1),
         sy = Math.min(Math.max(y, 4 - y0), H - 4 - y1);
-      say.setAttribute(
-        "transform",
-        `translate(${sx.toFixed(1)},${sy.toFixed(1)})`,
-      );
+      say.setAttribute("transform", `translate(${sx.toFixed(1)},${sy.toFixed(1)})`);
     }
     if (fig) {
       fig.toggleAttribute("data-moving", g.moving);
       fig.toggleAttribute("data-left", g.left);
+      fig.setAttribute("data-step", String(g.moving ? g.step : 0));
     }
   };
   const crew = useRef(homes);
   crew.current = homes;
   const sync = () => {
-    const homes = crew.current;
-    const out = homes
-      .filter((a, i) => {
+    const out = crew.current
+      .filter((a) => {
         const g = goers.current.get(a.id);
-        return g && (g.moving || dist(g.pos, homeAt(i)) > 1);
+        return g && (g.moving || dist(g.pos, home.current(a.id)) > 1);
       })
       .map((a) => a.id);
-    homes.forEach((a) =>
+    crew.current.forEach((a) =>
       figs.current.get(a.id)?.toggleAttribute("data-away", out.includes(a.id)),
     );
     const key = out.join();
@@ -452,16 +600,17 @@ function useGoers(
     goers.current.forEach((g, id) => {
       if (!g.moving) return;
       const e = Math.min(1, (now - g.t0) / g.dur);
-      let d = ease(e) * g.lens[g.lens.length - 1],
-        k = 1;
+      const d = ease(e) * g.lens[g.lens.length - 1];
+      let k = 1;
       while (k < g.path.length - 1 && g.lens[k] < d) k++;
       const a = g.path[k - 1],
         b = g.path[k],
         seg = g.lens[k] - g.lens[k - 1] || 1,
         f = Math.min(1, Math.max(0, (d - g.lens[k - 1]) / seg));
-      const next: Pt = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
-      if (Math.abs(b[0] - a[0]) > 2) g.left = b[0] < a[0];
-      g.pos = next;
+      g.pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+      if (Math.abs(b[0] - a[0]) > 4) g.left = b[0] < a[0];
+      // One step frame per 7 units walked, so feet keep pace with the floor.
+      g.step = Math.floor(d / 7) % 2;
       if (e >= 1) {
         g.pos = g.goal;
         g.moving = false;
@@ -474,19 +623,21 @@ function useGoers(
   const key = homes.map((a) => a.id + ":" + (goals[a.id] ?? "")).join("|");
   useLayoutEffect(() => {
     const now = performance.now();
-    homes.forEach((a, i) => {
-      const goal = goals[a.id] ?? homeAt(i);
+    homes.forEach((a) => {
+      const start = homeOf(a.id);
+      const goal = goals[a.id] ?? start;
       let g = goers.current.get(a.id);
       if (!g) {
         g = {
-          pos: homeAt(i),
-          goal: homeAt(i),
+          pos: start,
+          goal: start,
           path: [],
           lens: [0],
           t0: now,
           dur: 1,
           moving: false,
           left: false,
+          step: 0,
         };
         goers.current.set(a.id, g);
       }
@@ -499,6 +650,11 @@ function useGoers(
         return paint(a.id, g);
       }
       const path = route(g.pos, goal);
+      if (path.length < 2) {
+        g.pos = goal;
+        g.moving = false;
+        return paint(a.id, g);
+      }
       g.path = path;
       g.lens = path.reduce<number[]>(
         (l, p, n) => (l.push(n ? l[n - 1] + dist(path[n - 1], p) : 0), l),
@@ -532,7 +688,20 @@ function useGoers(
     say: (id: string) => ref(says, id),
   };
 }
-const sayWidth = (text: string) => text.length * 6.7 + 20;
+const sayWidth = (text: string) => text.length * 6.6 + 22;
+const press = (fn: () => void) => ({
+  role: "button",
+  tabIndex: 0,
+  onClick: fn,
+  onKeyDown: (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fn();
+    }
+  },
+});
+// The roof slope at x, for the lookout ceiling and the roof band.
+const slope = (a: Pt, b: Pt, x: number) => a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
 export function Town({
   agents,
   live = true,
@@ -550,13 +719,17 @@ export function Town({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [narrow, setNarrow] = useState(false);
   const [ready, setReady] = useState(false);
   // Labels keep a readable on-screen size when the map is drawn small.
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
-    const fit = () =>
-      setScale(Math.min(1.8, Math.max(1, 680 / (el.clientWidth || W))));
+    const fit = () => {
+      const w = el.clientWidth || W;
+      setScale(Math.min(1.9, Math.max(1, 680 / w)));
+      setNarrow(w < 480);
+    };
     fit();
     const observer = new ResizeObserver(fit);
     observer.observe(el);
@@ -584,7 +757,13 @@ export function Town({
       clearInterval(clock);
     };
   }, []);
-  const homes = agents.slice(0, plots.length);
+  const homes = agents.slice(0, 6);
+  const rooms = roomFor(homes);
+  const occupant = new Map([...rooms].map(([id, r]) => [r.key, homes.find((a) => a.id === id)!]));
+  const homeOf = (id: string): Pt => {
+    const r = rooms.get(id);
+    return r ? [r.home!, r.floor] : [456, GROUND];
+  };
   const ids = new Set(homes.map((a) => a.id));
   // Where everyone should be: the replayed moment, or live calls about to settle.
   const dest: Record<string, Dest> = { ...(replay?.go ?? {}) };
@@ -595,9 +774,7 @@ export function Town({
       }))
     : (mood?.settling ?? []).map((c) => ({ ...c, when: ago(c.expiry, now) }));
   due.forEach((c) =>
-    [c.agent_id, c.rival_id].forEach(
-      (id) => id && ids.has(id) && (dest[id] = "risk"),
-    ),
+    [c.agent_id, c.rival_id].forEach((id) => id && ids.has(id) && (dest[id] = "risk")),
   );
   const goals: Record<string, Pt> = {};
   if (ready && live) {
@@ -607,18 +784,13 @@ export function Town({
       if (!d) return;
       const n = (filled[d] = (filled[d] ?? -1) + 1),
         [x, y] = spots[d][n % spots[d].length];
-      goals[a.id] = [
-        x + Math.floor(n / spots[d].length) * 10,
-        y + Math.floor(n / spots[d].length) * 6,
-      ];
+      goals[a.id] = [x + Math.floor(n / spots[d].length) * 14, y];
     });
   }
-  const walk = useGoers(homes, goals, replay ? 240 : 40, !!replay?.instant);
+  const walk = useGoers(homes, homeOf, goals, replay ? 240 : 40, !!replay?.instant);
   const lit = lightFor(mood?.fear_greed?.value ?? null);
   // Each excerpt stays up long enough to read, even while the replay runs fast.
-  const [talk, setTalk] = useState(
-    new Map<string, { id: number; text: string; until: number }>(),
-  );
+  const [talk, setTalk] = useState(new Map<string, { id: number; text: string; until: number }>());
   const said = useRef(new Map<string, { id: number; text: string }>());
   const says = replay?.says;
   useEffect(() => {
@@ -632,9 +804,7 @@ export function Town({
           if ((!v || v.until - t < 1200) && (next.size < 3 || v))
             next.set(s.agent_id, { id: s.id, text: s.text, until: t + 2600 });
         });
-        const same =
-          next.size === cur.size &&
-          [...next].every(([k, v]) => cur.get(k) === v);
+        const same = next.size === cur.size && [...next].every(([k, v]) => cur.get(k) === v);
         return same ? cur : next;
       });
     if (!says) return setTalk((cur) => (cur.size ? new Map() : cur));
@@ -645,534 +815,473 @@ export function Town({
   talk.forEach((t, id) => said.current.set(id, t));
   const speaker = replay ? replay.speaking : speaking;
   const fg = mood?.fear_greed;
-  const fgText = fg ? `fear & greed ${fg.value} · ${fg.label}` : "";
+  const fgText = fg ? `Fear and greed ${fg.value}, ${fg.label.toLowerCase()}` : "";
   const dueText = due.length
-    ? `${due[0].asset.toLowerCase()} call ${due[0].when}` +
-      (due.length > 1 ? ` · ${due.length - 1} more` : "")
+    ? `${due[0].asset.toUpperCase()} call ${due[0].when}` +
+      (due.length > 1 ? `, ${due.length - 1} more` : "")
     : "";
   const tagScale = Math.min(scale, 1.6);
-  const scene = [
-    ...trees.map((t, i) => ({ y: t.y + 15, tree: t, i })),
-    ...homes.map((a, i) => ({ y: plots[i].y + 50, home: a, i })),
-  ].sort((l, r) => l.y - r.y);
+  const labelScale = Math.min(scale, narrow ? 1.75 : 1.5);
+  const cross = !narrow;
+  // Residents are drawn a little larger on phones so their faces still read.
+  const big = narrow ? 1.25 : 1;
+  const vx = narrow ? 44 : 0,
+    vw = narrow ? 732 : W;
+  const threadOf = (a?: Agent): Thread =>
+    a ? (THREAD[a.color] ?? THREAD.sage) : { o: "#cdbfa8", b: "#ddd0bb", h: "#ebe2d2", a: "#cdbfa8" };
+  const roof = `M${EAVE_L[0]} ${EAVE_L[1]}L${APEX[0]} ${APEX[1]}L${EAVE_R[0]} ${EAVE_R[1]}L${RAFTER_R[0] + 18} ${ATTIC + 6}L${RIDGE[0]} ${RIDGE[1]}L${RAFTER_L[0] - 18} ${ATTIC + 6}Z`;
+  const shell = `M${EAVE_L[0]} ${EAVE_L[1]}L${APEX[0]} ${APEX[1]}L${EAVE_R[0]} ${EAVE_R[1]}L748 ${EAVE_R[1]}V${SOIL}H72V${EAVE_L[1]}Z`;
+  const attic = `M${RAFTER_L[0]} ${ATTIC}L${RIDGE[0]} ${RIDGE[1]}L${RAFTER_R[0]} ${ATTIC}Z`;
+  const chimneyBase = slope(APEX, EAVE_R, 588);
   return (
-    <div ref={box} className={"town-scene" + (ready ? " is-ready" : "")}>
+    <div ref={box} className={"town-scene house-map" + (ready ? " is-ready" : "")}>
       <svg
-        viewBox={`0 0 ${W} ${H}`}
+        viewBox={`${vx} 0 ${vw} ${H}`}
         role="img"
-        aria-label="murmur town map, six resident cottages and three rooms"
+        aria-label="murmur house map: six resident rooms, the reading room, the workshop, the sitting room and the lookout"
       >
         <defs>
-          <pattern
-            id="grain"
-            width="9"
-            height="9"
-            patternUnits="userSpaceOnUse"
-          >
-            <circle cx="2" cy="2" r=".55" fill="#2f6b3a" opacity=".10" />
+          <pattern id="h-weave" width="4" height="4" patternUnits="userSpaceOnUse">
+            <path d="M0 1.2h4" stroke="#6c5f50" strokeWidth=".7" opacity=".09" />
+            <path d="M2.8 0v4" stroke="#6c5f50" strokeWidth=".6" opacity=".07" />
           </pattern>
-          <pattern
-            id="roof"
-            width="12"
-            height="8"
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d="M0 7h12M6 0v7"
-              stroke="#10201a"
-              strokeWidth=".8"
-              opacity=".2"
-            />
+          <pattern id="h-slub" width="53" height="31" patternUnits="userSpaceOnUse">
+            <path d="M4 7h9M31 19h12M18 27h6M44 3h5" stroke="#6c5f50" strokeWidth=".9" opacity=".08" strokeLinecap="round" />
+            <path d="M12 14v7M38 25v5" stroke="#fbf7ef" strokeWidth="1" opacity=".5" strokeLinecap="round" />
           </pattern>
-          {roads.map((d, i) => (
-            <path key={i} id={"road-" + i} d={d} />
-          ))}
-          <radialGradient id="light-sun" cx="88%" cy="-8%" r="95%">
-            <stop offset="0" stopColor="#ffe3a3" />
-            <stop offset=".55" stopColor="#ffc56a" stopOpacity=".35" />
-            <stop offset="1" stopColor="#ffb04a" stopOpacity="0" />
+          <pattern id="h-tiles" width="12" height="10" patternUnits="userSpaceOnUse">
+            <g strokeWidth="1.15" strokeLinecap="round">
+              <path d="M1.2 1.2l3.6 3.6M4.8 1.2l-3.6 3.6" stroke="#b85c38" />
+              <path d="M7.2 1.2l3.6 3.6M10.8 1.2l-3.6 3.6" stroke="#c46a43" />
+              <path d="M4.2 6.2l3.6 3.6M7.8 6.2l-3.6 3.6" stroke="#a4502f" />
+              <path d="M10.2 6.2l3.6 3.6M13.8 6.2l-3.6 3.6M-1.8 6.2l3.6 3.6M1.8 6.2l-3.6 3.6" stroke="#b85c38" />
+            </g>
+          </pattern>
+          <radialGradient id="h-lamp">
+            <stop offset="0" stopColor="#e2b056" stopOpacity=".55" />
+            <stop offset="1" stopColor="#e2b056" stopOpacity="0" />
           </radialGradient>
-          <radialGradient id="light-dusk" cx="50%" cy="45%" r="75%">
-            <stop offset=".45" stopColor="#1b2740" stopOpacity="0" />
-            <stop offset="1" stopColor="#1b2740" stopOpacity=".55" />
+          <radialGradient id="h-sun" cx="86%" cy="6%" r="80%">
+            <stop offset="0" stopColor="#f3cf86" stopOpacity=".9" />
+            <stop offset=".6" stopColor="#e2b056" stopOpacity=".25" />
+            <stop offset="1" stopColor="#e2b056" stopOpacity="0" />
           </radialGradient>
-          <radialGradient id="light-lamp">
-            <stop offset="0" stopColor="#ffd56b" stopOpacity=".7" />
-            <stop offset="1" stopColor="#ffd56b" stopOpacity="0" />
-          </radialGradient>
+          <linearGradient id="h-dusk" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#2e3a57" stopOpacity=".85" />
+            <stop offset="1" stopColor="#4a5a7a" stopOpacity=".2" />
+          </linearGradient>
+          <clipPath id="h-outside">
+            <path d={`M0 0H${W}V${H}H0Z${shell}`} clipRule="evenodd" />
+          </clipPath>
         </defs>
-        <rect width={W} height={H} fill="#e2efd3" />
-        <rect width={W} height={H} fill="url(#grain)" />
-        <g className="roads">
-          {roads.map((d, i) => (
-            <path
-              key={"edge" + i}
-              d={d}
-              pathLength={1}
-              stroke="#c9dbb8"
-              strokeWidth="34"
-              fill="none"
-              style={delay(i * 0.16)}
-            />
-          ))}
-          {roads.map((d, i) => (
-            <path
-              key={"lane" + i}
-              d={d}
-              pathLength={1}
-              stroke="#fbf9f3"
-              strokeWidth="26"
-              fill="none"
-              style={delay(i * 0.16)}
-            />
-          ))}
-        </g>
-        <g className="pop" style={delay(0.5)}>
-          <ellipse
-            cx={pond.x}
-            cy={pond.y}
-            rx={pond.rx}
-            ry={pond.ry}
-            fill="#a9daea"
-            stroke="#7fc0d6"
-          />
-          <path
-            className="ripples"
-            d="M726 380q18-6 34 0m-22 22q20-6 36 0"
-            stroke="#6fb3cb"
-            fill="none"
-          />
-        </g>
-        <g transform={`translate(${commons.x},${commons.y})`}>
-          <g className="pop" style={delay(0.45)}>
-            <ellipse cy="12" rx="44" ry="21" fill="#c9dbb8" />
-            <ellipse
-              rx="36"
-              ry="20"
-              fill="#fbf9f3"
-              stroke="#10201a"
-              strokeWidth="1.6"
-            />
-            <ellipse
-              cy="-6"
-              rx="21"
-              ry="11"
-              fill="#a9daea"
-              stroke="#10201a"
-              strokeWidth="1.4"
-            />
-            <path
-              d="M0-8v-30m-8 9q8-8 16 0"
-              stroke="#10201a"
-              fill="none"
-              strokeWidth="2.4"
-            />
-            <circle className="drop" cx="-8" cy="-29" r="1.6" fill="#5fb3d0" />
-            <circle
-              className="drop late"
-              cx="8"
-              cy="-29"
-              r="1.6"
-              fill="#5fb3d0"
-            />
+        {/* Linen, sky and the stitched frame. */}
+        <rect x="0" width={W} height={H} style={{ fill: "var(--linen)" }} />
+        <rect width={W} height={SOIL} fill="#d9e0d8" opacity=".38" />
+        <rect width={W} height={H} fill="url(#h-weave)" />
+        <rect width={W} height={H} fill="url(#h-slub)" />
+        <rect width={W} height={SOIL} fill="url(#h-dusk)" style={{ opacity: lit.dusk + lit.cool * 0.5 }} className="h-fade" />
+        <rect width={W} height={SOIL} fill="url(#h-sun)" style={{ opacity: lit.sun }} className="h-fade" />
+        <g className="h-in" style={delay(0.1)}>
+          {lit.dusk > 0.05 ? (
+            <g className="h-stars" style={{ opacity: Math.min(1, lit.dusk * 2) }}>
+              {[
+                [96, 58],
+                [168, 112],
+                [640, 40],
+                [716, 96],
+                [250, 34],
+                [778, 150],
+                [40, 150],
+              ].map(([x, y], n) => (
+                <circle key={n} cx={x} cy={y} r="1.6" fill="#efd08d" style={{ ["--n" as string]: n * 0.7 + "s" }} />
+              ))}
+              <path d="M128 62a16 16 0 1 0 16 22a12 12 0 1 1-16-22z" fill="none" stroke="#efd08d" strokeWidth="1.4" {...RUN} />
+            </g>
+          ) : (
+            <g className="h-sunmark" style={{ opacity: 0.45 + lit.sun * 0.8 }}>
+              <circle cx="716" cy="72" r="20" fill="none" stroke="#dcab4a" strokeWidth="1.6" {...RUN} />
+              <circle cx="716" cy="72" r="2" fill="#dcab4a" />
+              {Array.from({ length: 10 }, (_, k) => {
+                const t = (k / 10) * Math.PI * 2;
+                return (
+                  <path
+                    key={k}
+                    d={`M${716 + Math.cos(t) * 26} ${72 + Math.sin(t) * 26}L${716 + Math.cos(t) * 33} ${72 + Math.sin(t) * 33}`}
+                    stroke="#dcab4a"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+            </g>
+          )}
+          <g className="h-cloud">
+            <path d="M70 120q4-14 18-10q6-12 20-6q12-4 16 8q12 2 8 10z" fill="none" stroke="#a9b8c7" strokeWidth="1.4" {...RUN} />
           </g>
         </g>
-        {scene.map((s) => {
-          if ("tree" in s) {
-            const { tree: t, i } = s;
+        <rect
+          x="10"
+          y="10"
+          width={W - 20}
+          height={H - 20}
+          rx="20"
+          fill="none"
+          stroke="#cdbfa8"
+          strokeWidth="1.6"
+          {...RUN}
+          className="h-frame"
+        />
+        {/* Ground, grass stitches and french knots. */}
+        <g className="h-in" style={delay(0)}>
+          <path d={`M22 ${SOIL}H${W - 22}`} stroke="#4c5e34" strokeWidth="1.8" {...BACK} />
+          {meadow.grass.map((g, n) => (
+            <path
+              key={n}
+              d={`M${g.x - 2} ${g.y}l${g.lean - 1} -${g.h}M${g.x + 2} ${g.y}l${g.lean + 1.5} -${g.h * 0.8}`}
+              stroke={n % 3 ? "#8ba16d" : "#5f8a3c"}
+              strokeWidth="1.3"
+              strokeLinecap="round"
+            />
+          ))}
+          {[22, 34, 46, 58, 772, 784, 796].map((x, n) => (
+            <path
+              key={"tall" + n}
+              d={`M${x} ${SOIL}q${n % 2 ? 3 : -3} -${16 + (n % 3) * 9} ${n % 2 ? 1 : -1} -${30 + (n % 3) * 12}`}
+              stroke="#8ba16d"
+              strokeWidth="1.3"
+              fill="none"
+              {...RUN}
+              className="h-stem"
+              style={{ ["--n" as string]: -n * 0.8 + "s" }}
+            />
+          ))}
+          {meadow.knots.map((k, n) => (
+            <circle key={n} cx={k.x} cy={k.y} r="2.4" fill={k.c} />
+          ))}
+        </g>
+        {/* The house shell: stone walls, plaster rooms, floors, roof and chimney. */}
+        <g className="h-in" style={delay(0.2)}>
+          <rect x={WALL_L} y={ATTIC} width={WALL_R - WALL_L} height={GROUND - ATTIC} style={{ fill: "var(--card)" }} opacity=".82" />
+          <path d={attic} style={{ fill: "var(--card)" }} opacity=".82" />
+          {stones.map((s, n) => (
+            <rect
+              key={n}
+              x={s.x}
+              y={s.y}
+              width={s.w}
+              height={s.h}
+              rx="3"
+              fill={n % 4 ? "#e3d8c4" : "#d8cab2"}
+              stroke="#8f7c63"
+              strokeWidth="1"
+              strokeDasharray="4 1.2"
+            />
+          ))}
+          <path
+            d={`M72 ${SOIL}V${ATTIC + 6}M748 ${SOIL}V${ATTIC + 6}M${WALL_L} ${GROUND}V${ATTIC}M${WALL_R} ${GROUND}V${ATTIC}`}
+            stroke="#6c5137"
+            strokeWidth="1.6"
+            {...BACK}
+          />
+          {[FIRST, SECOND, ATTIC].map((y) => (
+            <path key={y} d={`M${WALL_L} ${y}H${WALL_R}`} stroke="#6c5137" strokeWidth={y === ATTIC ? 2.2 : 1.8} />
+          ))}
+          <path d={`M${WALL_L} ${GROUND}H${WALL_R}`} stroke="#6c5137" strokeWidth="1.8" />
+        </g>
+        <g className="h-in" style={delay(0.35)}>
+          <path d={`M556 ${slope(APEX, EAVE_R, 556) + 2}V82H588V${chimneyBase + 2}`} stroke="#6c5137" strokeWidth="1.6" fill="none" {...BACK} />
+          <path d="M552 80h40" stroke="#6c5137" strokeWidth="2" strokeLinecap="round" />
+          <g className="h-smoke" fill="none" stroke="#a9a091" strokeWidth="1.4" {...RUN}>
+            <path d="M570 70q-8-10 2-18t0-18" />
+            <path d="M578 66q8-12-2-20t2-16" style={{ animationDelay: "-2.4s" }} />
+          </g>
+          <path d={roof} fill="url(#h-tiles)" />
+          <path d={roof} fill="#b85c38" opacity=".08" />
+          <path
+            d={`M${EAVE_L[0]} ${EAVE_L[1]}L${APEX[0]} ${APEX[1]}L${EAVE_R[0]} ${EAVE_R[1]}`}
+            stroke="#8a4127"
+            strokeWidth="2"
+            fill="none"
+            strokeLinejoin="round"
+            {...BACK}
+          />
+          <path
+            d={`M${RAFTER_L[0] - 18} ${ATTIC + 6}L${RIDGE[0]} ${RIDGE[1]}L${RAFTER_R[0] + 18} ${ATTIC + 6}`}
+            stroke="#8a4127"
+            strokeWidth="1.4"
+            fill="none"
+            {...RUN}
+          />
+          <path d={`M${EAVE_L[0]} ${EAVE_L[1]}L${RAFTER_L[0] - 18} ${ATTIC + 6}M${EAVE_R[0]} ${EAVE_R[1]}L${RAFTER_R[0] + 18} ${ATTIC + 6}`} stroke="#8a4127" strokeWidth="1.6" strokeLinecap="round" />
+        </g>
+        {/* Rooms: running stitch outlines, windows, furniture, labels. */}
+        <g className="h-in" style={delay(0.45)}>
+          {STAIRS.map(([a, b], n) => (
+            <Stairs key={n} a={a} b={b} ladder={n === 2} />
+          ))}
+        </g>
+        {ROOMS.map((r, i) => {
+          const top = ceilingOf(r.floor);
+          const a = occupant.get(r.key);
+          const t = r.label ? HOUSE_THREAD : threadOf(a);
+          const act = r.label
+            ? press(() => onRoom(r.key))
+            : a
+              ? press(() => onAgent(a))
+              : {};
+          const name = r.label ?? a?.name;
+          return (
+            <g
+              key={r.key}
+              className={"h-room" + (r.label ? " shared" : a ? " lived" : " empty")}
+              data-i={a ? homes.indexOf(a) : undefined}
+              aria-label={r.label ? "Open the " + r.label.toLowerCase() : a ? "Visit " + a.name : undefined}
+              {...act}
+            >
+              <g className="h-in" style={delay(0.55 + i * 0.06)}>
+                <rect
+                  className="h-room-glow"
+                  x={r.x0 + 4}
+                  y={top + 4}
+                  width={r.x1 - r.x0 - 8}
+                  height={r.floor - top - 6}
+                  rx="6"
+                />
+                <rect
+                  x={r.x0 + 7}
+                  y={top + 7}
+                  width={r.x1 - r.x0 - 14}
+                  height={r.floor - top - 12}
+                  rx="5"
+                  fill="none"
+                  stroke={r.label ? "#b9a88f" : t.h}
+                  strokeWidth="1.4"
+                  {...RUN}
+                />
+                {!narrow &&
+                  (FURNITURE[r.key] ?? []).map((it, n) => (
+                    <g key={n} className={"h-furniture" + (it.lit ? " lamp" : "")}>
+                      <Glyph item={it} floor={r.floor} t={t} />
+                    </g>
+                  ))}
+                {r.key === "commons" && (
+                  <ellipse cx="468" cy={r.floor - 4} rx="62" ry="6" fill="none" stroke="#e2b056" strokeWidth="1.6" {...RUN} />
+                )}
+                {a && r.home !== undefined && (
+                  <ellipse
+                    cx={r.home}
+                    cy={r.floor - 4}
+                    rx="34"
+                    ry="5"
+                    fill="none"
+                    stroke={t.h}
+                    strokeWidth="1.6"
+                    {...RUN}
+                  />
+                )}
+                {name && (
+                  <Label
+                    x={r.labelX ?? r.x0 + 17}
+                    y={top + 24}
+                    scale={labelScale}
+                    text={name}
+                    shared={!!r.label}
+                    arrow={!narrow}
+                    color={r.label ? undefined : t.o}
+                  />
+                )}
+              </g>
+            </g>
+          );
+        })}
+        {/* The lookout under the roof, with its round window. */}
+        <g className="h-room shared" {...press(() => onRoom("risk"))} aria-label="Open the lookout">
+          <g className="h-in" style={delay(0.5)}>
+            <path className="h-room-glow" d={attic} />
+            <path
+              d={`M${RAFTER_L[0] + 22} ${ATTIC - 6}L${RIDGE[0]} ${RIDGE[1] + 12}L${RAFTER_R[0] - 22} ${ATTIC - 6}Z`}
+              fill="none"
+              stroke="#b9a88f"
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+              {...RUN}
+            />
+            <circle cx="410" cy="132" r="19" fill="#d9e0d8" className="h-pane" />
+            <circle cx="410" cy="132" r="19" fill="#e2b056" style={{ opacity: lit.lamps * 0.85 }} className="h-fade" />
+            <g stroke={SAGE_FRAME} strokeWidth="1.6" fill="none" strokeLinecap="round">
+              <circle cx="410" cy="132" r="19" {...BACK} />
+              <path d="M391 132h38M410 113v38" />
+            </g>
+            {!narrow && (
+              <g className="h-furniture">
+                <Glyph item={{ g: "telescope", x: 262 }} floor={ATTIC} t={HOUSE_THREAD} />
+                <Glyph item={{ g: "chest", x: 572 }} floor={ATTIC} t={HOUSE_THREAD} />
+              </g>
+            )}
+            <Label x={446} y={ATTIC - 54} scale={labelScale} text="Lookout" shared arrow={!narrow} />
+          </g>
+        </g>
+        {/* Back-wall windows; sky by day, honey when the lamps are on. */}
+        <g className="h-in" style={delay(0.7)} pointerEvents="none">
+          {WINDOWS.map((w, n) => (
+            <g key={n} transform={`translate(${w.x},${w.y})`}>
+              <rect x="-13" y="0" width="26" height="30" rx="2" fill="#d9e0d8" className="h-pane" />
+              <rect x="-13" y="0" width="26" height="30" rx="2" fill="url(#h-dusk)" style={{ opacity: lit.dusk + lit.cool * 0.4 }} className="h-fade" />
+              <rect x="-13" y="0" width="26" height="30" rx="2" fill="#e2b056" style={{ opacity: lit.lamps * 0.9 }} className="h-fade" />
+              <g stroke={SAGE_FRAME} strokeWidth="1.5" fill="none" strokeLinecap="round">
+                <rect x="-13" y="0" width="26" height="30" rx="2" {...BACK} />
+                <path d="M0 0v30M-13 15h26" />
+                <path d="M-19 0v30M19 0v30" strokeWidth="2.4" strokeDasharray="3 2" />
+              </g>
+              {w.curtain && (
+                <path
+                  className="h-curtain"
+                  d="M-10 1q4 7 0 14t1 14"
+                  stroke="#e9ab89"
+                  strokeWidth="1.6"
+                  fill="none"
+                  {...RUN}
+                  style={{ ["--n" as string]: -n * 1.3 + "s" }}
+                />
+              )}
+            </g>
+          ))}
+        </g>
+        {/* Residents. */}
+        <g className="goers">
+          {homes.map((a, i) => {
+            const id = who(a.id, a.color);
             return (
               <g
-                key={"t" + i}
-                transform={`translate(${t.x.toFixed(1)},${t.y.toFixed(1)})`}
+                key={a.id}
+                ref={walk.fig(a.id)}
+                className="goer"
+                data-i={i}
+                aria-label={"Visit " + a.name}
+                {...press(() => onAgent(a))}
               >
-                <g
-                  className="tree"
-                  style={{
-                    ...delay(0.3 + growOrder[i] * 0.022),
-                    ["--sway" as string]: 6 + (i % 5) * 0.9 + "s",
-                    ["--phase" as string]: -(i % 7) * 0.9 + "s",
-                  }}
-                >
-                  <g className={t.big ? "sway" : undefined}>
-                    <path d="M0 15V-5" stroke="#3f6b45" strokeWidth="2" />
-                    <ellipse
-                      cy="-12"
-                      rx={t.big ? 16 : 11}
-                      ry={t.big ? 23 : 15}
-                      fill={tones[t.tone]}
-                    />
-                    <path
-                      d={
-                        t.big
-                          ? "M0 4v-30m0 14 6-7m-6 12-5-7"
-                          : "M0 2v-22m0 10 5-6m-5 10-4-6"
-                      }
-                      stroke="#ffffff"
-                      strokeOpacity=".35"
-                      strokeWidth="1"
-                      fill="none"
-                    />
+                <g className="h-in" style={delay(0.9 + i * 0.08)}>
+                  <g className="goer-lift">
+                    <g className="goer-face">
+                      <g className="goer-bob" style={{ ["--phase" as string]: -i * 0.7 + "s" }}>
+                        <ellipse cy="0" rx="13" ry="2.4" fill="#6c5137" opacity=".16" />
+                        <rect x="-22" y={-50 * big} width="44" height={52 * big} fill="transparent" />
+                        <g transform={`translate(${-6.5 * CELL * big},${-14 * CELL * big}) scale(${CELL * big})`}>
+                          <g className="step-0">
+                            <Stitches rows={pattern(id, 0)} color={a.color} cross={cross} />
+                          </g>
+                          <g className="step-1">
+                            <Stitches rows={pattern(id, 1)} color={a.color} cross={cross} />
+                          </g>
+                        </g>
+                      </g>
+                    </g>
                   </g>
                 </g>
               </g>
             );
-          }
-          const { home: a, i } = s;
-          const p = plots[i],
-            w = pill(a.name);
-          return (
-            <g
-              key={a.id}
-              transform={`translate(${p.x},${p.y})`}
-              className={"cottage " + a.color}
-              data-i={i}
-              role="button"
-              tabIndex={0}
-              aria-label={`visit ${a.name}`}
-              onClick={() => onAgent(a)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onAgent(a);
-                }
-              }}
-            >
-              <g className="pop" style={delay(0.75 + i * 0.12)}>
-                <g className="lift">
-                  <Cottage a={a} />
-                  <g
-                    transform="translate(44,41)"
-                    className={
-                      "at-home" + (walk.away.includes(a.id) ? " out" : "")
-                    }
-                  >
-                    <g
-                      className="resident"
-                      style={{ ["--phase" as string]: -i * 0.7 + "s" }}
-                    >
-                      <path d="M0 0q-3-26 11-26T23 0Z" fill="currentColor" />
-                      <g className="eyes">
-                        <circle cx="7" cy="-12" r="1.5" fill="#10201a" />
-                        <circle cx="15" cy="-12" r="1.5" fill="#10201a" />
-                      </g>
-                    </g>
-                  </g>
-                  <g transform="translate(62,-30)">
-                    <g
-                      className={
-                        "bubble" +
-                        (speaker === a.id &&
-                        !walk.away.includes(a.id) &&
-                        !talk.has(a.id)
-                          ? " on"
-                          : "")
-                      }
-                    >
-                      <path
-                        d="M-18-12h36a6 6 0 0 1 6 6v8a6 6 0 0 1-6 6H-1l-8 7v-7h-9a6 6 0 0 1-6-6v-8a6 6 0 0 1 6-6z"
-                        fill="#ffffff"
-                        stroke="#10201a"
-                      />
-                      {[-9, 0, 9].map((x, n) => (
-                        <circle
-                          key={x}
-                          cx={x}
-                          cy="-2"
-                          r="2.1"
-                          fill="#10201a"
-                          style={{ ["--n" as string]: n * 0.2 + "s" }}
-                        />
-                      ))}
-                    </g>
-                  </g>
-                </g>
-              </g>
-              <g transform={`translate(4,64) scale(${scale})`}>
-                <g className="tag" style={delay(1.15 + i * 0.12)}>
-                  <rect
-                    x={-w / 2}
-                    y="-12"
-                    width={w}
-                    height="24"
-                    rx="12"
-                    fill="#ffffff"
-                    stroke="#10201a"
-                    strokeOpacity=".18"
-                  />
-                  <text x={-w / 2 + 13} y="4" className="map-label">
-                    {a.name}
-                  </text>
-                  <circle
-                    cx={w / 2 - 12}
-                    cy="0"
-                    r="3"
-                    fill={speaker === a.id ? "#e2553a" : "#1fa45a"}
-                    className="tag-dot"
-                  />
-                </g>
-              </g>
-            </g>
-          );
-        })}
-        <g className="goers">
-          {homes.map((a) => (
-            <g key={a.id} ref={walk.fig(a.id)} className={"goer " + a.color}>
-              <g className="goer-face">
-                <g className="goer-bob">
-                  <ellipse cy="1" rx="10" ry="3" fill="#2f6b3a" opacity=".18" />
-                  <path d="M-11 0q-3-26 11-26T12 0Z" fill="currentColor" />
-                  <circle cx="-4" cy="-12" r="1.5" fill="#10201a" />
-                  <circle cx="4" cy="-12" r="1.5" fill="#10201a" />
-                </g>
-              </g>
-            </g>
-          ))}
+          })}
         </g>
+        {/* Mood light over the whole cloth. */}
         <g className="light" pointerEvents="none">
-          <rect
-            width={W}
-            height={H}
-            fill="#5f7aa6"
-            className="light-multiply"
-            style={{ opacity: lit.cool }}
-          />
-          <rect
-            width={W}
-            height={H}
-            fill="#a3a9ad"
-            className="light-multiply"
-            style={{ opacity: lit.grey }}
-          />
-          <rect
-            width={W}
-            height={H}
-            fill="url(#light-dusk)"
-            style={{ opacity: lit.dusk }}
-          />
-          <rect
-            width={W}
-            height={H}
-            fill="#ffcf7a"
-            className="light-multiply"
-            style={{ opacity: lit.warm }}
-          />
-          <rect
-            width={W}
-            height={H}
-            fill="#ff8f3a"
-            className="light-soft"
-            style={{ opacity: lit.hot }}
-          />
-          <rect
-            width={W}
-            height={H}
-            fill="url(#light-sun)"
-            className="light-screen"
-            style={{ opacity: lit.sun }}
-          />
-          {homes.map((a, i) => (
-            <g
-              key={a.id}
-              transform={`translate(${plots[i].x},${plots[i].y})`}
-              className="lamps"
-              data-i={i}
-              style={{ opacity: ready ? lit.lamps : 0 }}
-            >
-              <g className="lamp-lift">
-                {[-23.5, 23.5].map((x) => (
-                  <g key={x}>
-                    <circle cx={x} cy="13.5" r="16" fill="url(#light-lamp)" />
-                    <rect
-                      x={x - 5.5}
-                      y="8"
-                      width="11"
-                      height="11"
-                      rx="2"
-                      fill="#ffd86e"
-                      stroke="#10201a"
-                      strokeWidth="1.6"
-                    />
-                  </g>
-                ))}
-              </g>
-            </g>
-          ))}
-        </g>
-        <g
-          transform={`translate(${commons.x},${commons.y + 44}) scale(${scale})`}
-        >
-          <g className="tag" style={delay(1)}>
-            <text textAnchor="middle" y="4" className="map-label soft">
-              the commons
-            </text>
+          <g clipPath="url(#h-outside)">
+            <rect width={W} height={H} fill="#5f7aa6" className="light-multiply" style={{ opacity: lit.cool * 0.6 }} />
+            <rect width={W} height={H} fill="#a3a9ad" className="light-multiply" style={{ opacity: lit.grey * 0.6 }} />
           </g>
+          <rect width={W} height={H} fill="#5f7aa6" className="light-multiply" style={{ opacity: lit.cool * 0.22 }} />
+          <path d={shell} fill="#e9b25c" className="light-multiply" style={{ opacity: lit.lamps * 0.16 }} />
+          <rect width={W} height={H} fill="#ffcf7a" className="light-multiply" style={{ opacity: lit.warm * 0.8 }} />
+          <rect width={W} height={H} fill="#e8893a" className="light-soft" style={{ opacity: lit.hot }} />
+          {ROOMS.flatMap((r) =>
+            (FURNITURE[r.key] ?? [])
+              .filter((it) => it.lit)
+              .map((it, n) => (
+                <circle
+                  key={r.key + n}
+                  className="h-lampglow"
+                  cx={it.x}
+                  cy={r.floor - (it.up ?? 0) - GLYPH[it.g].length * CELL + 4}
+                  r="46"
+                  fill="url(#h-lamp)"
+                  style={{
+                    opacity: ready ? 0.18 + lit.lamps * 0.82 : 0,
+                    ["--n" as string]: -(r.floor + it.x) * 0.013 + "s",
+                  }}
+                />
+              )),
+          )}
         </g>
-        {signs.map((r, n) => {
-          const w = pill(r.name) + 6;
-          return (
-            <g
-              key={r.id}
-              transform={`translate(${r.left ? 14 : W - 14},${r.top ? 14 : H - 14}) scale(${scale})`}
-              role="button"
-              tabIndex={0}
-              aria-label={"open the " + r.name}
-              className="map-sign"
-              onClick={() => onRoom(r.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onRoom(r.id);
-                }
-              }}
-            >
-              <g className="tag" style={delay(1.5 + n * 0.1)}>
-                <rect
-                  x={r.left ? 0 : -w}
-                  y={r.top ? 0 : -27}
-                  width={w}
-                  height="27"
-                  rx="3"
-                  fill="#ffffff"
-                  stroke="#10201a"
-                  strokeOpacity=".25"
-                />
-                <text
-                  x={r.left ? 11 : -w + 11}
-                  y={r.top ? 18 : -9}
-                  className="map-label"
-                >
-                  {r.name}
-                </text>
-                <path
-                  d={`M${r.left ? w - 19 : -19} ${r.top ? 17 : -10}l6-6m-4 0h4v4`}
-                  stroke="#10201a"
-                  strokeWidth="1.2"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              </g>
-            </g>
-          );
-        })}
         {fgText && (
-          <g
-            transform={`translate(14,${H - 12 - 22 * tagScale}) scale(${tagScale})`}
-            className="map-note"
-          >
-            <g className="tag" style={delay(1.7)}>
-              <rect
-                width={sayWidth(fgText)}
-                height="22"
-                rx="11"
-                fill="#ffffff"
-                fillOpacity=".86"
-              />
-              <text
-                x={sayWidth(fgText) / 2}
-                y="15"
-                textAnchor="middle"
-                className="map-label small"
-              >
+          <g transform={`translate(${vx + 22},${H - 18 - 22 * tagScale}) scale(${tagScale})`} className="map-note">
+            <g className="h-in" style={delay(1.3)}>
+              <rect width={sayWidth(fgText)} height="22" rx="11" style={{ fill: "var(--card)" }} stroke="#cdbfa8" />
+              <text x={sayWidth(fgText) / 2} y="15" textAnchor="middle" className="map-label small note">
                 {fgText}
               </text>
             </g>
           </g>
         )}
         <g
-          transform={`translate(${W - 14},${H - 20 - 27 * scale}) scale(${tagScale})`}
+          transform={`translate(${vx + vw - 22},${H - 18}) scale(${tagScale})`}
           className={"map-note due" + (dueText && ready ? " on" : "")}
         >
-          <rect
-            x={-sayWidth(dueText)}
-            y="-22"
-            width={sayWidth(dueText)}
-            height="22"
-            rx="11"
-            fill="#10201a"
-          />
-          <text
-            x={-sayWidth(dueText) / 2}
-            y="-7"
-            textAnchor="middle"
-            className="map-label small light"
-          >
+          <rect x={-sayWidth(dueText)} y="-22" width={sayWidth(dueText)} height="22" rx="11" style={{ fill: "var(--ink)" }} />
+          <text x={-sayWidth(dueText) / 2} y="-7" textAnchor="middle" className="map-label small note light">
             {dueText}
           </text>
         </g>
         <g className="says">
           {homes.map((a, i) => {
-            const at = walk.pos(a.id) ?? homeAt(i),
-              below = at[1] < 150,
+            const at = walk.pos(a.id) ?? homeOf(a.id),
               left = at[0] > W * 0.55,
               // Stack bubbles of residents standing close together.
               slot = homes
                 .slice(0, i)
                 .filter(
-                  (b, j) =>
+                  (b) =>
                     (talk.has(b.id) || speaker === b.id) &&
-                    dist(walk.pos(b.id) ?? homeAt(j), at) < 120,
+                    dist(walk.pos(b.id) ?? homeOf(b.id), at) < 120,
                 ).length,
               t = said.current.get(a.id),
-              dots =
-                !talk.has(a.id) && speaker === a.id && walk.away.includes(a.id),
+              dots = !talk.has(a.id) && speaker === a.id,
               w = dots ? 44 : t ? sayWidth(t.text) : 0,
-              y = below ? 10 + slot * 30 : -58 - slot * 30,
+              y = -76 - slot * 30,
               tip = left ? w - 16 : 16,
               lean = left ? 6 : -6,
-              bx = left ? 6 - w : -6,
-              box = w
-                ? [bx, y - 8, bx + w, y + 32].map((n) => n * tagScale).join()
-                : "0,0,0,0";
+              bx = left ? 10 - w : -10,
+              box = w ? [bx, y - 8, bx + w, y + 32].map((n) => n * tagScale).join() : "0,0,0,0";
             return (
               <g key={a.id} ref={walk.say(a.id)} data-box={box}>
                 <g transform={`scale(${tagScale})`}>
                   <g
                     className={"say" + (talk.has(a.id) || dots ? " on" : "")}
-                    style={{
-                      transformOrigin: `${left ? "100%" : "0"} ${below ? "0" : "100%"}`,
-                    }}
+                    style={{ transformOrigin: `${left ? "100%" : "0"} 100%` }}
                   >
                     {(t || dots) && (
-                      <g
-                        key={dots ? "dots" : t!.id}
-                        transform={`translate(${bx},${y})`}
-                      >
-                        <rect
-                          width={w}
-                          height="24"
-                          rx="8"
-                          fill="#ffffff"
-                          stroke="#10201a"
-                        />
+                      <g key={dots ? "dots" : t!.id} transform={`translate(${bx},${y})`}>
+                        <rect width={w} height="24" rx="9" style={{ fill: "var(--card)" }} stroke="#6c5f50" strokeWidth="1" />
                         <path
-                          d={
-                            below
-                              ? `M${tip} .5l${lean} -7 1 7`
-                              : `M${tip} 23.5l${lean} 7 1-7`
-                          }
-                          fill="#ffffff"
-                          stroke="#10201a"
+                          d={`M${tip} 23.5l${lean} 7 1-7`}
+                          style={{ fill: "var(--card)" }}
+                          stroke="#6c5f50"
+                          strokeWidth="1"
                           strokeLinejoin="round"
                         />
+                        <path d={`M${tip - 0.5} 23.3h7`} style={{ stroke: "var(--card)" }} strokeWidth="1.6" />
                         {dots ? (
                           [13, 22, 31].map((x, n) => (
                             <circle
                               key={x}
                               cx={x}
                               cy="12"
-                              r="2.1"
-                              fill="#10201a"
+                              r="2.2"
+                              fill={INK}
                               className="say-dot"
                               style={{ ["--n" as string]: n * 0.2 + "s" }}
                             />
                           ))
                         ) : (
-                          <text
-                            x={w / 2}
-                            y="16"
-                            textAnchor="middle"
-                            className="map-label small"
-                          >
+                          <text x={w / 2} y="16.5" textAnchor="middle" className="map-label small quote">
                             {t!.text}
                           </text>
                         )}
@@ -1185,43 +1294,11 @@ export function Town({
           })}
         </g>
       </svg>
-      {
-        <svg className="walkers" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          {homes
-            .filter(
-              (a) =>
-                !replay &&
-                !walk.away.includes(a.id) &&
-                (["researching", "thinking", "executing trade"].includes(
-                  a.status,
-                ) ||
-                  (a.activity?.kind === "launched coin" &&
-                    Date.now() - Date.parse(a.activity.created_at) < 1800000)),
-            )
-            .slice(0, 3)
-            .map((a, i) => (
-              <path
-                key={a.id}
-                className={"walker " + a.color}
-                d="M-5 0q-1-12 5-12t5 12z"
-                fill="currentColor"
-                stroke="#10201a"
-                strokeWidth=".8"
-                style={{
-                  offsetPath: `path("${roads[i]}")`,
-                  animationDuration: [68, 82, 74][i] + "s",
-                  animationDelay: [2.6, 9, 17][i] + "s",
-                  animationDirection: i === 1 ? "reverse" : "normal",
-                }}
-              />
-            ))}
-        </svg>
-      }
     </div>
   );
 }
 
-// The town plus a 24 hour replay bar; what the home page renders.
+// The house plus a 24 hour replay bar; what the home page renders.
 export function TownStage(props: {
   agents: Agent[];
   live: boolean;

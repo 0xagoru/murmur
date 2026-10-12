@@ -69,14 +69,14 @@ export function CommandSearch({
         ...result.residents.map((r) => ({
           key: "a" + r.id,
           label: r.name,
-          detail: "resident · " + r.role,
+          detail: "Resident · " + r.role,
           color: r.color,
           go: close(() => onResident(r.id)),
         })),
         ...result.tokens.map((t) => ({
           key: "t" + t.address,
           label: t.symbol || short(t.address),
-          detail: "token · " + short(t.address),
+          detail: "Token · " + short(t.address),
           go: close(() => (location.hash = "token/" + t.address)),
         })),
         ...result.notes.map((n) => ({
@@ -88,7 +88,7 @@ export function CommandSearch({
         })),
         ...result.reports.map((r) => ({
           key: "r" + r.id,
-          label: "audit #" + r.id,
+          label: "Audit #" + r.id,
           detail: short(r.token) + " · " + r.state,
           go: close(() => (location.hash = "report/" + r.id)),
         })),
@@ -101,7 +101,7 @@ export function CommandSearch({
         className="cmdk panel"
         role="dialog"
         aria-modal="true"
-        aria-label="search murmur"
+        aria-label="Search murmur"
         onClick={(e) => e.stopPropagation()}
       >
         <label className="cmdk-input">
@@ -119,8 +119,8 @@ export function CommandSearch({
                 setActive((a) => Math.max(a - 1, 0));
               } else if (e.key === "Enter" && items[active]) items[active].go();
             }}
-            placeholder="residents, tokens, notes, audits or a 0x address"
-            aria-label="search"
+            placeholder="Search residents, tokens, notes, audits or a 0x address"
+            aria-label="Search"
           />
           <kbd>esc</kbd>
         </label>
@@ -145,7 +145,7 @@ export function CommandSearch({
                 </li>
               ))
             ) : result ? (
-              <li className="cmdk-none">nothing matches “{q}”</li>
+              <li className="cmdk-none">Nothing matches “{q}”.</li>
             ) : null}
           </ul>
         )}

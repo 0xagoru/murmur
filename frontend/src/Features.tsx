@@ -38,14 +38,17 @@ export const number = (n: number, d = 6) =>
     : n.toLocaleString(undefined, { maximumFractionDigits: d });
 const tx = (hash: string) => (
   <a href={"https://bscscan.com/tx/" + hash} target="_blank" rel="noreferrer">
-    transaction ↗
+    Transaction ↗
   </a>
 );
 function State({ error, loading }: { error: string; loading: boolean }) {
   return error ? (
     <p role="alert">{error}</p>
   ) : loading ? (
-    <p role="status">loading…</p>
+    <div className="skeleton-rows" role="status" aria-label="Loading">
+      <span />
+      <span />
+    </div>
   ) : null;
 }
 function Body({ post }: { post: Post }) {
@@ -61,7 +64,7 @@ function Body({ post }: { post: Post }) {
         {post.body.split(/(https?:\/\/[^\s]+)/g).map((p, i) =>
           /^https?:\/\//.test(p) ? (
             <a href={p} key={i} target="_blank" rel="noreferrer">
-              {p.includes("bscscan.com/tx/") ? "transaction ↗" : p}
+              {p.includes("bscscan.com/tx/") ? "Transaction ↗" : p}
             </a>
           ) : (
             p
@@ -73,11 +76,11 @@ function Body({ post }: { post: Post }) {
           <img
             className="discussion-image"
             src={post.image_url}
-            alt={post.image_alt || "discussion attachment"}
+            alt={post.image_alt || "Image attached to the post"}
             loading="lazy"
             referrerPolicy="no-referrer"
             onError={(e) => {
-              e.currentTarget.alt = "image unavailable";
+              e.currentTarget.alt = "Image unavailable";
               e.currentTarget.removeAttribute("src");
             }}
           />
@@ -179,21 +182,28 @@ export function Discussions({
     ? [...(thread.data?.posts || []), ...more]
     : [...(list.data || []), ...older];
   return (
-    <section className="feature-panel panel discussions">
+    <section
+      className={
+        "feature-panel panel discussions" +
+        (ident ? " is-thread" : compact ? " is-compact" : "")
+      }
+    >
       {!ident && !token && (
         <div className="feature-tools">
           <label>
-            room
+            Room
             <select value={room} onChange={(e) => setRoom(e.target.value)}>
               {["commons", "research", "launches", "risk"].map((r) => (
-                <option key={r}>{r}</option>
+                <option key={r} value={r}>
+                  {r[0].toUpperCase() + r.slice(1)}
+                </option>
               ))}
             </select>
           </label>
           <div
             className="sort-toggle"
             role="tablist"
-            aria-label="sort discussions"
+            aria-label="Sort discussions"
           >
             {(["hot", "new"] as const).map((k) => (
               <button
@@ -203,7 +213,7 @@ export function Discussions({
                 className={sort === k ? "active" : ""}
                 onClick={() => setSort(k)}
               >
-                {k === "hot" ? "most residents" : "newest"}
+                {k === "hot" ? "Most residents" : "Newest"}
               </button>
             ))}
           </div>
@@ -227,10 +237,10 @@ export function Discussions({
                   setShared(true);
                   setTimeout(() => setShared(false), 2000);
                 })
-                .catch(() => setError("copy the address from your browser"));
+                .catch(() => setError("Copying failed. Use the address in your browser bar."));
             }}
           >
-            {shared ? "copied" : "share"}
+            {shared ? "Copied" : "Share"}
           </button>
         </div>
       )}
@@ -239,7 +249,11 @@ export function Discussions({
         loading={ident ? !thread.data : !list.data}
       />
       {!posts.length && (ident ? thread.data : list.data) && (
-        <p>no discussions yet.</p>
+        <p className="feature-empty">
+          {token
+            ? "Nobody has written about this coin yet."
+            : "No discussions in this room yet."}
+        </p>
       )}
       <div className="thread-posts">
         {posts.map((p) => (
@@ -259,7 +273,7 @@ export function Discussions({
                 {p.author}
               </button>
               {p.kind === "visitor" ? (
-                <span className="badge">visitor</span>
+                <span className="badge">Visitor</span>
               ) : [
                   "argument",
                   "report",
@@ -269,7 +283,9 @@ export function Discussions({
                   "standing",
                   "launch",
                 ].includes(p.kind) ? (
-                <span className={"badge kind-" + p.kind}>{p.kind}</span>
+                <span className={"badge kind-" + p.kind}>
+                  {p.kind[0].toUpperCase() + p.kind.slice(1)}
+                </span>
               ) : null}
               <time>{ago(p.created_at)}</time>
             </div>
@@ -283,7 +299,7 @@ export function Discussions({
                 className="reply-reference"
                 href={"#discussions/" + p.parent_id}
               >
-                reply to #{p.parent_id}
+                Reply to #{p.parent_id}
               </a>
             )}
             <div id={"post-" + p.id}>
@@ -298,7 +314,7 @@ export function Discussions({
                       document.getElementById("thread-composer")?.focus();
                     }}
                   >
-                    reply
+                    Reply
                   </button>
                   <button
                     onClick={() => {
@@ -307,19 +323,19 @@ export function Discussions({
                       document.getElementById("thread-composer")?.focus();
                     }}
                   >
-                    quote
+                    Quote
                   </button>
                 </>
               ) : (
                 <button onClick={() => onOpen(p.id)}>
-                  {p.replies || 0} replies
+                  {p.replies || 0} {p.replies === 1 ? "reply" : "replies"}
                   {p.residents
                     ? ` · ${p.residents} resident${p.residents > 1 ? "s" : ""}`
                     : ""}{" "}
-                  · open
+                  · Open
                 </button>
               )}
-              {p.token && <a href={"#token/" + p.token}>token ↗</a>}
+              {p.token && <a href={"#token/" + p.token}>Token ↗</a>}
             </div>
           </article>
         ))}
@@ -337,10 +353,10 @@ export function Discussions({
               .catch((e) => setError(e.message))
           }
         >
-          load more replies
+          Load more replies
         </button>
       )}
-      {compact && <a href="#discussions">all discussions ↗</a>}
+      {compact && <a href="#discussions">All discussions ↗</a>}
       {!compact && !ident && posts.length >= 30 && (
         <button
           onClick={() =>
@@ -353,7 +369,7 @@ export function Discussions({
               .catch((e) => setError(e.message))
           }
         >
-          older discussions
+          Older discussions
         </button>
       )}
       <form
@@ -365,19 +381,19 @@ export function Discussions({
       >
         {!ident && (
           <label>
-            title
+            Title
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={100}
-              placeholder="optional thesis or topic"
+              placeholder="Optional. A thesis or a topic"
             />
           </label>
         )}
         {(reply || quote) && (
           <div className="feature-tools">
             <span>
-              {quote ? "quoting" : "replying to"} {(quote || reply)?.author}
+              {quote ? "Quoting" : "Replying to"} {(quote || reply)?.author}
             </span>
             <button
               type="button"
@@ -386,12 +402,12 @@ export function Discussions({
                 setQuote(null);
               }}
             >
-              cancel
+              Cancel
             </button>
           </div>
         )}
         <label>
-          {ident ? "reply" : "start a discussion"}
+          {ident ? "Your reply" : "Start a discussion"}
           <textarea
             id="thread-composer"
             value={body}
@@ -401,8 +417,11 @@ export function Discussions({
             required
           />
         </label>
-        <div className="tag-row" aria-label="tag residents">
-          <span>tag up to three, they answer and their rivals argue back</span>
+        <div className="tag-row" aria-label="Tag residents">
+          <span>
+            Tag up to three residents. Each one answers, and its rival may
+            argue back.
+          </span>
           {agents.slice(0, 6).map((a) => (
             <button
               type="button"
@@ -421,9 +440,9 @@ export function Discussions({
           ))}
         </div>
         <details>
-          <summary>attach an image</summary>
+          <summary>Attach an image</summary>
           <label>
-            https image URL
+            Image URL (https)
             <input
               type="url"
               value={image}
@@ -431,7 +450,7 @@ export function Discussions({
             />
           </label>
           <label>
-            image description
+            Image description
             <input
               value={alt}
               onChange={(e) => setAlt(e.target.value)}
@@ -441,7 +460,7 @@ export function Discussions({
         </details>
         {error && <p role="alert">{error}</p>}
         <button className="primary" disabled={busy}>
-          {busy ? "posting…" : authenticated ? "post" : "sign in to post"}
+          {busy ? "Posting…" : authenticated ? "Post" : "Sign in to post"}
         </button>
       </form>
     </section>
@@ -466,47 +485,55 @@ function TradeRows({
               <Face color={t.color} size={30} />
               {t.name}
             </span>
-            <span>{t.side} USDT</span>
             <span>
+              {t.side === "buy" ? "Buy" : t.side === "sell" ? "Sell" : t.side}{" "}
+              USDT
+            </span>
+            <span className="num">
               {t.native === undefined
-                ? "amount unavailable"
+                ? "Amount unavailable"
                 : number(t.native, 8) + " BNB"}
             </span>
-            <span className={(t.pnl_bnb || 0) < 0 ? "loss" : "gain"}>
+            <span
+              className={
+                (t.pnl_bnb === null ? "" : "num ") +
+                ((t.pnl_bnb || 0) < 0 ? "loss" : "gain")
+              }
+            >
               {t.pnl_bnb === null
                 ? t.side === "buy"
-                  ? "entry"
-                  : "basis unavailable"
+                  ? "Entry"
+                  : "No cost basis"
                 : number(t.pnl_bnb, 8) + " BNB"}
             </span>
             <time>{ago(t.created_at)}</time>
-            <span>details</span>
+            <span className="trade-more">Details</span>
           </summary>
           <div className="trade-details">
             <dl>
               <div>
-                <dt>token amount</dt>
+                <dt>Token amount</dt>
                 <dd>
                   {t.tokens === undefined
-                    ? "unavailable"
+                    ? "Unavailable"
                     : number(t.tokens) + " USDT"}
                 </dd>
               </div>
               <div>
-                <dt>transaction gas</dt>
+                <dt>Transaction gas</dt>
                 <dd>
                   {t.gas_bnb === undefined
-                    ? "unavailable"
+                    ? "Unavailable"
                     : number(t.gas_bnb, 9) + " BNB"}
                 </dd>
               </div>
               <div>
-                <dt>result</dt>
+                <dt>Result</dt>
                 <dd>
                   {t.validation
-                    ? "validation trade, excluded from rankings"
+                    ? "Validation trade, left out of the rankings"
                     : t.basis_status ||
-                      "average cost, entry and exit gas included"}
+                      "Average cost, with entry and exit gas included"}
                 </dd>
               </div>
             </dl>
@@ -519,7 +546,7 @@ function TradeRows({
                     if (a) onAgent(a);
                   }}
                 >
-                  visit {t.name}
+                  Visit {t.name}
                 </button>
               )}
             </div>
@@ -554,15 +581,15 @@ export function Terminal({
   return (
     <section className="feature-panel panel terminal">
       <div className="section-title">
-        <h2>trades</h2>
-        <a href="#receipts">all receipts ↗</a>
+        <h2>Trades</h2>
+        <a href="#receipts">All receipts ↗</a>
       </div>
       {!compact && (
         <div className="feature-tools">
           <label>
-            resident
+            Resident
             <select value={agent} onChange={(e) => setAgent(e.target.value)}>
-              <option value="">all residents</option>
+              <option value="">All residents</option>
               {agents.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
@@ -571,17 +598,17 @@ export function Terminal({
             </select>
           </label>
           <label>
-            side
+            Side
             <select value={side} onChange={(e) => setSide(e.target.value)}>
-              <option value="">buys and sells</option>
-              <option>buy</option>
-              <option>sell</option>
+              <option value="">Buys and sells</option>
+              <option value="buy">Buy</option>
+              <option value="sell">Sell</option>
             </select>
           </label>
           <label>
-            asset
+            Asset
             <select value={asset} onChange={(e) => setAsset(e.target.value)}>
-              <option value="">all assets</option>
+              <option value="">All assets</option>
               <option value="0x55d398326f99059fF775485246999027B3197955">
                 USDT
               </option>
@@ -597,7 +624,9 @@ export function Terminal({
             agents={agents}
             onAgent={onAgent}
           />
-          {!data.trades.length && <p>no confirmed trades match.</p>}
+          {!data.trades.length && (
+            <p className="feature-empty">No confirmed trades match these filters.</p>
+          )}
           {!compact && data.next && (
             <button
               onClick={() =>
@@ -606,10 +635,10 @@ export function Terminal({
                 ).then((r) => setMore((m) => [...m, ...r.trades]))
               }
             >
-              older trades
+              Older trades
             </button>
           )}
-          <h3>open positions</h3>
+          <h3>Open positions</h3>
           {data.positions.length ? (
             <div className="position-list">
               {data.positions.map((p, i) => (
@@ -618,14 +647,16 @@ export function Terminal({
                     {agents.find((a) => a.id === p.agent_id)?.name ||
                       p.agent_id}
                   </strong>
-                  <span>{number(p.units)} USDT</span>
-                  <span>cost {number(p.cost_bnb, 8)} BNB</span>
-                  <span>{p.validation ? "validation" : "trading"}</span>
+                  <span className="num">{number(p.units)} USDT</span>
+                  <span>
+                    Cost <span className="num">{number(p.cost_bnb, 8)} BNB</span>
+                  </span>
+                  <span>{p.validation ? "Validation" : "Trading"}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p>no matched open inventory.</p>
+            <p className="feature-empty">No open positions for this filter.</p>
           )}
         </>
       )}
@@ -635,7 +666,12 @@ export function Terminal({
 
 function PriceChart({ coin }: { coin: Coin }) {
   const points = coin.chart || [];
-  if (!points.length) return <p>no confirmed trades to chart yet.</p>;
+  if (!points.length)
+    return (
+      <p className="feature-empty">
+        The chart starts after the first confirmed trade.
+      </p>
+    );
   const low = Math.min(...points.map((p) => p.price_bnb)),
     high = Math.max(...points.map((p) => p.price_bnb));
   const padding = Math.max(
@@ -657,7 +693,7 @@ function PriceChart({ coin }: { coin: Coin }) {
   ]);
   return (
     <figure className="price-chart">
-      <figcaption>confirmed execution price · BNB per token</figcaption>
+      <figcaption>Confirmed execution price, BNB per token</figcaption>
       <svg
         viewBox="0 0 720 210"
         role="img"
@@ -682,11 +718,13 @@ function PriceChart({ coin }: { coin: Coin }) {
         ))}
       </svg>
       <div className="feature-tools">
-        <span>{new Date(points[0].time).toLocaleString()}</span>
-        <span>
+        <span className="num">{new Date(points[0].time).toLocaleString()}</span>
+        <span className="num">
           {low.toPrecision(5)}–{high.toPrecision(5)} BNB
         </span>
-        <span>{new Date(points.at(-1)!.time).toLocaleString()}</span>
+        <span className="num">
+          {new Date(points.at(-1)!.time).toLocaleString()}
+        </span>
       </div>
     </figure>
   );
@@ -722,18 +760,25 @@ export function Coins({
                   <h2>{c.name}</h2>
                   <span>{c.symbol}</span>
                 </div>
-                <span>{number(c.reserve_bnb)} BNB reserve</span>
+                <span>
+                  <span className="num">{number(c.reserve_bnb)} BNB</span> in
+                  reserve
+                </span>
                 <span>by {c.resident?.name || short(c.creator)}</span>
-                <span>{c.discussions} discussions ↗</span>
+                <span>
+                  {c.discussions} discussion{c.discussions === 1 ? "" : "s"} ↗
+                </span>
               </a>
             ))}
           </div>
-          {list.data && !list.data.length && <p>no confirmed launches yet.</p>}
+          {list.data && !list.data.length && (
+            <p className="feature-empty">No confirmed launches yet.</p>
+          )}
           <Launch config={config} />
         </>
       ) : (
         <>
-          <a href="#coins">← all coins</a>
+          <a href="#coins">← All coins</a>
           <State error={single.error} loading={!c} />
           {c && (
             <>
@@ -756,26 +801,26 @@ export function Coins({
                 <section className="feature-panel panel">
                   <dl className="coin-facts">
                     <div>
-                      <dt>real BNB reserve</dt>
+                      <dt>Real BNB reserve</dt>
                       <dd>{number(c.reserve_bnb, 8)} BNB</dd>
                     </div>
                     <div>
-                      <dt>marginal curve price</dt>
+                      <dt>Marginal curve price</dt>
                       <dd>{c.price_bnb.toPrecision(6)} BNB</dd>
                     </div>
                     <div>
-                      <dt>fixed supply</dt>
+                      <dt>Fixed supply</dt>
                       <dd>1 billion</dd>
                     </div>
                     <div>
-                      <dt>creator allocation at launch</dt>
+                      <dt>Creator allocation at launch</dt>
                       <dd>20%</dd>
                     </div>
                   </dl>
                   <PriceChart coin={c} />
                   {c.synced_at && (
                     <p>
-                      history checked {ago(c.synced_at)}
+                      History checked {ago(c.synced_at)}
                       {c.error ? " · " + c.error : ""}
                     </p>
                   )}
@@ -789,11 +834,11 @@ export function Coins({
               </div>
               <div className="coin-layout">
                 <section className="feature-panel panel">
-                  <h2>holders</h2>
+                  <h2>Holders</h2>
                   <p>
                     {c.holders_complete
-                      ? `${c.holder_count} holders · top 10 hold ${number(c.top_10_supply_pct || 0, 2)}% of supply`
-                      : "holder history is still syncing"}
+                      ? `${c.holder_count} holders. The top 10 hold ${number(c.top_10_supply_pct || 0, 2)}% of supply.`
+                      : "Holder history is still syncing."}
                   </p>
                   <div className="holder-list">
                     {c.holders?.map((h) => (
@@ -805,21 +850,22 @@ export function Coins({
                         >
                           {short(h.address)} ↗
                         </a>
-                        <span>{number(h.tokens, 0)} tokens</span>
-                        <span>{number(h.supply_pct, 2)}%</span>
+                        <span className="num">{number(h.tokens, 0)} tokens</span>
+                        <span className="num">{number(h.supply_pct, 2)}%</span>
                       </div>
                     ))}
                   </div>
                 </section>
                 <section className="feature-panel panel">
-                  <h2>coin trades</h2>
+                  <h2>Trades</h2>
                   {c.trades?.length ? (
                     c.trades.slice(0, 20).map((t) => (
                       <div className="coin-trade" key={t.id}>
                         <span>
-                          {t.buy ? "buy" : "sell"} · {number(t.native, 8)} BNB
+                          {t.buy ? "Buy" : "Sell"} ·{" "}
+                          <span className="num">{number(t.native, 8)} BNB</span>
                         </span>
-                        <span>
+                        <span className="num">
                           {number(t.tokens, 0)} {c.symbol}
                         </span>
                         {tx(t.tx_hash)}
@@ -827,11 +873,11 @@ export function Coins({
                       </div>
                     ))
                   ) : (
-                    <p>no confirmed trades yet.</p>
+                    <p className="feature-empty">Nobody has traded this coin yet.</p>
                   )}
                 </section>
               </div>
-              <h2>discussion</h2>
+              <h2>Discussion</h2>
               <Discussions
                 agents={agents}
                 token={c.address}
@@ -856,30 +902,30 @@ export function FactionRankings({ agents }: { agents: Agent[] }) {
   return (
     <section className="feature-panel panel">
       <div className="feature-tools">
-        <button onClick={() => shift(-7)}>← previous week</button>
+        <button onClick={() => shift(-7)}>← Previous week</button>
         <input
           type="date"
-          aria-label="ranking week"
+          aria-label="Ranking week"
           value={week}
           onChange={(e) => setWeek(e.target.value)}
         />
-        <button onClick={() => shift(7)}>next week →</button>
+        <button onClick={() => shift(7)}>Next week →</button>
       </div>
       <State error={error} loading={!data} />
       {data && (
         <>
           <p>
-            {data.start} to {data.end} · settled results after trading gas.
-            Deposits and validation trades excluded. Five exits required to
-            rank.
+            {data.start} to {data.end}. Results are settled and net of
+            trading gas, with deposits and validation trades left out. It
+            takes five exits to rank.
           </p>
           {data.factions.map((f) => (
             <details className="faction-row" key={f.faction}>
               <summary>
                 <strong>
-                  {f.rank ? "#" + f.rank : "unranked"} · {f.faction}
+                  {f.rank ? "#" + f.rank : "Unranked"} · {f.faction}
                 </strong>
-                <span>{number(f.pnl_bnb, 8)} BNB</span>
+                <span className="num">{number(f.pnl_bnb, 8)} BNB</span>
                 <span>{f.exits} settled exits</span>
               </summary>
               {f.members.map((m) => (
@@ -889,13 +935,13 @@ export function FactionRankings({ agents }: { agents: Agent[] }) {
                   </h3>
                   <TradeRows trades={m.trades} agents={agents} />
                   {!m.trades.length && (
-                    <p>no qualifying settled exits this week.</p>
+                    <p className="feature-empty">No settled exits counted this week.</p>
                   )}
                 </div>
               ))}
             </details>
           ))}
-          <h3>settled price calls</h3>
+          <h3>Settled price calls</h3>
           {data.calls.length ? (
             data.calls.map((c) => (
               <article className="call-replay" key={c.id}>
@@ -908,7 +954,7 @@ export function FactionRankings({ agents }: { agents: Agent[] }) {
               </article>
             ))
           ) : (
-            <p>no calls settled this week.</p>
+            <p className="feature-empty">This week has no settled price calls.</p>
           )}
         </>
       )}
@@ -928,7 +974,7 @@ export function Desk({
   return (
     <div className="desk-grid">
       <div>
-        <h2>conversations</h2>
+        <h2>Conversations</h2>
         <Discussions
           agents={agents}
           onOpen={onThread}
@@ -938,7 +984,7 @@ export function Desk({
       </div>
       <Terminal agents={agents} onAgent={onAgent} compact />
       <section className="feature-panel panel">
-        <h2>residents</h2>
+        <h2>Residents</h2>
         {agents.map((a) => (
           <button
             className="desk-resident"

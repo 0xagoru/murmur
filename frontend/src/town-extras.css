@@ -1,68 +1,99 @@
-/* Mood lighting, residents walking to rooms, and the 24 hour replay bar. */
-.town-scene .light rect,
-.town-scene .lamps {
-  transition: opacity 1.2s var(--ease);
+/* The house map: an embroidered cutaway on linen, its residents, mood light and the 24 hour replay bar. */
+.town-panel .town-scene.house-map {
+  background: var(--linen);
 }
-.town-scene .light-multiply {
-  mix-blend-mode: multiply;
+.house-map > svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
-.town-scene .light-screen {
-  mix-blend-mode: screen;
+.house-map .map-label {
+  font-family: var(--serif);
+  font-size: 15px;
+  fill: var(--ink);
 }
-.town-scene .light-soft {
-  mix-blend-mode: soft-light;
+.house-map .room-label {
+  font-size: 15.5px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
 }
-.lamp-lift {
-  transition: transform 0.6s var(--ease);
+.house-map .room-name {
+  font-size: 14px;
+  font-style: italic;
 }
-.town-scene svg:has(.cottage[data-i="0"]:hover) .lamps[data-i="0"] .lamp-lift,
-.town-scene
-  svg:has(.cottage[data-i="0"]:focus-visible)
-  .lamps[data-i="0"]
-  .lamp-lift,
-.town-scene svg:has(.cottage[data-i="1"]:hover) .lamps[data-i="1"] .lamp-lift,
-.town-scene
-  svg:has(.cottage[data-i="1"]:focus-visible)
-  .lamps[data-i="1"]
-  .lamp-lift,
-.town-scene svg:has(.cottage[data-i="2"]:hover) .lamps[data-i="2"] .lamp-lift,
-.town-scene
-  svg:has(.cottage[data-i="2"]:focus-visible)
-  .lamps[data-i="2"]
-  .lamp-lift,
-.town-scene svg:has(.cottage[data-i="3"]:hover) .lamps[data-i="3"] .lamp-lift,
-.town-scene
-  svg:has(.cottage[data-i="3"]:focus-visible)
-  .lamps[data-i="3"]
-  .lamp-lift,
-.town-scene svg:has(.cottage[data-i="4"]:hover) .lamps[data-i="4"] .lamp-lift,
-.town-scene
-  svg:has(.cottage[data-i="4"]:focus-visible)
-  .lamps[data-i="4"]
-  .lamp-lift,
-.town-scene svg:has(.cottage[data-i="5"]:hover) .lamps[data-i="5"] .lamp-lift,
-.town-scene
-  svg:has(.cottage[data-i="5"]:focus-visible)
-  .lamps[data-i="5"]
-  .lamp-lift {
-  transform: translateY(-5px);
+.house-map .map-label.note {
+  font-family: "Geist", sans-serif;
+  font-size: 11.5px;
+  fill: var(--muted);
 }
-.at-home {
-  transition: opacity 0.5s var(--ease);
+.house-map .map-label.note.light {
+  fill: var(--card);
 }
-.at-home.out {
+.house-map .map-label.quote {
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+/* Stitches come in once the page has revealed. */
+.house-map .h-in {
   opacity: 0;
 }
+.house-map.is-ready .h-in {
+  animation: h-in 1s var(--ease) calc(var(--d) + 0.2s) both;
+}
+@keyframes h-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Rooms brighten under the pointer; a resident's own room lifts them a little. */
+.h-room.shared,
+.h-room.lived,
 .goer {
+  cursor: pointer;
+  outline: none;
+}
+.h-room-glow {
+  fill: var(--honey);
   opacity: 0;
   transition: opacity 0.5s var(--ease);
-  pointer-events: none;
 }
-.goer[data-away] {
-  opacity: 1;
+.h-room.shared:hover .h-room-glow,
+.h-room.lived:hover .h-room-glow,
+.h-room:focus-visible .h-room-glow {
+  opacity: 0.12;
 }
-.goer-face {
-  transition: transform 0.35s var(--ease);
+.h-room:focus-visible .room-label,
+.h-room:focus-visible .room-name {
+  text-decoration: underline;
+}
+.goer-lift {
+  transition: transform 0.45s var(--ease);
+}
+.goer:hover .goer-lift,
+.goer:focus-visible .goer-lift,
+.house-map svg:has(.h-room[data-i="0"]:hover) .goer[data-i="0"] .goer-lift,
+.house-map svg:has(.h-room[data-i="1"]:hover) .goer[data-i="1"] .goer-lift,
+.house-map svg:has(.h-room[data-i="2"]:hover) .goer[data-i="2"] .goer-lift,
+.house-map svg:has(.h-room[data-i="3"]:hover) .goer[data-i="3"] .goer-lift,
+.house-map svg:has(.h-room[data-i="4"]:hover) .goer[data-i="4"] .goer-lift,
+.house-map svg:has(.h-room[data-i="5"]:hover) .goer[data-i="5"] .goer-lift {
+  transform: translateY(-2px);
+}
+
+/* Walking: two step frames, a small hop, and a flip when heading left. */
+.goer .step-1,
+.goer[data-step="1"] .step-0 {
+  display: none;
+}
+.goer[data-step="1"] .step-1 {
+  display: inline;
 }
 .goer[data-left] .goer-face {
   transform: scaleX(-1);
@@ -70,23 +101,126 @@
 .goer-bob {
   transform-box: fill-box;
   transform-origin: 50% 100%;
+  animation: h-breathe 4.2s ease-in-out var(--phase) infinite;
 }
 .goer[data-moving] .goer-bob {
-  animation: goer-step 0.52s ease-in-out infinite alternate;
+  animation: h-hop 0.18s ease-in-out infinite alternate;
 }
-@keyframes goer-step {
+@keyframes h-breathe {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scale(0.985, 1.03);
+  }
+}
+@keyframes h-hop {
   from {
-    transform: translateY(0) scale(1.02, 0.98);
+    transform: none;
   }
   to {
-    transform: translateY(-2.5px) scale(0.98, 1.03);
+    transform: translateY(-1.4px);
   }
 }
-.map-label.small {
-  font-size: 11.5px;
+
+/* Ambient thread motion. */
+.h-lampglow {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  transition: opacity 1.2s var(--ease);
+  animation: h-flicker 3.6s ease-in-out var(--n) infinite;
 }
-.map-label.light {
-  fill: #fbf9f3;
+@keyframes h-flicker {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.93);
+  }
+  34% {
+    transform: scale(1.03);
+  }
+  60% {
+    transform: scale(0.97);
+  }
+}
+.h-curtain {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: h-sway 5.5s var(--ease) var(--n) infinite alternate;
+}
+@keyframes h-sway {
+  from {
+    transform: rotate(-5deg);
+  }
+  to {
+    transform: rotate(6deg) scaleX(1.2);
+  }
+}
+.h-stem {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: h-sway-stem 6s ease-in-out var(--n) infinite alternate;
+}
+@keyframes h-sway-stem {
+  from {
+    transform: rotate(-3deg);
+  }
+  to {
+    transform: rotate(3deg);
+  }
+}
+.h-smoke path {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: h-smoke 6s ease-out infinite;
+}
+@keyframes h-smoke {
+  0% {
+    opacity: 0;
+    transform: none;
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(1.15);
+  }
+}
+.h-cloud {
+  animation: h-drift 38s ease-in-out infinite alternate;
+}
+@keyframes h-drift {
+  to {
+    transform: translateX(70px);
+  }
+}
+.h-stars circle {
+  animation: h-twinkle 4.5s ease-in-out var(--n) infinite;
+}
+@keyframes h-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Mood lighting. */
+.house-map .light rect,
+.house-map .h-fade {
+  transition: opacity 1.2s var(--ease);
+}
+.house-map .light-multiply {
+  mix-blend-mode: multiply;
+}
+.house-map .light-soft {
+  mix-blend-mode: soft-light;
 }
 .map-note {
   pointer-events: none;
@@ -98,6 +232,8 @@
 .map-note.due.on {
   opacity: 1;
 }
+
+/* Speech. */
 .says {
   pointer-events: none;
 }
@@ -109,42 +245,61 @@
     opacity 0.45s var(--ease),
     transform 0.6s var(--ease);
 }
-.say-dot {
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  animation: think 1.5s ease-in-out var(--n) infinite;
-}
 .say.on {
   opacity: 1;
   transform: none;
 }
+.say-dot {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: h-think 1.5s ease-in-out var(--n) infinite;
+}
+@keyframes h-think {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: none;
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* Replay bar. */
 .replay {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 14px;
+  gap: 12px;
+  padding: 10px 14px;
   border-top: 1px solid var(--border);
+  background: var(--card);
   min-width: 0;
 }
 .replay-play {
   flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--card);
   transition:
     background 0.3s var(--ease),
     transform 0.3s var(--ease);
 }
 .replay-play:hover {
-  background: #eef1ea;
+  background: var(--ink);
   transform: translateY(-1px);
+}
+.replay-play svg {
+  fill: currentColor;
 }
 .replay-track {
   position: relative;
   flex: 1;
   min-width: 0;
+  margin: 0 8px 0 2px;
   height: 30px;
   cursor: pointer;
   touch-action: none;
@@ -155,24 +310,26 @@
   position: absolute;
   left: 0;
   top: 50%;
-  height: 2px;
-  margin-top: -1px;
-  border-radius: 2px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 999px;
   pointer-events: none;
 }
 .replay-rail {
   right: 0;
-  background: #10201a1a;
+  background: var(--linen);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 .replay-fill {
-  background: #10201a55;
+  background: var(--faint);
+  opacity: 0.55;
 }
 .replay-ticks {
   position: absolute;
   left: 0;
   width: 100%;
-  top: 4px;
-  height: 7px;
+  top: 11px;
+  height: 8px;
   pointer-events: none;
   opacity: 0;
   animation: replay-in 0.8s var(--ease) forwards;
@@ -182,75 +339,75 @@
 }
 @keyframes replay-in {
   to {
-    opacity: 0.9;
+    opacity: 0.85;
   }
 }
 .replay-thumb {
   position: absolute;
   top: 50%;
-  width: 12px;
-  height: 12px;
-  margin: -6px 0 0 -6px;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
   border-radius: 50%;
-  background: #ffffff;
-  border: 2px solid var(--ink);
+  background: var(--honey);
+  border: 1.5px solid var(--ink);
   pointer-events: none;
   transition: transform 0.3s var(--ease);
 }
 .replay-track:hover .replay-thumb,
 .replay-track:active .replay-thumb {
-  transform: scale(1.2);
-}
-.replay.is-live .replay-thumb {
-  border-color: #1fa45a;
+  transform: scale(1.15);
 }
 .replay-time {
   flex: none;
-  min-width: 66px;
-  font-size: 12px;
+  min-width: 74px;
+  font-family: var(--mono);
+  font-size: 13px;
   color: var(--muted);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 .replay-live {
   flex: none;
-  height: 26px;
-  padding: 0 10px;
-  border-radius: 13px;
-  border: 1px solid var(--border);
-  font:
-    12px "DM Mono",
-    monospace;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--linen);
+  font-size: 13px;
   gap: 2px;
   color: var(--muted);
   transition:
     background 0.3s var(--ease),
-    color 0.3s var(--ease),
-    border-color 0.3s var(--ease);
+    color 0.3s var(--ease);
+}
+.replay-live:hover {
+  background: var(--border);
 }
 .replay-live .live-dot {
-  background: #b9beb4;
+  background: var(--faint);
   box-shadow: none;
   transition: background 0.3s var(--ease);
 }
 .replay.is-live .replay-live {
   color: var(--ink);
-  border-color: #1fa45a55;
 }
 .replay.is-live .replay-live .live-dot {
-  background: #1fa45a;
-  box-shadow: 0 0 0 3px #1fa45a22;
+  background: var(--forest);
+  box-shadow: 0 0 0 3px rgba(77, 101, 52, 0.18);
 }
 @media (max-width: 420px) {
+  .h-furniture {
+    display: none;
+  }
   .replay {
-    gap: 7px;
+    gap: 8px;
     padding: 8px 10px;
   }
   .replay-time {
     min-width: 0;
-    font-size: 11px;
+    font-size: 12px;
   }
   .replay-live {
-    padding: 0 8px;
+    padding: 0 9px;
   }
 }

@@ -1,13 +1,13 @@
-/* search, note pages, predictions on notes, discussion sorting and tags */
+/* search, note cards and pages, calls, discussion sorting and tags */
 .search-trigger {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 34px;
-  padding: 0 10px;
+  padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--card);
   color: var(--muted);
   transition:
     transform 0.25s var(--ease),
@@ -15,39 +15,49 @@
 }
 .search-trigger:hover {
   transform: translateY(-1px);
-  border-color: #c9cbbf;
+  border-color: var(--faint);
+  background: var(--card);
 }
 .search-trigger kbd,
 .cmdk-input kbd {
   font:
-    12px "DM Mono",
-    monospace;
-  color: #6b776f;
+    500 11.5px "Geist",
+    sans-serif;
+  color: var(--muted);
+  background: var(--linen);
+  border-radius: 6px;
+  padding: 2px 7px;
 }
 .cmdk-backdrop {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(16, 32, 26, 0.28);
-  backdrop-filter: blur(3px);
+  background: color-mix(in srgb, var(--ink) 26%, transparent);
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding: 12vh 16px 16px;
   animation: cmdk-fade 0.22s var(--ease);
 }
-.cmdk {
+.cmdk.panel {
   width: min(620px, 100%);
   padding: 0;
   overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow:
+    var(--shadow),
+    0 24px 60px -24px color-mix(in srgb, var(--ink) 40%, transparent);
   animation: cmdk-rise 0.32s var(--ease);
 }
 .cmdk-input {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 15px 16px;
   border-bottom: 1px solid var(--border);
+  color: var(--muted);
 }
 .cmdk-input input {
   flex: 1;
@@ -57,6 +67,10 @@
   background: transparent;
   font-size: 16px;
   color: var(--ink);
+}
+.cmdk-input input::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
 }
 .cmdk-list {
   list-style: none;
@@ -77,8 +91,9 @@
   background: transparent;
   text-align: left;
 }
+.cmdk-list button:hover,
 .cmdk-list button.active {
-  background: #eef3ee;
+  background: var(--linen);
 }
 .cmdk-list strong {
   font-weight: 500;
@@ -88,15 +103,15 @@
 }
 .cmdk-list small {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 12.5px;
   white-space: nowrap;
 }
 .cmdk-dot {
-  width: 10px;
-  height: 10px;
-  margin: 0 6px;
-  border-radius: 3px;
-  background: var(--forest);
+  width: 8px;
+  height: 8px;
+  margin: 0 7px;
+  border-radius: 50%;
+  background: var(--honey);
 }
 .cmdk-none {
   padding: 14px 12px;
@@ -110,7 +125,7 @@
 @keyframes cmdk-rise {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(16px);
   }
 }
 @media (max-width: 520px) {
@@ -120,45 +135,183 @@
   }
 }
 
-.note-open {
-  all: unset;
-  cursor: pointer;
-  transition: color 0.2s var(--ease);
+/* The note card: a page from a resident's notebook. */
+.note-card.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px 16px;
+  gap: 10px;
+}
+.note-card.panel:hover {
+  border-color: var(--faint);
+  transform: translateY(-1px);
+}
+.note-card.panel > header {
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--muted);
+  min-width: 0;
+}
+.note-card .note-author {
+  font-weight: 500;
+  color: var(--ink);
+  border-radius: 999px;
+  flex: none;
+}
+.note-card .note-topic {
+  min-width: 0;
+}
+.note-card.panel time {
+  font:
+    12.5px var(--mono);
+  color: var(--muted);
+}
+.note-card.panel h3 {
+  font-family: var(--serif);
+  font-weight: 450;
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.note-card.panel.big h3 {
+  font-size: clamp(23px, 2.2vw, 28px);
+  letter-spacing: -0.018em;
+}
+.note-card.panel > p {
+  font-size: 15px;
+  line-height: 1.62;
+  color: var(--ink);
+}
+.note-card.panel.big > p:not(.note-question) {
+  font-size: 15.5px;
+  line-height: 1.65;
 }
 .note-open:hover {
   color: var(--forest);
 }
-.note-expect {
+
+/* data cells: a quiet ledger strip */
+.note-card .facts,
+.note-page .facts {
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  border: 0;
+  border-radius: 10px;
+  background: var(--linen);
+  margin: 4px 0 2px;
+  padding: 2px 0;
+}
+.note-card .facts div,
+.note-page .facts div {
+  padding: 8px 12px;
+  box-shadow: none;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+.note-card .facts div:last-child,
+.note-page .facts div:last-child {
+  border-right: 0;
+}
+.note-card .facts dt,
+.note-page .facts dt {
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note-card .facts dd,
+.note-page .facts dd {
+  font:
+    14.5px var(--mono);
+  color: var(--ink);
+  margin: 1px 0 0;
+}
+.note-page-side .facts {
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 0;
+}
+.note-page-side .facts div {
+  border-right: 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+/* the next check: a pencilled margin note */
+.note-card.panel > .note-question {
+  position: relative;
+  margin: 2px 0 0 4px;
+  padding: 2px 0 2px 16px;
+  border-left: 1.5px dashed var(--faint);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px !important;
+  line-height: 1.45;
+  color: var(--muted) !important;
+}
+.note-card.panel > .note-question > span {
+  display: block;
+  margin-bottom: 3px;
+  font:
+    500 12.5px "Geist",
+    sans-serif;
+  font-style: normal;
+  color: var(--muted);
+}
+.note-card .note-expect {
   display: inline-block;
   margin-left: 8px;
+  font:
+    500 13px "Geist",
+    sans-serif;
   font-style: normal;
-  font-size: 13px;
   color: var(--ink);
+  background: var(--linen);
+  border-radius: 999px;
+  padding: 1px 9px;
 }
 .check-chip {
   display: inline-block;
-  margin-left: 8px;
-  padding: 1px 8px;
+  margin-left: 6px;
+  padding: 1px 9px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #fff;
+  font:
+    500 12.5px "Geist",
+    sans-serif;
+  font-style: normal;
+  color: var(--card);
 }
 .check-chip.hit,
 .check-text.hit {
-  background: var(--sage);
+  background: var(--forest);
 }
 .check-chip.miss,
 .check-text.miss {
-  background: var(--coral);
+  background: var(--terracotta);
 }
 .check-text.hit,
 .check-text.miss {
-  color: #fff;
-  padding: 1px 8px;
+  color: var(--card);
+  padding: 1px 9px;
   border-radius: 999px;
 }
+.note-card.panel footer {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: auto;
+  font-size: 13.5px;
+  gap: 4px 18px;
+}
+.note-card.panel footer a {
+  color: var(--forest);
+}
+.note-card.panel footer a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
+/* note page */
 .note-page {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
@@ -167,45 +320,198 @@
 }
 .note-page-main {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  min-width: 0;
+}
+.note-page-main .note-card.panel {
+  padding: 26px 28px 20px;
 }
 .note-page-side {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 .note-page-side .panel {
   padding: 18px 20px;
+  border-radius: 14px;
+  background: var(--card);
 }
 .note-page-side h3 {
   margin: 0 0 10px;
-  font-size: 15px;
+  font-family: var(--serif);
+  font-weight: 450;
+  font-size: 19px;
 }
 .note-grade p {
   margin: 0 0 10px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.note-grade .data-pair strong {
+  text-align: right;
+}
+.note-page-side .data-pair code {
+  font-family: var(--mono);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note-aside {
+  display: block;
+  margin-top: 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.note-grade p.note-aside {
+  font-family: inherit;
+  font-style: normal;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.note-page-side .text-button {
+  margin-top: 6px;
 }
 @media (max-width: 860px) {
   .note-page {
     grid-template-columns: 1fr;
   }
 }
+@media (max-width: 520px) {
+  .note-card.panel {
+    padding: 18px 16px 14px;
+  }
+  .note-page-main .note-card.panel {
+    padding: 20px 18px 16px;
+  }
+  .note-card.panel > header {
+    flex-wrap: wrap;
+  }
+  .note-card.panel > header .note-topic {
+    order: 3;
+    flex-basis: 100%;
+    white-space: normal;
+  }
+  .note-card.panel h3 {
+    font-size: 19px;
+  }
+}
 
+/* price calls */
+.call-row {
+  border-radius: 14px;
+  background: var(--card);
+  border-color: var(--border);
+}
+.call-row:hover {
+  border-color: var(--faint);
+}
+.call-main strong {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+.call-main p {
+  color: var(--ink);
+}
+.call-counter {
+  color: var(--muted);
+}
+.call-state {
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--linen);
+  color: var(--ink);
+}
+.call-state.up,
+.call-state.right {
+  background: var(--forest);
+  color: var(--card);
+}
+.call-state.down,
+.call-state.wrong {
+  background: var(--terracotta);
+  color: var(--card);
+}
+.call-time {
+  font-size: 13px;
+}
+.calls-empty {
+  border: 1.5px dashed var(--faint);
+  border-radius: 14px;
+  background: transparent;
+}
+.record li {
+  border-bottom-color: var(--border);
+}
+.record b {
+  font-family: var(--mono);
+}
+
+/* skeletons: linen blocks with a soft shimmer */
+.skeleton-rows {
+  display: grid;
+  gap: 10px;
+  padding: 4px 0;
+}
+.skeleton-rows span {
+  display: block;
+  height: 64px;
+  border-radius: 14px;
+  background: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in srgb, var(--card) 75%, transparent) 50%,
+      transparent 70%
+    )
+    var(--linen);
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.6s var(--ease) infinite;
+}
+.skeleton-rows span:nth-child(2) {
+  width: 86%;
+}
+.skeleton-rows span:nth-child(3) {
+  width: 70%;
+}
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* discussion sorting and tags */
 .sort-toggle {
   display: inline-flex;
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 2px;
-  background: #fff;
+  padding: 3px;
+  background: var(--card);
 }
+.feature-panel .sort-toggle button,
 .sort-toggle button {
   border: 0;
   background: transparent;
-  padding: 4px 12px;
+  padding: 4px 14px;
+  min-height: 34px;
   border-radius: 999px;
   color: var(--muted);
 }
+.feature-panel .sort-toggle button:hover {
+  background: var(--linen);
+  color: var(--ink);
+}
+.feature-panel .sort-toggle button.active,
 .sort-toggle button.active {
   background: var(--ink);
-  color: #fff;
+  color: var(--card);
 }
 .tag-row {
   display: flex;
@@ -216,60 +522,69 @@
 .tag-row > span {
   width: 100%;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 13.5px;
 }
+.feature-panel .tag-row button,
 .tag-row button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px 3px 4px;
-  border: 1px solid var(--border);
+  gap: 5px;
+  min-height: 32px;
+  padding: 3px 11px 3px 5px;
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: #fff;
+  background: var(--linen);
   font-size: 13px;
   transition:
     transform 0.2s var(--ease),
-    background 0.2s var(--ease);
+    background 0.2s var(--ease),
+    border-color 0.2s var(--ease);
 }
 .tag-row button:hover {
   transform: translateY(-1px);
 }
+.feature-panel .tag-row button.active,
 .tag-row button.active {
-  background: #e6f0e8;
-  border-color: var(--sage);
+  background: var(--card);
+  border-color: var(--forest);
+  color: var(--forest);
+}
+
+/* post kinds: linen chips, coloured text */
+.post-by .badge,
+.badge[class*="kind-"] {
+  font:
+    500 12.5px "Geist",
+    sans-serif;
+  padding: 2px 9px;
+  border: 0;
+  background: var(--linen);
+  color: var(--muted);
 }
 .badge.kind-argument {
-  border-color: #f0c7bd;
-  background: #fbefec;
-  color: #a5402b;
+  color: var(--terracotta);
 }
 .badge.kind-report,
 .badge.kind-review {
-  border-color: #c6d0de;
-  background: #eef2f7;
   color: var(--slate);
 }
 .badge.kind-alert {
-  border-color: #f0c7bd;
-  background: #fde9e4;
-  color: #b23b22;
+  background: var(--terracotta);
+  color: var(--card);
 }
 .badge.kind-proposal,
 .badge.kind-launch {
-  border-color: #efd7a6;
-  background: #fbf3e2;
-  color: #8a5d08;
+  color: var(--ochre);
 }
 .badge.kind-standing {
-  border-color: #d5cbf2;
-  background: #f2eefc;
   color: var(--lavender);
 }
 .standing-note {
   margin: 0 0 12px;
   padding: 8px 12px;
-  border-left: 2px solid var(--coral);
-  background: #fdf1ee;
+  border-left: 2px solid var(--terracotta);
+  border-radius: 0 10px 10px 0;
+  background: var(--linen);
   font-size: 14px;
 }
 @media (max-width: 760px) {
@@ -286,4 +601,29 @@
   .feature-nav button {
     flex: none;
   }
+}
+.note-card.panel h3 .note-open {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.note-card.panel h3 .note-open:hover {
+  color: var(--forest);
+  background: none;
+}
+.note-page-side .facts dt {
+  white-space: normal;
+}
+.cmdk-input input:focus-visible {
+  outline: none;
+}
+.note-card.panel > p,
+.note-card.panel h3 {
+  overflow-wrap: anywhere;
+}
+.note-card .note-expect {
+  max-width: 100%;
 }

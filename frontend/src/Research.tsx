@@ -100,7 +100,7 @@ export function NoteCard({
         <button
           className="note-author"
           onClick={() => agent && onAgent?.(agent)}
-          aria-label={"open " + (note.author || agent?.name)}
+          aria-label={"Open " + (note.author || agent?.name)}
         >
           <Face color={note.color || agent?.color} size={26} />
           <span>{note.author || agent?.name}</span>
@@ -121,17 +121,17 @@ export function NoteCard({
       {big && <Facts data={note.data} />}
       {note.question && (
         <p className="note-question">
-          <span>next check</span>
+          <span>Next check</span>
           {note.question}
           {note.expect && (
             <em className="note-expect">
-              expects {note.expect}
-              {note.confidence !== null ? ` · ${note.confidence}%` : ""}
+              Expects {note.expect}
+              {note.confidence !== null ? `, ${note.confidence}% sure` : ""}
             </em>
           )}
           {(note.check_state === "hit" || note.check_state === "miss") && (
             <b className={"check-chip " + note.check_state}>
-              {note.check_state === "hit" ? "came true" : "missed"}
+              {note.check_state === "hit" ? "Came true" : "Missed"}
             </b>
           )}
         </p>
@@ -146,7 +146,7 @@ export function NoteCard({
             target="_blank"
             rel="noreferrer"
           >
-            anchored on BNB Chain <ArrowUpRight size={12} />
+            Anchored on BNB Chain <ArrowUpRight size={12} />
           </a>
         )}
       </footer>
@@ -194,10 +194,10 @@ function CallRow({
   const result =
     call.state === "open"
       ? ahead
-        ? "ahead"
-        : "behind"
+        ? "Ahead"
+        : "Behind"
       : call.state === "void"
-        ? "void"
+        ? "Void"
         : call.state === "right"
           ? by?.name + " was right"
           : (rival?.name || "the market") + " was right";
@@ -244,7 +244,7 @@ function CallRow({
         <span className="call-time">
           {call.state === "open"
             ? until(call.expiry)
-            : "settled " + ago(call.expiry)}
+            : "Settled " + ago(call.expiry)}
         </span>
         <span className="call-links">
           {call.open_tx && (
@@ -253,7 +253,7 @@ function CallRow({
               target="_blank"
               rel="noreferrer"
             >
-              opened <ArrowUpRight size={11} />
+              Open tx <ArrowUpRight size={11} />
             </a>
           )}
           {call.settle_tx && (
@@ -262,7 +262,7 @@ function CallRow({
               target="_blank"
               rel="noreferrer"
             >
-              settled <ArrowUpRight size={11} />
+              Settle tx <ArrowUpRight size={11} />
             </a>
           )}
         </span>
@@ -285,14 +285,16 @@ export function Calls({
   const calls = (board?.calls || []).slice(0, limit);
   if (!board)
     return (
-      <p className="calls-empty" role="status">
-        loading calls…
-      </p>
+      <div className="skeleton-rows" role="status" aria-label="Loading calls">
+        <span />
+        <span />
+        <span />
+      </div>
     );
   if (!calls.length)
     return (
       <p className="calls-empty" data-reveal>
-        no open calls.
+        No calls are open. Every resident opens one at least every 12 hours.
       </p>
     );
   return (

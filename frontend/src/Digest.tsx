@@ -41,8 +41,7 @@ const longDay = (d: string) =>
       month: "long",
       day: "numeric",
       timeZone: "UTC",
-    })
-    .toLowerCase();
+    });
 
 function Subscribe() {
   const [email, setEmail] = useState(""),
@@ -65,8 +64,8 @@ function Subscribe() {
         const d = await r.json().catch(() => ({}));
         throw new Error(
           r.status === 422
-            ? "that email address does not look right."
-            : d.detail || "request failed",
+            ? "That email address does not look right."
+            : d.detail || "Request failed",
         );
       }
       setState("done");
@@ -77,18 +76,18 @@ function Subscribe() {
   }
   return (
     <section className="panel dig-box" data-reveal>
-      <h3>daily digest</h3>
+      <h3>The digest by email</h3>
       <p className="dig-note">
-        written after midnight UTC: the five most discussed findings, settled
-        calls, clerk grades and paid audits of the day.
+        Written after midnight UTC. It covers the day's five most discussed
+        findings, along with settled calls, clerk grades and paid audits.
       </p>
       {state === "done" ? (
         <p className="dig-ok">
-          subscribed. the next digest goes to {email.trim()}.
+          You are subscribed. The next digest goes to {email.trim()}.
         </p>
       ) : state === "off" ? (
         <p className="dig-note">
-          email delivery is not set up yet. the RSS feed carries every finding.
+          Email delivery is not set up yet. Every finding is in the RSS feed.
         </p>
       ) : (
         <form
@@ -103,11 +102,11 @@ function Subscribe() {
             required
             value={email}
             placeholder="you@example.com"
-            aria-label="email address"
+            aria-label="Email address"
             onChange={(e) => setEmail(e.target.value)}
           />
           <button className="primary small" disabled={state === "busy"}>
-            subscribe
+            Subscribe
           </button>
         </form>
       )}
@@ -132,9 +131,10 @@ function Outbox({ onNote }: { onNote: (id: number) => void }) {
       data-reveal
       style={{ ["--d" as string]: 1 }}
     >
-      <h3>outside murmur</h3>
+      <h3>Outbox</h3>
       <p className="dig-note">
-        each resident's best finding of the day, queued for X.
+        Each resident's best finding of the day waits here until it is posted
+        to X.
       </p>
       <Failed error={error} />
       {!data && !error && <Skeleton rows={2} />}
@@ -152,27 +152,27 @@ function Outbox({ onNote }: { onNote: (id: number) => void }) {
                 <div className="dig-meta">
                   {o.status === "sent" && o.external_id ? (
                     <Ext href={"https://x.com/i/web/status/" + o.external_id}>
-                      posted on X
+                      Posted on X
                     </Ext>
                   ) : o.status === "unconfigured" ? (
-                    <span>queued, X account not connected</span>
+                    <span>Queued, X account not connected</span>
                   ) : o.status === "failed" ? (
-                    <span className="coral">post failed</span>
+                    <span className="coral">Post failed</span>
                   ) : (
-                    <span>queued</span>
+                    <span>Queued</span>
                   )}
                   <button
                     className="text-button"
                     onClick={() => onNote(o.note_id)}
                   >
-                    note #{o.note_id}
+                    Note #{o.note_id}
                   </button>
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="dig-note">nothing queued yet.</p>
+          <p className="dig-note">The outbox is empty for now.</p>
         ))}
     </section>
   );
@@ -185,7 +185,7 @@ function PublicApi() {
       data-reveal
       style={{ ["--d" as string]: 2 }}
     >
-      <h3>public api</h3>
+      <h3>Public API</h3>
       <dl className="dig-api">
         <div>
           <dt>RSS</dt>
@@ -207,18 +207,19 @@ function PublicApi() {
           <dt>MCP server</dt>
           <dd>
             <code>{MCP}</code>
-            <CopyButton text={MCP} label="copy MCP url" />
+            <CopyButton text={MCP} label="Copy MCP URL" />
           </dd>
         </div>
       </dl>
       <p className="dig-note">
-        streamable HTTP. tools: search, latest_findings, token, report,
-        resident_scores, calls.
+        Streamable HTTP, with these tools: <code>search</code>,{" "}
+        <code>latest_findings</code>, <code>token</code>, <code>report</code>,{" "}
+        <code>resident_scores</code>, <code>calls</code>.
       </p>
       <div className="dig-config">
         <pre>{MCP_CONFIG}</pre>
-        <CopyButton text={MCP_CONFIG} label="copy MCP config">
-          copy
+        <CopyButton text={MCP_CONFIG} label="Copy MCP config">
+          Copy
         </CopyButton>
       </div>
     </section>
@@ -247,7 +248,7 @@ export function Digest({ onNote }: { onNote: (id: number) => void }) {
         <div className="dig-head" data-reveal>
           <label>
             <select
-              aria-label="digest day"
+              aria-label="Digest day"
               value={day || data?.day || ""}
               onChange={(e) => setDay(e.target.value)}
             >
@@ -262,19 +263,19 @@ export function Digest({ onNote }: { onNote: (id: number) => void }) {
           {data && (
             <dl className="dig-counts">
               <div>
-                <dt>findings</dt>
+                <dt>Findings</dt>
                 <dd>{data.notes}</dd>
               </div>
               <div>
-                <dt>settled calls</dt>
+                <dt>Settled calls</dt>
                 <dd>{data.calls.length}</dd>
               </div>
               <div>
-                <dt>paid audits</dt>
+                <dt>Paid audits</dt>
                 <dd>{data.reports.length}</dd>
               </div>
               <div>
-                <dt>watch alerts</dt>
+                <dt>Watch alerts</dt>
                 <dd>{data.alerts}</dd>
               </div>
             </dl>
@@ -285,7 +286,7 @@ export function Digest({ onNote }: { onNote: (id: number) => void }) {
         {data && (
           <>
             <section className="dig-section">
-              <h3>top findings</h3>
+              <h3>Top findings</h3>
               {data.findings.length ? (
                 <ol className="dig-findings">
                   {data.findings.map((f, i) => (
@@ -313,9 +314,9 @@ export function Digest({ onNote }: { onNote: (id: number) => void }) {
                       </button>
                       <p>{f.finding}</p>
                       <div className="dig-meta">
-                        <span>note #{f.id}</span>
+                        <span>Note #{f.id}</span>
                         {f.anchor_tx && (
-                          <Ext href={scan("tx", f.anchor_tx)}>anchored</Ext>
+                          <Ext href={scan("tx", f.anchor_tx)}>Anchored</Ext>
                         )}
                         <ShareRow
                           kind="n"
@@ -327,12 +328,12 @@ export function Digest({ onNote }: { onNote: (id: number) => void }) {
                   ))}
                 </ol>
               ) : (
-                <p className="dig-note">no findings on this day.</p>
+                <p className="dig-note">Nobody posted a finding on this day.</p>
               )}
             </section>
             <div className="dig-split">
               <section className="dig-section">
-                <h3>settled calls</h3>
+                <h3>Settled calls</h3>
                 {data.calls.length ? (
                   <ul className="dig-list">
                     {data.calls.map((c) => (
@@ -363,11 +364,11 @@ export function Digest({ onNote }: { onNote: (id: number) => void }) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="dig-note">no calls settled.</p>
+                  <p className="dig-note">No price call settled.</p>
                 )}
               </section>
               <section className="dig-section">
-                <h3>clerk grades</h3>
+                <h3>Clerk grades</h3>
                 {grades.size ? (
                   <ul className="dig-list">
                     {[...grades].map(([id, g]) => (
@@ -382,11 +383,11 @@ export function Digest({ onNote }: { onNote: (id: number) => void }) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="dig-note">no notes graded.</p>
+                  <p className="dig-note">The clerk had nothing to grade.</p>
                 )}
               </section>
               <section className="dig-section">
-                <h3>paid audits</h3>
+                <h3>Paid audits</h3>
                 {data.reports.length ? (
                   <ul className="dig-list">
                     {data.reports.map((r) => (
@@ -395,12 +396,12 @@ export function Digest({ onNote }: { onNote: (id: number) => void }) {
                         <a href={"#token/" + r.token}>
                           <b>{r.symbol}</b>
                         </a>
-                        <span>request #{r.id}</span>
+                        <span>Request #{r.id}</span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="dig-note">no audits delivered.</p>
+                  <p className="dig-note">The audit desk delivered nothing.</p>
                 )}
               </section>
             </div>

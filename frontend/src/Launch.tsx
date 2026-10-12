@@ -115,7 +115,7 @@ export default function Launch({
         }
       }
     } catch {
-      setStatus("the launch ledger is temporarily unavailable");
+      setStatus("The launchpad contract could not be read right now. Try again shortly.");
     }
   }
   useEffect(() => {
@@ -149,10 +149,10 @@ export default function Launch({
   async function wallet() {
     if (!authenticated) {
       login();
-      throw new Error("sign in, then try again");
+      throw new Error("Sign in, then try again.");
     }
     const w = wallets[0];
-    if (!w) throw new Error("connect a wallet first");
+    if (!w) throw new Error("Connect a wallet first.");
     await w.switchChain(56);
     const provider = await w.getEthereumProvider();
     return createWalletClient({
@@ -163,13 +163,13 @@ export default function Launch({
   }
   async function execute(action: () => Promise<`0x${string}`>) {
     setBusy(true);
-    setStatus("check the request in your wallet.");
+    setStatus("Confirm the request in your wallet.");
     try {
       const hash = await action();
-      setStatus("transaction sent: " + short(hash));
+      setStatus("Transaction sent: " + short(hash));
       const receipt = await client.waitForTransactionReceipt({ hash });
-      if (receipt.status !== "success") throw new Error("transaction reverted");
-      setStatus("confirmed: " + hash);
+      if (receipt.status !== "success") throw new Error("The transaction reverted.");
+      setStatus("Confirmed: " + hash);
       await load();
     } catch (e) {
       setStatus((e as Error).message.slice(0, 220));
@@ -179,11 +179,12 @@ export default function Launch({
   }
   return (
     <section className="launch-panel panel">
-      <h2>{selectedAddress ? "trade" : "launch a coin"}</h2>
+      <h2>{selectedAddress ? "Trade" : "Launch a coin"}</h2>
       {!selectedAddress && (
         <p>
-          fixed 1 billion supply. 20% creator allocation, 80% BNB curve. inspect
-          the field guide for the curve rules.
+          Every coin has a fixed supply of 1 billion. The creator gets 20% and
+          the other 80% sits on a BNB curve. The field guide has the curve
+          rules.
         </p>
       )}
       {address ? (
@@ -209,19 +210,19 @@ export default function Launch({
                 maxLength={40}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="coin name"
-                aria-label="coin name"
+                placeholder="Coin name"
+                aria-label="Coin name"
               />
               <input
                 required
                 maxLength={10}
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
-                placeholder="symbol"
-                aria-label="coin symbol"
+                placeholder="Symbol"
+                aria-label="Coin symbol"
               />
               <button className="primary" disabled={busy}>
-                {busy ? "waiting..." : "launch coin"}
+                {busy ? "Waiting…" : "Launch coin"}
                 <ArrowUpRight size={14} />
               </button>
             </form>
@@ -258,10 +259,10 @@ export default function Launch({
                 <select
                   value={side}
                   onChange={(e) => setSide(e.target.value as "buy" | "sell")}
-                  aria-label="trade side"
+                  aria-label="Trade side"
                 >
-                  <option value="buy">buy with BNB</option>
-                  <option value="sell">sell tokens for BNB</option>
+                  <option value="buy">Buy with BNB</option>
+                  <option value="sell">Sell tokens for BNB</option>
                 </select>
                 <input
                   value={amount}
@@ -269,7 +270,7 @@ export default function Launch({
                   min="0.000001"
                   step="any"
                   onChange={(e) => setAmount(e.target.value)}
-                  aria-label={side === "buy" ? "BNB amount" : "token amount"}
+                  aria-label={side === "buy" ? "BNB amount" : "Token amount"}
                 />
                 <button
                   className="primary"
@@ -285,7 +286,7 @@ export default function Launch({
                         args: [coin.address, value],
                       });
                       const minimum = (fresh * 99n) / 100n;
-                      if (minimum <= 0n) throw new Error("amount too small");
+                      if (minimum <= 0n) throw new Error("That amount is too small.");
                       const deadline = BigInt(
                         Math.floor(Date.now() / 1000) + 180,
                       );
@@ -307,7 +308,7 @@ export default function Launch({
                         hash,
                       });
                       if (approved.status !== "success")
-                        throw new Error("approval failed");
+                        throw new Error("The approval failed.");
                       return w.writeContract({
                         address,
                         abi,
@@ -317,36 +318,36 @@ export default function Launch({
                     })
                   }
                 >
-                  review {side}
+                  {side === "buy" ? "Review buy" : "Review sell"}
                 </button>
               </div>
               <p>
                 {quote
-                  ? "estimated output " +
+                  ? "Estimated output " +
                     Number(formatEther(quote)).toLocaleString(undefined, {
                       maximumFractionDigits: 6,
                     }) +
                     " " +
                     (side === "buy" ? coin.symbol : "BNB") +
-                    " · 1% slippage limit"
-                  : "enter an amount for a quote"}
+                    ", with a 1% slippage limit"
+                  : "Enter an amount to get a quote."}
               </p>
             </div>
           )}
         </>
       ) : (
-        <p>launchpad unavailable.</p>
+        <p>No launchpad contract is set for this deployment.</p>
       )}
       <div className="wallet-tools">
         <button onClick={() => setWithdraw(!withdraw)}>
           <Wallet size={13} />
-          withdraw from your wallet
+          Withdraw from your wallet
         </button>
       </div>
       {withdraw && (
         <div className="launch-form">
           <select
-            aria-label="withdrawal asset"
+            aria-label="Withdrawal asset"
             value={withdrawAsset}
             onChange={(e) => setWithdrawAsset(e.target.value)}
           >
@@ -356,8 +357,8 @@ export default function Launch({
           <input
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
-            placeholder="recipient 0x..."
-            aria-label="withdrawal recipient"
+            placeholder="Recipient 0x…"
+            aria-label="Withdrawal recipient"
             pattern="0x[a-fA-F0-9]{40}"
           />
           <input
@@ -367,7 +368,7 @@ export default function Launch({
             type="number"
             min="0"
             step="any"
-            aria-label="withdrawal amount"
+            aria-label="Withdrawal amount"
           />
           <button
             className="primary"
@@ -375,9 +376,9 @@ export default function Launch({
             onClick={() =>
               void execute(async () => {
                 if (!/^0x[a-fA-F0-9]{40}$/.test(recipient))
-                  throw new Error("enter a valid recipient");
+                  throw new Error("Enter a valid recipient address.");
                 const value = parseEther(withdrawAmount);
-                if (value <= 0n) throw new Error("enter a positive amount");
+                if (value <= 0n) throw new Error("Enter an amount above zero.");
                 const w = await wallet();
                 return withdrawAsset === "BNB"
                   ? w.sendTransaction({ to: recipient as `0x${string}`, value })
@@ -390,7 +391,7 @@ export default function Launch({
               })
             }
           >
-            review withdrawal
+            Review withdrawal
           </button>
         </div>
       )}

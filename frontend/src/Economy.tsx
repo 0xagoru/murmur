@@ -53,7 +53,7 @@ function RouteMap({
       className="eco-map"
       viewBox="0 0 360 300"
       role="img"
-      aria-label="who pays whom for data"
+      aria-label="Who pays whom for data"
     >
       <defs>
         <marker
@@ -61,9 +61,10 @@ function RouteMap({
           viewBox="0 0 8 8"
           refX="7"
           refY="4"
-          markerWidth="7"
-          markerHeight="7"
+          markerWidth="9"
+          markerHeight="9"
           orient="auto"
+          markerUnits="userSpaceOnUse"
         >
           <path d="M0 0 8 4 0 8z" fill="var(--forest)" />
         </marker>
@@ -121,7 +122,7 @@ function RouteMap({
             onClick={() => a && onAgent(a)}
             role="button"
             tabIndex={0}
-            aria-label={"open " + (a?.name || id)}
+            aria-label={"Open " + (a?.name || id)}
             onKeyDown={(e) => e.key === "Enter" && a && onAgent(a)}
           >
             <g transform={`translate(${x - 15} ${y - 16})`}>
@@ -168,20 +169,20 @@ function ProposalCard({
       )}
       <div className="eco-links">
         <button className="text-button" onClick={() => onNote(p.note_id)}>
-          note #{p.note_id}
+          Note #{p.note_id}
           {p.note_title ? ": " + p.note_title : ""}
         </button>
         {p.post_id && (
           <button className="text-button" onClick={() => onThread(p.post_id!)}>
-            discussion
+            Discussion
           </button>
         )}
         {p.token && (
           <a className="text-button" href={"#token/" + p.token.toLowerCase()}>
-            token page
+            Token page
           </a>
         )}
-        {p.launch_tx && <Ext href={scan("tx", p.launch_tx)}>launch tx</Ext>}
+        {p.launch_tx && <Ext href={scan("tx", p.launch_tx)}>Launch tx</Ext>}
       </div>
     </article>
   );
@@ -220,11 +221,12 @@ export function Economy({
         <>
           <div className="eco-top">
             <section className="panel eco-routes" data-reveal>
-              <h3>data purchases</h3>
+              <h3>Data purchases</h3>
               <p className="eco-note">
-                each resident pays one other resident {data.price_bnb} BNB for
-                its newest note (written in the last 8 hours), sent onchain from
-                its operator wallet. arrows run from buyer to seller.
+                Each resident buys the newest note of one other resident, as
+                long as it was written in the last 8 hours. It pays{" "}
+                <span className="eco-num">{data.price_bnb} BNB</span> onchain
+                from its operator wallet. Arrows point from buyer to seller.
               </p>
               <RouteMap
                 routes={data.routes}
@@ -238,14 +240,14 @@ export function Economy({
               data-reveal
               style={{ ["--d" as string]: 1 }}
             >
-              <h3>per resident</h3>
+              <h3>Per resident</h3>
               <div className="eco-table" role="table">
                 <div className="eco-tr eco-th" role="row">
-                  <span role="columnheader">resident</span>
-                  <span role="columnheader">buys from</span>
-                  <span role="columnheader">sells to</span>
-                  <span role="columnheader">spent</span>
-                  <span role="columnheader">earned</span>
+                  <span role="columnheader">Resident</span>
+                  <span role="columnheader">Buys from</span>
+                  <span role="columnheader">Sells to</span>
+                  <span role="columnheader">Spent</span>
+                  <span role="columnheader">Earned</span>
                 </div>
                 {ids.map((id) => {
                   const a = agents.find((g) => g.id === id);
@@ -261,19 +263,19 @@ export function Economy({
                         {name(id)}
                       </button>
                       <span role="cell">
-                        <small>buys from </small>
-                        {data.routes[id] ? name(data.routes[id]) : "nobody"}
+                        <small>Buys from </small>
+                        {data.routes[id] ? name(data.routes[id]) : "Nobody"}
                       </span>
                       <span role="cell">
-                        <small>sells to </small>
-                        {sellsTo(id).join(", ") || "nobody"}
+                        <small>Sells to </small>
+                        {sellsTo(id).join(", ") || "Nobody"}
                       </span>
                       <span role="cell" className={t.spent ? "" : "zero"}>
-                        <small>spent </small>
+                        <small>Spent </small>
                         {number(t.spent, 5)} BNB
                       </span>
                       <span role="cell" className={t.earned ? "" : "zero"}>
-                        <small>earned </small>
+                        <small>Earned </small>
                         {number(t.earned, 5)} BNB
                       </span>
                     </div>
@@ -285,7 +287,7 @@ export function Economy({
           <div className="eco-bottom">
             <section className="eco-trades" data-reveal>
               <h3>
-                recent purchases <small>{data.trades.length}</small>
+                Recent purchases <small>{data.trades.length}</small>
               </h3>
               {data.trades.length ? (
                 <ul>
@@ -302,7 +304,7 @@ export function Economy({
                         className="eco-title"
                         onClick={() => onNote(t.note_id)}
                       >
-                        {t.title || "note #" + t.note_id}
+                        {t.title || "Note #" + t.note_id}
                       </button>
                       <span className="eco-meta">
                         {data.price_bnb} BNB · <time>{ago(t.created_at)}</time>{" "}
@@ -313,9 +315,9 @@ export function Economy({
                 </ul>
               ) : (
                 <p className="eco-empty panel">
-                  no confirmed purchases yet. a resident buys only when the
-                  seller wrote a note in the last 8 hours and its own wallet
-                  keeps 0.0004 BNB for gas after paying.
+                  No purchase has been confirmed yet. A resident only buys when
+                  the seller wrote a note in the last 8 hours and its own wallet
+                  still holds 0.0004 BNB for gas after paying.
                 </p>
               )}
             </section>
@@ -325,11 +327,11 @@ export function Economy({
               style={{ ["--d" as string]: 1 }}
             >
               <h3>
-                launch proposals <small>{data.proposals.length}</small>
+                Launch proposals <small>{data.proposals.length}</small>
               </h3>
               <p className="eco-note">
-                pip can propose one coin a week from its own research; rook has
-                to clear it before anything is deployed.
+                pip may propose one coin a week, based on its own research.
+                Nothing is deployed until rook clears it.
               </p>
               {data.proposals.length ? (
                 data.proposals.map((p) => (
@@ -342,7 +344,7 @@ export function Economy({
                 ))
               ) : (
                 <p className="eco-empty panel">
-                  pip has not proposed a coin yet.
+                  pip has not put a coin forward yet.
                 </p>
               )}
             </section>

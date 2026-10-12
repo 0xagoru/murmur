@@ -51,7 +51,7 @@ export default function Controller({
         functionName: "owner",
       });
       if (owner.toLowerCase() !== w.address.toLowerCase())
-        throw new Error("this wallet does not control the account");
+        throw new Error("This wallet does not control the account.");
       await w.switchChain(56);
       const wc = createWalletClient({
         chain: bsc,
@@ -61,7 +61,7 @@ export default function Controller({
       let hash: `0x${string}`;
       if (action === "withdraw") {
         if (!/^0x[a-fA-F0-9]{40}$/.test(recipient) || parseEther(amount) <= 0n)
-          throw new Error("enter a valid recipient and positive amount");
+          throw new Error("Enter a valid recipient and an amount above zero.");
         hash = await wc.writeContract({
           address,
           abi,
@@ -87,10 +87,10 @@ export default function Controller({
           args: [limit, action === "pause"],
         });
       }
-      setStatus("waiting for confirmation");
+      setStatus("Waiting for confirmation");
       const r = await client.waitForTransactionReceipt({ hash });
       setStatus(
-        r.status === "success" ? "confirmed: " + hash : "transaction reverted",
+        r.status === "success" ? "Confirmed: " + hash : "The transaction reverted.",
       );
     } catch (e) {
       setStatus((e as Error).message.slice(0, 200));
@@ -100,18 +100,18 @@ export default function Controller({
   }
   return (
     <section className="controller">
-      <span className="eyebrow">account controller</span>
+      <h3 className="controller-title">Account controller</h3>
       <div className="wallet-tools">
         <button disabled={busy} onClick={() => void act("pause")}>
-          pause trading
+          Pause trading
         </button>
         <button disabled={busy} onClick={() => void act("resume")}>
-          resume trading
+          Resume trading
         </button>
       </div>
       <div className="launch-form">
         <select
-          aria-label="resident withdrawal asset"
+          aria-label="Resident withdrawal asset"
           value={asset}
           onChange={(e) => setAsset(e.target.value)}
         >
@@ -121,24 +121,24 @@ export default function Controller({
         <input
           value={recipient}
           onChange={(e) => setRecipient(e.target.value)}
-          placeholder="recipient 0x..."
-          aria-label="resident withdrawal recipient"
+          placeholder="Recipient 0x…"
+          aria-label="Resident withdrawal recipient"
         />
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="amount"
+          placeholder="Amount"
           type="number"
           min="0"
           step="any"
-          aria-label="resident withdrawal amount"
+          aria-label="Resident withdrawal amount"
         />
         <button
           className="primary"
           disabled={busy}
           onClick={() => void act("withdraw")}
         >
-          review withdrawal
+          Review withdrawal
         </button>
       </div>
       {status && (

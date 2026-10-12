@@ -5,12 +5,13 @@ import { ago } from "./Research";
 import { Chip, Failed, Skeleton, useGet } from "./Share";
 import "./town-views.css";
 
+// The six house residents each keep a photographed room.
+const ROOMS = new Set(["moss", "flicker", "rook", "pip", "vale", "echo"]);
 const pct = (v: number | null) =>
   v === null ? "n/a" : Math.round(v * 100) + "%";
 const day = (s: string) =>
   new Date(s)
-    .toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    .toLowerCase();
+    .toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 function Meter({ value }: { value: number | null }) {
   return (
@@ -19,7 +20,7 @@ function Meter({ value }: { value: number | null }) {
         style={{ width: (value ?? 0) * 100 + "%" }}
         className={value !== null && value < 0.4 ? "low" : ""}
       />
-      <b title="probation line, 40%" />
+      <b title="Probation line at 40%" />
     </span>
   );
 }
@@ -30,14 +31,14 @@ function Numbers({ card, label }: { card: ScoreCard; label: string }) {
       <span className="score-label">{label}</span>
       <dl>
         <div>
-          <dt>accuracy</dt>
+          <dt>Accuracy</dt>
           <dd>
             {pct(card.accuracy)}
             <Meter value={card.accuracy} />
           </dd>
         </div>
         <div>
-          <dt>brier</dt>
+          <dt>Brier</dt>
           <dd
             className={
               card.brier === null ? "" : card.brier < 0.25 ? "sage" : "coral"
@@ -47,19 +48,19 @@ function Numbers({ card, label }: { card: ScoreCard; label: string }) {
           </dd>
         </div>
         <div>
-          <dt>right / resolved</dt>
+          <dt>Right / resolved</dt>
           <dd>
             {card.hits + card.calls_won} / {card.resolved}
           </dd>
         </div>
         <div>
-          <dt>notes graded</dt>
+          <dt>Notes graded</dt>
           <dd>
             {card.hits} hit · {card.misses} miss
           </dd>
         </div>
         <div>
-          <dt>price calls</dt>
+          <dt>Price calls</dt>
           <dd>
             {card.calls_won} won · {card.calls_lost} lost
           </dd>
@@ -92,10 +93,19 @@ function Resident({
       style={{ ["--d" as string]: step }}
     >
       <div className="score-who">
+        {ROOMS.has(s.id) && (
+          <img
+            className="score-room"
+            src={"/img/place-" + s.id + ".webp"}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        )}
         <span className="score-rank">{rank ? "#" + rank : ""}</span>
         <button
           onClick={() => agent && onAgent(agent)}
-          aria-label={"open " + s.name}
+          aria-label={"Open " + s.name}
         >
           <Face color={s.color} size={40} />
         </button>
@@ -110,24 +120,24 @@ function Resident({
           <p className="score-chips">
             {probation ? (
               <Chip tone="coral">
-                probation
+                Probation
                 {s.standing_since ? " since " + day(s.standing_since) : ""}
               </Chip>
             ) : (
-              <Chip tone="sage">good standing</Chip>
+              <Chip tone="sage">Good standing</Chip>
             )}
             {s.record.qualified ? (
-              <Chip>qualified</Chip>
+              <Chip>Qualified</Chip>
             ) : (
-              <Chip>{s.record.resolved}/8 resolved to qualify</Chip>
+              <Chip>{s.record.resolved} of 8 resolved to qualify</Chip>
             )}
             {s.record.pending > 0 && <Chip>{s.record.pending} pending</Chip>}
           </p>
         </div>
       </div>
       <div className="score-numbers">
-        <Numbers card={s.record} label="this generation" />
-        <Numbers card={s.recent} label="last 14 days" />
+        <Numbers card={s.record} label="This generation" />
+        <Numbers card={s.recent} label="Last 14 days" />
       </div>
       <div className="score-history">
         {s.history.length ? (
@@ -142,12 +152,12 @@ function Resident({
                     {h.question || h.title}
                   </button>
                   <p className="score-expect">
-                    expected {h.expect}
+                    Expected {h.expect}
                     {h.confidence !== null && <> at {h.confidence}%</>} · note #
                     {h.id} · graded {ago(h.checked_at)}
                   </p>
                   {h.check_evidence && (
-                    <p className="score-evidence">clerk: {h.check_evidence}</p>
+                    <p className="score-evidence">Clerk: {h.check_evidence}</p>
                   )}
                 </div>
               </li>
@@ -155,11 +165,12 @@ function Resident({
           </ol>
         ) : (
           <p className="score-empty">
-            no graded notes yet
-            {s.record.pending
-              ? ", " + s.record.pending + " waiting for the next reading"
-              : ""}
-            .
+            Nothing graded yet.
+            {s.record.pending === 1
+              ? " 1 note waits for the next reading."
+              : s.record.pending
+                ? " " + s.record.pending + " notes wait for the next reading."
+                : ""}
           </p>
         )}
       </div>
@@ -189,31 +200,35 @@ export function Standings({
   return (
     <div className="score-page">
       <aside className="score-rules panel" data-reveal>
-        <h3>how grading works</h3>
+        <h3>How grading works</h3>
         <p>
-          every note ends with a yes/no question about its own data, an expected
-          answer and a confidence. the town clerk grades it on the next reading
-          of the same source. settled price calls count too. below 40% over the
-          last 14 days with 8+ resolved puts a resident on probation (it studies
-          half as often); still on probation after 5 days and a new generation
-          moves in with an empty notebook and a fresh record.
+          Every note ends with a yes or no question about its own data, along
+          with the answer the resident expects and how confident it is. The town
+          clerk grades the note on the next reading of the same source. Settled
+          price calls count as well.
+        </p>
+        <p>
+          A resident with 8 or more resolved that scores below 40% over the last
+          14 days goes on probation and studies half as often. If it is still on
+          probation after 5 days, a new generation moves in with an empty
+          notebook and a fresh record.
         </p>
         <p className="score-brier">
-          brier score: the average squared gap between stated confidence and the
-          outcome. lower is better; 0.25 is a coin flip.
+          The Brier score is the average squared gap between stated confidence
+          and the outcome. Lower is better, and 0.25 equals a coin flip.
         </p>
         {data && (
           <dl className="score-totals">
             <div>
-              <dt>resolved</dt>
+              <dt>Resolved</dt>
               <dd>{totals.resolved}</dd>
             </div>
             <div>
-              <dt>pending</dt>
+              <dt>Pending</dt>
               <dd>{totals.pending}</dd>
             </div>
             <div>
-              <dt>on probation</dt>
+              <dt>On probation</dt>
               <dd>{totals.probation}</dd>
             </div>
           </dl>

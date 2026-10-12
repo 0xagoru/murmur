@@ -40,7 +40,7 @@ footer a {
 }
 .feature-nav button.active,
 .neighborhood-picker button.active {
-  background: #eef1ea;
+  background: var(--linen);
   color: var(--forest);
   border-color: var(--border);
 }
@@ -49,6 +49,32 @@ footer a {
   min-width: 0;
   font-size: 15px;
   line-height: 1.6;
+}
+.feature-panel.panel,
+.coin-list-row.panel,
+.launch-panel.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.feature-panel h2,
+.coin-pages > h2,
+.desk-grid h2 {
+  font-family: var(--serif);
+  font-weight: 450;
+  letter-spacing: -0.015em;
+}
+.feature-panel h3 {
+  font-family: var(--serif);
+  font-weight: 450;
+}
+.feature-empty {
+  color: var(--muted);
+}
+.num,
+.feature-panel .num {
+  font-family: var(--mono);
+  font-size: 14px;
 }
 .feature-panel h2 {
   margin: 0 0 18px;
@@ -70,7 +96,37 @@ footer a {
 }
 .feature-panel button {
   min-height: 42px;
-  padding: 8px 14px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  transition:
+    transform 0.2s var(--ease),
+    background 0.2s,
+    border-color 0.2s;
+}
+.feature-panel button:hover:not(:disabled) {
+  background: var(--linen);
+  transform: translateY(-1px);
+}
+.feature-panel .primary,
+.launch-panel .primary,
+.agent-page .primary {
+  background: var(--ink);
+  color: var(--card);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  padding: 10px 20px;
+}
+.feature-panel .primary:hover:not(:disabled),
+.launch-panel .primary:hover:not(:disabled),
+.agent-page .primary:hover:not(:disabled) {
+  background: var(--ink);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--ink) 50%, transparent);
+}
+.feature-panel a {
+  color: var(--forest);
 }
 .feature-panel a {
   font-size: 14px;
@@ -110,8 +166,8 @@ footer a {
   min-width: 0;
   padding: 11px 12px;
   border: 1px solid var(--border);
-  border-radius: 5px;
-  background: #ffffff;
+  border-radius: 10px;
+  background: var(--card);
   color: var(--ink);
   font-size: 15px;
 }
@@ -133,58 +189,149 @@ footer a {
   padding: 12px 0;
 }
 .feature-panel blockquote {
-  border-left: 3px solid var(--sage);
-  margin: 16px 0;
-  padding: 8px 16px;
-  background: #f1f3ee;
+  border-left: 1.5px dashed var(--faint);
+  margin: 14px 0;
+  padding: 10px 16px;
+  border-radius: 0 10px 10px 0;
+  background: var(--linen);
+}
+.feature-panel blockquote strong {
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.feature-panel blockquote p {
+  margin: 4px 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.5;
 }
 .discussion-body {
   white-space: pre-wrap;
 }
-.thread-post {
-  padding: 20px 0;
-  border-bottom: 1px solid var(--border);
+/* discussions: letters laid out on a table */
+.feature-panel.panel.discussions {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
 }
-.thread-post:first-child {
-  padding-top: 6px;
+.thread-posts {
+  display: grid;
+  gap: 12px;
+}
+.thread-post {
+  padding: 18px 22px 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  min-width: 0;
+  transition:
+    transform 0.3s var(--ease),
+    border-color 0.25s;
+}
+.thread-post:hover {
+  border-color: var(--faint);
+}
+.thread-post .post-by {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.thread-post .post-by time {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+.thread-post .feature-tools {
+  margin: 8px 0 4px;
+  gap: 8px;
+}
+.thread-post .feature-tools button {
+  min-height: 34px;
+  padding: 4px 14px;
+  font-size: 13.5px;
+}
+.thread-post .discussion-body {
+  margin: 8px 0 0;
+  color: var(--ink);
+}
+.discussions > .feature-tools .sort-toggle {
+  align-self: flex-end;
+}
+.discussions .discussion-composer {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px 22px;
+}
+.discussions > button {
+  justify-self: start;
+  margin-top: 12px;
 }
 .thread-post .post-by,
 .thread-post .post-by button,
 .thread-post time {
   font-size: 14px;
 }
-.thread-author {
+.feature-panel .thread-author {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 !important;
   border: 0;
+  border-radius: 0;
   min-height: 38px !important;
   background: none;
+  font-weight: 500;
+  transform: none;
 }
-.thread-post h3 button {
-  font: inherit;
+.feature-panel .thread-author:hover {
+  background: none;
+  color: var(--forest);
+}
+.thread-post h3 {
+  margin: 6px 0 2px;
+}
+.feature-panel .thread-post h3 button {
+  font-family: var(--serif);
+  font-weight: 450;
   font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   padding: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
   text-align: left;
+  transform: none;
+}
+.feature-panel .thread-post h3 button:hover {
+  background: none;
+  color: var(--forest);
 }
 .thread-reply {
-  padding-left: 22px;
-  border-left: 2px solid var(--border);
+  margin-left: 28px;
+  background: var(--card);
+  border-style: solid;
 }
 .discussion-image {
   display: block;
   max-width: 100%;
   max-height: 480px;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: 10px;
   margin: 16px 0;
 }
 .discussion-composer {
   padding-top: 12px;
 }
-.reply-reference {
+.feature-panel .reply-reference {
   color: var(--muted);
+  font-size: 13px;
 }
 .trade-list {
   margin: 20px 0;
@@ -197,35 +344,40 @@ footer a {
   grid-template-columns: 1.2fr 0.8fr 1fr 1.2fr 0.7fr 0.6fr;
   gap: 16px;
   align-items: center;
-  padding: 18px 0 !important;
+  padding: 16px 8px !important;
   list-style: none;
-  font:
-    14px "DM Mono",
-    monospace;
+  font-size: 14px;
+  border-radius: 10px;
 }
 .trade-row > summary::-webkit-details-marker {
   display: none;
 }
 .trade-row > summary:hover {
-  background: #f3f2eb;
+  background: var(--linen);
+}
+.trade-more {
+  color: var(--forest);
+  text-align: right;
 }
 .trade-person {
   display: flex;
   align-items: center;
   gap: 10px;
   font:
-    15px "DM Sans",
+    15px "Geist",
     sans-serif;
 }
 .gain {
   color: var(--forest);
 }
 .loss {
-  color: #c4401f;
+  color: var(--terracotta);
 }
 .trade-details {
   padding: 12px 20px 20px;
-  background: #f3f2eb;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: var(--linen);
 }
 .trade-details dl,
 .coin-facts,
@@ -272,12 +424,30 @@ footer a {
   text-decoration: none;
   font-size: 15px;
 }
+.coin-list-row {
+  transition:
+    transform 0.3s var(--ease),
+    border-color 0.25s;
+}
 .coin-list-row:hover {
-  background: #f1f3ee;
+  border-color: var(--faint);
+  transform: translateY(-1px);
 }
 .coin-list-row h2 {
   margin: 0 0 4px;
+  font-family: var(--serif);
+  font-weight: 450;
   font-size: 25px;
+}
+.coin-list-row > div > span {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+.coin-list-row > span:last-child {
+  color: var(--forest);
+}
+.coin-facts dd {
+  font-family: var(--mono);
 }
 .coin-layout {
   display: grid;
@@ -344,9 +514,19 @@ footer a {
   padding: 24px 0 !important;
   font-size: 16px;
 }
+.faction-row > summary strong {
+  font-family: var(--serif);
+  font-weight: 450;
+  font-size: 19px;
+}
 .faction-member {
   padding: 8px 20px 18px;
-  background: #f3f2eb;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: var(--linen);
+}
+.faction-member h3 {
+  font-size: 17px;
 }
 .call-replay {
   padding: 16px 0;
@@ -384,6 +564,10 @@ footer a {
   border-bottom: 1px solid var(--border);
   padding: 8px 0;
 }
+.owner-funds dd {
+  font-family: var(--mono);
+  font-size: 14.5px;
+}
 .owner-history {
   padding: 14px 0;
   border-bottom: 1px solid var(--border);
@@ -410,9 +594,19 @@ footer a {
   grid-column: 1/-1;
   font-size: 15px;
   overflow-wrap: anywhere;
-  padding: 18px;
-  background: #eef1ea;
+  padding: 16px 18px;
+  background: var(--linen);
   border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.owner-state > div > span {
+  color: var(--muted);
+}
+.controller-title {
+  font-family: var(--serif);
+  font-weight: 450;
+  font-size: 18px;
+  margin: 0 0 4px;
 }
 .desk-grid {
   display: grid;
@@ -435,6 +629,17 @@ footer a {
   overflow: auto;
   overscroll-behavior: contain;
   padding-right: 5px;
+}
+.feature-panel .desk-resident {
+  border-radius: 0;
+  min-height: 0;
+  transform: none;
+}
+.feature-panel .desk-resident:hover {
+  background: none;
+}
+.feature-panel .desk-resident:hover strong {
+  color: var(--forest);
 }
 .desk-resident {
   display: flex;
@@ -461,7 +666,8 @@ footer a {
 .resident-activity {
   padding: 16px;
   margin: 20px 0;
-  background: #f1f3ee;
+  border-radius: 10px;
+  background: var(--linen);
   font-size: 15px;
 }
 .resident-activity p {
@@ -565,7 +771,13 @@ footer a {
     grid-template-columns: 1fr;
   }
   .thread-reply {
-    padding-left: 14px;
+    margin-left: 14px;
+  }
+  .thread-post {
+    padding: 16px 16px 6px;
+  }
+  .discussions .discussion-composer {
+    padding: 16px;
   }
   .feature-tools {
     gap: 10px;
@@ -606,4 +818,65 @@ footer a {
     transform: translateY(0);
     opacity: 1;
   }
+}
+@media (min-width: 1100px) {
+  .discussions:not(.is-thread):not(.is-compact) .thread-posts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .discussions.is-thread {
+    max-width: 920px;
+  }
+  .discussions:not(.is-thread):not(.is-compact) .discussion-composer {
+    max-width: 760px;
+  }
+}
+
+/* launch and controller forms */
+.launch-panel .launch-form input,
+.launch-panel .launch-form select,
+.controller .launch-form input,
+.controller .launch-form select {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.launch-panel .coin-chip {
+  border: 0;
+  border-radius: 999px;
+  background: var(--linen);
+  padding: 7px 14px;
+  transition: transform 0.2s var(--ease);
+}
+.launch-panel .coin-chip:hover {
+  transform: translateY(-1px);
+  background: var(--linen);
+}
+.launch-panel .wallet-tools button,
+.controller .wallet-tools button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  padding: 8px 16px;
+}
+.launch-panel .wallet-tools button:hover,
+.controller .wallet-tools button:hover {
+  background: var(--linen);
+}
+.launch-panel h2 {
+  font-family: var(--serif);
+  font-weight: 450;
+}
+.feature-panel .desk-resident {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  justify-content: flex-start;
+  background: none;
+}
+.feature-panel .desk-resident:last-child {
+  border-bottom: 0;
+}
+.feature-tools input[type="date"] {
+  width: auto;
+  flex: 0 1 200px;
 }

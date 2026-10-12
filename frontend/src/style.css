@@ -1,26 +1,37 @@
 @import "./fonts.css";
 :root {
-  font-family: "DM Sans", sans-serif;
-  color: #10201a;
-  background: #fbf9f3;
+  font-family: "Geist", sans-serif;
+  color: var(--ink);
+  background: var(--paper);
   font-synthesis: none;
-  --ink: #10201a;
-  --muted: #4f5d56;
-  --border: #e3e1d8;
-  --paper: #fbf9f3;
-  --forest: #0e6b47;
-  --sage: #3f9a5c;
-  --coral: #e2553a;
-  --ochre: #e09a1a;
-  --slate: #3d5a80;
-  --lavender: #7b5cd6;
-  --blue: #2a7fd4;
-  --faint: #cfd3c7;
+  /* Sampled from the meadow: cobalt sky, pink cloud, cosmos, grass, milk glass. */
+  --ink: #1f1d3a;
+  --muted: #5c5a7b;
+  --border: rgba(66, 60, 140, 0.13);
+  --faint: rgba(66, 60, 140, 0.26);
+  --paper: #e9ecfa;
+  --card: rgba(255, 255, 255, 0.62);
+  --glass: rgba(246, 245, 255, 0.6);
+  --linen: rgba(104, 96, 200, 0.08);
+  --forest: #3f7a26;
+  --honey: #f0b64a;
+  --terracotta: #d0436d;
+  --pink: #e0559b;
+  --skyblue: #3d63c8;
+  --sage: #5c8a3a;
+  --coral: #d0436d;
+  --ochre: #c48a1c;
+  --slate: #4f66a8;
+  --lavender: #8b5cc4;
+  --blue: #2f86a8;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 24px 60px -30px rgba(38, 36, 110, 0.45);
+  --serif: "Geist", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, monospace;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 html {
   scroll-behavior: smooth;
-  background: #fbf9f3;
+  background: var(--paper);
 }
 * {
   box-sizing: border-box;
@@ -50,7 +61,7 @@ button {
     color 0.18s;
 }
 button:hover {
-  background: #eef1ea;
+  background: var(--linen);
 }
 button:disabled {
   opacity: 0.5;
@@ -81,7 +92,7 @@ h3 {
 h1,
 h2,
 h3 {
-  font-family: "Fraunces", serif;
+  font-family: "Geist", serif;
   font-weight: 400;
 }
 h1 {
@@ -109,7 +120,7 @@ header {
   background: var(--paper);
 }
 .wordmark {
-  font-family: "Fraunces", serif;
+  font-family: "Geist", serif;
   font-size: 30px;
   letter-spacing: -1.7px;
   white-space: nowrap;
@@ -137,7 +148,7 @@ nav button {
 }
 nav .active {
   color: var(--forest);
-  background: #e1f0e6;
+  background: var(--linen);
 }
 nav .active:after {
   content: "";
@@ -159,7 +170,7 @@ nav .active:after {
   border: 1px solid var(--forest);
 }
 .primary:hover {
-  background: #0a5538;
+  background: #45372a;
 }
 .primary.small {
   padding: 8px 12px;
@@ -170,7 +181,7 @@ nav .active:after {
 .map-label,
 code,
 time {
-  font-family: "DM Mono", monospace;
+  font-family: "Geist Mono", monospace;
 }
 .chain-tag {
   font-size: 14px;
@@ -182,7 +193,7 @@ time {
 .chain-tag i {
   width: 7px;
   height: 7px;
-  background: #e09a1a;
+  background: var(--ochre);
   transform: rotate(45deg);
 }
 main {
@@ -209,8 +220,8 @@ main {
 }
 .panel {
   border: 1px solid var(--border);
-  background: #ffffff;
-  border-radius: 3px;
+  background: var(--card);
+  border-radius: 12px;
 }
 .home-top,
 .home-grid {
@@ -274,7 +285,7 @@ main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #e8f1e6;
+  background: var(--linen);
   position: relative;
 }
 .town-scene > .walkers {
@@ -310,10 +321,10 @@ main {
 }
 .map-label {
   font-size: 14px;
-  fill: #10201a;
+  fill: var(--ink);
 }
 .map-label.soft {
-  fill: #4f5d56;
+  fill: var(--muted);
   font-style: italic;
 }
 .map-sign rect,
@@ -321,7 +332,7 @@ main {
   transition: fill 0.4s;
 }
 .map-sign:hover rect {
-  fill: #d9ecdf;
+  fill: var(--linen);
 }
 .sway,
 .resident,
@@ -520,12 +531,12 @@ main {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #1fa45a;
+  background: var(--honey);
   margin-right: 4px;
-  box-shadow: 0 0 0 3px #1fa45a22;
+  box-shadow: 0 0 0 3px rgba(226, 176, 86, 0.28);
 }
 .live-dot.offline {
-  background: #e09a1a;
+  background: var(--ochre);
 }
 .town-bottom {
   padding: 18px 22px;
@@ -539,7 +550,7 @@ main {
   flex-wrap: wrap;
   gap: 12px 20px;
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
 }
 .faction-legend span {
@@ -586,7 +597,7 @@ main {
 }
 .counter {
   font-size: 14px;
-  background: #e8f1e6;
+  background: var(--linen);
   padding: 3px 8px;
   border-radius: 20px;
   color: var(--muted);
@@ -613,14 +624,14 @@ main {
 }
 .room-tabs .active {
   color: var(--forest);
-  background: #e1f0e6;
+  background: var(--linen);
 }
 .search {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  color: #5d6a63;
+  color: var(--muted);
   border-bottom: 1px solid var(--border);
 }
 .search input {
@@ -636,13 +647,13 @@ main {
   overflow: auto;
   flex: 1;
   scrollbar-width: thin;
-  scrollbar-color: #c3c9bd transparent;
+  scrollbar-color: var(--border) transparent;
 }
 .post {
   display: flex;
   gap: 10px;
   padding: 18px 17px;
-  border-bottom: 1px solid #ecebe4;
+  border-bottom: 1px solid var(--linen);
   animation: arrive 0.7s both;
 }
 .avatar-button {
@@ -650,7 +661,7 @@ main {
   height: 39px;
   align-self: start;
   padding: 0;
-  background: #eef2ec;
+  background: var(--linen);
   border-radius: 50%;
 }
 .post-main {
@@ -684,7 +695,7 @@ main {
   align-items: center;
   gap: 13px;
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
   color: var(--muted);
   margin-top: 9px;
@@ -701,7 +712,7 @@ main {
 }
 .composer {
   padding: 14px 17px;
-  background: #f6f5ef;
+  background: var(--linen);
   border-top: 1px solid var(--border);
 }
 .composer textarea {
@@ -731,7 +742,7 @@ main {
 .text-button {
   padding: 0;
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
 }
 .resident-mini-grid {
@@ -757,13 +768,13 @@ main {
 }
 .badge {
   font:
-    14px "DM Mono",
-    monospace;
+    13px "Geist",
+    sans-serif;
   padding: 3px 7px;
-  border: 1px solid #dcddd3;
-  background: #f1f3ee;
+  border: 1px solid var(--border);
+  background: var(--linen);
   border-radius: 20px;
-  color: #4f5d56;
+  color: var(--muted);
   white-space: nowrap;
 }
 .agents-grid {
@@ -780,7 +791,7 @@ main {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  background: #e8f1e6;
+  background: var(--linen);
   background-image: radial-gradient(#0e6b4718 0.7px, transparent 0.7px);
   background-size: 9px 9px;
 }
@@ -861,8 +872,8 @@ main {
   justify-content: space-between;
 }
 .room-card.selected {
-  border-color: #0e6b47;
-  background: #e8f1e6;
+  border-color: var(--forest);
+  background: var(--linen);
 }
 .stats-row {
   display: grid;
@@ -877,7 +888,7 @@ main {
   gap: 12px;
 }
 .stats-row strong {
-  font-family: "Fraunces", serif;
+  font-family: "Geist", serif;
   font-size: 34px;
   font-weight: 400;
 }
@@ -904,7 +915,7 @@ main {
   color: var(--muted);
 }
 .receipt-icon {
-  background: #e8f1e6;
+  background: var(--linen);
   padding: 8px;
   display: flex;
   border-radius: 50%;
@@ -929,7 +940,7 @@ main {
 }
 .docs-layout aside button span {
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
   color: var(--muted);
 }
@@ -937,7 +948,7 @@ main {
   margin-left: auto;
 }
 .docs-layout aside .active {
-  background: #e8f1e6;
+  background: var(--linen);
 }
 .docs-article {
   padding: 44px;
@@ -962,7 +973,7 @@ main {
 }
 .docs-next button {
   font-size: 14px;
-  background: #e8f1e6;
+  background: var(--linen);
   padding: 10px 15px;
 }
 .empty {
@@ -981,7 +992,7 @@ main {
   max-width: 300px;
 }
 .empty svg {
-  color: #3f9a5c;
+  color: var(--sage);
 }
 footer {
   display: flex;
@@ -1009,7 +1020,7 @@ footer > button {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: #0d1a1566;
+  background: rgba(43, 34, 25, 0.42);
   backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
@@ -1022,7 +1033,7 @@ footer > button {
   max-width: 100%;
   max-height: 90vh;
   overflow: auto;
-  box-shadow: 0 20px 70px #10201a2e;
+  box-shadow: 0 20px 70px rgba(43, 34, 25, 0.18);
   animation: arrive 0.4s;
 }
 .modal-close {
@@ -1031,7 +1042,7 @@ footer > button {
   right: 12px;
   width: 36px;
   height: 36px;
-  background: #fbf9f3;
+  background: var(--paper);
   z-index: 1;
 }
 .profile-top {
@@ -1039,7 +1050,7 @@ footer > button {
   gap: 20px;
   padding: 25px 30px;
   align-items: center;
-  background: #e8f1e6;
+  background: var(--linen);
 }
 .profile-top h2 {
   font-size: 40px;
@@ -1067,7 +1078,7 @@ footer > button {
 }
 .profile-stats span {
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
   color: var(--muted);
 }
@@ -1093,9 +1104,9 @@ footer > button {
   align-items: center;
   margin-top: 18px;
   padding: 12px 16px;
-  background: #fde7dc;
-  border: 1px solid #f0b9a6;
-  color: #9a3a20;
+  background: color-mix(in srgb, var(--terracotta) 12%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--terracotta) 35%, var(--card));
+  color: var(--terracotta);
   font-size: 14px;
 }
 .launch-panel {
@@ -1122,7 +1133,7 @@ footer > button {
   padding: 10px 12px;
   border-radius: 4px;
   font:
-    14px "DM Sans",
+    14px "Geist",
     sans-serif;
   color: var(--ink);
   min-width: 0;
@@ -1410,7 +1421,7 @@ footer > button {
   }
 }
 .post-link {
-  color: #0e6b47;
+  color: var(--forest);
   text-decoration: underline;
   text-underline-offset: 3px;
   overflow-wrap: anywhere;
@@ -1440,7 +1451,7 @@ footer > button {
 }
 .research-observation a {
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
   display: flex;
   gap: 7px;
@@ -1554,7 +1565,7 @@ header {
   border-bottom-color: transparent;
 }
 header.scrolled {
-  background: rgba(251, 249, 243, 0.86);
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
   backdrop-filter: blur(14px) saturate(120%);
   -webkit-backdrop-filter: blur(14px) saturate(120%);
   border-bottom-color: var(--border);
@@ -1592,7 +1603,7 @@ button:active {
   align-items: center;
   gap: 5px;
   font:
-    14px "DM Sans",
+    14px "Geist",
     sans-serif;
   color: var(--forest);
   background: none;
@@ -1641,7 +1652,7 @@ button:active {
   border-radius: 0;
 }
 .resident-list button:hover {
-  background: #f1f6f1;
+  background: var(--linen);
 }
 .resident-list strong {
   font-weight: 500;
@@ -1654,7 +1665,7 @@ button:active {
 }
 .resident-list small {
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
   color: var(--ink);
 }
@@ -1695,7 +1706,7 @@ button:active {
   margin: 0;
   color: var(--ink);
   font:
-    400 24px/1.1 "Fraunces",
+    400 24px/1.1 "Geist",
     serif;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -1731,7 +1742,7 @@ button:active {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #24332d;
+  color: var(--ink);
   white-space: nowrap;
 }
 .ticker-track b {
@@ -1747,14 +1758,14 @@ button:active {
 /* board additions */
 .post.study .post-title {
   font:
-    500 14px/1.35 "DM Sans",
+    500 14px/1.35 "Geist",
     sans-serif;
   margin: 2px 0 4px;
   color: var(--ink);
 }
 .post.rebuttal,
 .post.counter {
-  background: #f6f5ef;
+  background: var(--linen);
 }
 .post-room {
   font-size: 14px;
@@ -1766,9 +1777,9 @@ button:active {
 .post-call {
   display: inline-block;
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
-  background: #e1f0e6;
+  background: var(--linen);
   color: #0b5a3b;
   border-radius: 4px;
   padding: 2px 7px;
@@ -1783,7 +1794,7 @@ button:active {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: #0e6b47;
+  color: var(--forest);
 }
 .post-actions a:hover {
   color: var(--forest);
@@ -1821,7 +1832,7 @@ button:active {
   min-width: 0;
 }
 .note-card:hover {
-  border-color: #b9c0b3;
+  border-color: var(--faint);
 }
 .note-card > header {
   display: flex;
@@ -1865,7 +1876,7 @@ button:active {
 .note-card > p {
   font-size: 14px;
   line-height: 1.6;
-  color: #24332d;
+  color: var(--ink);
 }
 .note-grid .note-card:not(.big) > p {
   display: -webkit-box;
@@ -1874,15 +1885,13 @@ button:active {
   overflow: hidden;
 }
 .note-question {
-  font-size: 14px !important;
-  color: var(--muted) !important;
-  border-left: 2px solid #3f9a5c;
-  padding-left: 10px;
+  font-size: 14px;
+  color: var(--muted);
 }
 .note-question span {
   display: block;
   font-size: 14px;
-  color: #5d6a63;
+  color: var(--muted);
   margin-bottom: 1px;
 }
 .note-card footer {
@@ -1897,16 +1906,16 @@ button:active {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: #0e6b47;
+  color: var(--forest);
 }
 .facts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 12px;
   margin: 4px 0 2px;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--card);
 }
 .facts div {
   padding: 8px 10px;
@@ -1921,7 +1930,7 @@ button:active {
 .facts dd {
   margin: 2px 0 0;
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
   color: var(--ink);
 }
@@ -1947,12 +1956,12 @@ button:active {
   align-items: start;
   padding: 16px 18px;
   border: 1px solid var(--border);
-  background: #ffffff;
-  border-radius: 3px;
+  background: var(--card);
+  border-radius: 12px;
 }
 .call-row:hover {
   transform: translateY(-2px);
-  border-color: #b9c0b3;
+  border-color: var(--faint);
 }
 .call-who {
   position: relative;
@@ -1967,7 +1976,7 @@ button:active {
   left: 22px;
   top: 18px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--card);
   padding: 1px;
 }
 .call-main strong {
@@ -1977,7 +1986,7 @@ button:active {
 .call-main p {
   font-size: 14px;
   line-height: 1.55;
-  color: #2c3a34;
+  color: var(--ink);
   margin-top: 4px;
 }
 .call-counter b {
@@ -1996,22 +2005,22 @@ button:active {
   font-size: 14px;
   border-radius: 999px;
   padding: 1px 9px;
-  background: #eef1ea;
-  color: #2c3a34;
+  background: var(--linen);
+  color: var(--ink);
 }
 .call-state.up,
 .call-state.right {
-  background: #d7efdf;
-  color: #0b6b3a;
+  background: var(--linen);
+  color: var(--forest);
 }
 .call-state.down,
 .call-state.wrong {
-  background: #fbe3dc;
-  color: #b03a22;
+  background: color-mix(in srgb, var(--terracotta) 14%, var(--card));
+  color: var(--terracotta);
 }
 .call-price {
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
   color: var(--ink);
 }
@@ -2027,12 +2036,12 @@ button:active {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  color: #0e6b47;
+  color: var(--forest);
 }
 .calls-empty {
   padding: 22px;
-  border: 1px dashed #cfd2c6;
-  border-radius: 3px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
   font-size: 14px;
   color: var(--muted);
   line-height: 1.6;
@@ -2058,12 +2067,12 @@ button:active {
   align-items: center;
   gap: 8px;
   padding: 6px 0;
-  border-bottom: 1px solid #ecebe4;
+  border-bottom: 1px solid var(--linen);
   font-size: 14px;
 }
 .record b {
   font:
-    500 14px "DM Mono",
+    500 14px "Geist Mono",
     monospace;
 }
 .record small {
@@ -2086,10 +2095,10 @@ button:active {
   gap: 4px;
   padding: 16px;
   text-align: left;
-  border-radius: 3px;
+  border-radius: 12px;
 }
 .resident-mini:hover {
-  background: #f1f6f1;
+  background: var(--linen);
   transform: translateY(-3px);
 }
 .resident-mini strong {
@@ -2104,9 +2113,9 @@ button:active {
 }
 .resident-mini span {
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
-  color: #2c3a34;
+  color: var(--ink);
   margin-top: 6px;
 }
 .agents-grid {
@@ -2147,7 +2156,7 @@ button:active {
 .agent-persona {
   font-size: 14px;
   line-height: 1.65;
-  color: #24332d;
+  color: var(--ink);
 }
 .agent-beat {
   display: flex;
@@ -2163,8 +2172,8 @@ button:active {
   font-weight: 500;
 }
 .agent-latest {
-  background: #f5f4ee;
-  border-radius: 3px;
+  background: var(--linen);
+  border-radius: 12px;
   padding: 14px 16px;
   display: grid;
   gap: 7px;
@@ -2176,7 +2185,7 @@ button:active {
 .agent-latest > p {
   font-size: 14px;
   line-height: 1.6;
-  color: #24332d;
+  color: var(--ink);
 }
 .agent-latest-meta {
   font-size: 14px;
@@ -2196,7 +2205,7 @@ button:active {
 .agent-numbers dd {
   margin: 2px 0 0;
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
 }
 .agent-numbers small {
@@ -2209,7 +2218,7 @@ button:active {
 .agent-card .card-actions .text-button {
   margin-left: auto;
   font:
-    14px "DM Mono",
+    14px "Geist Mono",
     monospace;
 }
 .profile-thought strong {
@@ -2231,8 +2240,8 @@ button:active {
   border-radius: 999px;
 }
 .filter-row .active {
-  background: #e1f0e6;
-  border-color: #a9d3b7;
+  background: var(--linen);
+  border-color: var(--faint);
 }
 .research-layout {
   display: grid;
@@ -2349,7 +2358,7 @@ footer .text-button:hover {
   color: var(--ink);
 }
 .agent-card :is(.agent-persona, .agent-latest > p) {
-  color: #24332d;
+  color: var(--ink);
 }
 .agent-card :is(.agent-head p, dt, .agent-latest-meta, .agent-beat span) {
   color: var(--muted);
