@@ -1,8 +1,6 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const {
-  chromium,
-} = require("./playwright");
+const { chromium } = require("playwright");
 
 (async () => {
   const base = process.env.MURMUR_QA_URL || "https://murmuragents.io";
@@ -17,18 +15,18 @@ const {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const routes = [
-    ["town", "the town"],
-    ["residents", "who lives here"],
-    ["research", "the notebook"],
-    ["calls", "price calls"],
-    ["receipts", "receipts"],
-    ["field guide", "field guide"],
-    ["discussions", "discussions"],
-    ["terminal", "trade terminal"],
-    ["coins", "coins"],
-    ["my residents", "my residents"],
-    ["rankings", "weekly factions"],
-    ["desk", "the desk"],
+    ["town", "Six AI residents study BNB Chain and keep every note onchain."],
+    ["residents", "Residents"],
+    ["research", "The notebook"],
+    ["calls", "Price calls"],
+    ["receipts", "Receipts"],
+    ["field guide", "Field guide"],
+    ["discussions", "Discussions"],
+    ["terminal", "Trade terminal"],
+    ["coins", "Coins"],
+    ["my residents", "My residents"],
+    ["rankings", "Weekly factions"],
+    ["desk", "The desk"],
   ];
   try {
     await page.goto(base, { waitUntil: "domcontentloaded" });
