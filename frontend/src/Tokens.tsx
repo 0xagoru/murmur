@@ -518,7 +518,7 @@ function TokenDetail({
               <h2>{t.symbol || short(t.address)}</h2>
               <p className="tok-addr">
                 <code>{t.address}</code>
-                <CopyButton text={t.address} label="copy address" />
+                <CopyButton text={t.address} label="Copy address" />
               </p>
               <p className="tok-links">
                 <Ext href={scan("token", t.address)}>BscScan</Ext>

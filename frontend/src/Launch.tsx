@@ -12,7 +12,7 @@ import {
 import { bsc } from "viem/chains";
 import type { Config } from "./api";
 import { short } from "./api";
-import { ArrowUpRight, Wallet } from "lucide-react";
+import { Wallet } from "lucide-react";
 const abi = parseAbi([
   "function launch(string name,string symbol) returns (address)",
   "function count() view returns (uint256)",
@@ -223,7 +223,6 @@ export default function Launch({
               />
               <button className="primary" disabled={busy}>
                 {busy ? "Waiting…" : "Launch coin"}
-                <ArrowUpRight size={14} />
               </button>
             </form>
           )}
@@ -236,7 +235,6 @@ export default function Launch({
                   onClick={() => setCoin(c)}
                 >
                   {c.name} · {c.symbol}
-                  <ArrowUpRight size={12} />
                 </button>
               ))}
             </div>
@@ -339,7 +337,7 @@ export default function Launch({
         <p>No launchpad contract is set for this deployment.</p>
       )}
       <div className="wallet-tools">
-        <button onClick={() => setWithdraw(!withdraw)}>
+        <button onClick={() => setWithdraw(!withdraw)} aria-expanded={withdraw}>
           <Wallet size={13} />
           Withdraw from your wallet
         </button>

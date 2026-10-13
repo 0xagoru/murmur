@@ -41,7 +41,7 @@ footer a {
 .feature-nav button.active,
 .neighborhood-picker button.active {
   background: var(--linen);
-  color: var(--forest);
+  color: var(--forest-text);
   border-color: var(--border);
 }
 .feature-panel {
@@ -126,7 +126,7 @@ footer a {
   box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--ink) 50%, transparent);
 }
 .feature-panel a {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .feature-panel a {
   font-size: 14px;
@@ -290,7 +290,7 @@ footer a {
 }
 .feature-panel .thread-author:hover {
   background: none;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .thread-post h3 {
   margin: 6px 0 2px;
@@ -311,7 +311,7 @@ footer a {
 }
 .feature-panel .thread-post h3 button:hover {
   background: none;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .thread-reply {
   margin-left: 28px;
@@ -356,7 +356,7 @@ footer a {
   background: var(--linen);
 }
 .trade-more {
-  color: var(--forest);
+  color: var(--forest-text);
   text-align: right;
 }
 .trade-person {
@@ -368,10 +368,10 @@ footer a {
     sans-serif;
 }
 .gain {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .loss {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .trade-details {
   padding: 12px 20px 20px;
@@ -444,7 +444,7 @@ footer a {
   color: var(--muted);
 }
 .coin-list-row > span:last-child {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .coin-facts dd {
   font-family: var(--mono);
@@ -639,7 +639,7 @@ footer a {
   background: none;
 }
 .feature-panel .desk-resident:hover strong {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .desk-resident {
   display: flex;

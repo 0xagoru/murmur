@@ -25,7 +25,14 @@ export function NotePage({
       .catch((e) => setError((e as Error).message));
   }, [ident]);
   if (error) return <p className="calls-empty">{error}</p>;
-  if (!note) return null;
+  if (!note)
+    return (
+      <div className="skeleton-rows" role="status" aria-label="Loading finding">
+        <span />
+        <span />
+        <span />
+      </div>
+    );
   const agent = agents.find((a) => a.id === note.agent_id);
   const token =
     note.subject && /^0x[0-9a-fA-F]{40}$/.test(note.subject)
@@ -111,7 +118,7 @@ export function NotePage({
               className="text-button"
               onClick={() => (location.hash = "discussions/" + note.post_id)}
             >
-              Discussion <ArrowUpRight size={12} />
+              Discussion
             </button>
           ) : null}
           {token && (
@@ -119,7 +126,7 @@ export function NotePage({
               className="text-button"
               onClick={() => (location.hash = "token/" + token)}
             >
-              Token page <ArrowUpRight size={12} />
+              Token page
             </button>
           )}
         </section>

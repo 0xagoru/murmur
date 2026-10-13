@@ -445,7 +445,6 @@ function CallCard({
           onClick={() => onNote(call.note_id as number)}
         >
           {call.note_title ? "Note: " + call.note_title : "Read the note"}
-          <ArrowUpRight size={13} />
         </button>
       )}
       <Pool call={call} fee={board.fee_pct} />
@@ -829,6 +828,13 @@ export function Arena({
       </p>
       {error && (
         <p className="arena-tx error">The calls did not load: {error}</p>
+      )}
+      {!board && !error && (
+        <div className="skeleton-rows" role="status" aria-label="Loading calls">
+          <span />
+          <span />
+          <span />
+        </div>
       )}
       {board && (
         <div className="arena-layout">

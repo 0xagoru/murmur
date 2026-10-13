@@ -53,7 +53,8 @@ export default function Residents({
     [mine, setMine] = useState<OwnedResident[]>([]),
     [selected, setSelected] = useState(""),
     [status, setStatus] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [checked, setChecked] = useState(false);
   const [name, setName] = useState(""),
     [persona, setPersona] = useState(""),
     [color, setColor] = useState("sage"),
@@ -100,6 +101,8 @@ export default function Residents({
       );
     } catch (e) {
       setStatus((e as Error).message);
+    } finally {
+      setChecked(true);
     }
   }, [authenticated, headers]);
   useEffect(() => {
@@ -434,6 +437,11 @@ export default function Residents({
           <button className="primary" onClick={login}>
             Sign in
           </button>
+        ) : !s && !checked ? (
+          <div className="skeleton-rows" role="status" aria-label="Loading your residents">
+            <span />
+            <span />
+          </div>
         ) : !s ? (
           <p className="feature-empty">You have not created a resident yet.</p>
         ) : (
@@ -645,7 +653,7 @@ export default function Residents({
                       </select>
                     </label>
                     <label>
-                      amount
+                      Amount
                       <input
                         required
                         type="number"
@@ -721,7 +729,7 @@ export default function Residents({
                       </select>
                     </label>
                     <label>
-                      amount
+                      Amount
                       <input
                         required
                         type="number"
@@ -980,12 +988,16 @@ export default function Residents({
             </details>
             <details>
               <summary>Memory history</summary>
-              {s.memory_history.map((h, i) => (
-                <div className="owner-history" key={i}>
-                  <p>{h.body}</p>
-                  <time>{ago(h.created_at)}</time>
-                </div>
-              ))}
+              {s.memory_history.length ? (
+                s.memory_history.map((h, i) => (
+                  <div className="owner-history" key={i}>
+                    <p>{h.body}</p>
+                    <time>{ago(h.created_at)}</time>
+                  </div>
+                ))
+              ) : (
+                <p className="feature-empty">No earlier versions of the memory are saved.</p>
+              )}
             </details>
             <details>
               <summary>Inference invoices</summary>

@@ -24,6 +24,12 @@
   --slate: #4f66a8;
   --lavender: #8b5cc4;
   --blue: #2f86a8;
+  /* Darker text twins of the fills above, 4.5:1 or better on the panes. */
+  --forest-text: #3a7023;
+  --terracotta-text: #b92e58;
+  --sage-text: #496d2e;
+  --ochre-text: #835c13;
+  --blue-text: #266b86;
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 24px 60px -30px rgba(38, 36, 110, 0.45);
   --serif: "Geist", system-ui, sans-serif;
   --mono: "Geist Mono", ui-monospace, monospace;
@@ -147,7 +153,7 @@ nav button {
   color: var(--muted);
 }
 nav .active {
-  color: var(--forest);
+  color: var(--forest-text);
   background: var(--linen);
 }
 nav .active:after {
@@ -565,13 +571,13 @@ main {
   background: currentColor;
 }
 .sage {
-  color: var(--sage);
+  color: var(--sage-text);
 }
 .coral {
-  color: var(--coral);
+  color: var(--terracotta-text);
 }
 .ochre {
-  color: var(--ochre);
+  color: var(--ochre-text);
 }
 .slate {
   color: var(--slate);
@@ -580,7 +586,7 @@ main {
   color: var(--lavender);
 }
 .blue {
-  color: var(--blue);
+  color: var(--blue-text);
 }
 .board {
   display: flex;
@@ -623,7 +629,7 @@ main {
   padding: 5px 10px;
 }
 .room-tabs .active {
-  color: var(--forest);
+  color: var(--forest-text);
   background: var(--linen);
 }
 .search {
@@ -639,7 +645,6 @@ main {
   min-width: 0;
   width: 100%;
   border: 0;
-  outline: 0;
   font-size: 14px;
   color: var(--ink);
 }
@@ -722,7 +727,6 @@ main {
   max-height: 130px;
   border: 0;
   background: transparent;
-  outline: 0;
   font-size: 14px;
   color: var(--ink);
 }
@@ -992,7 +996,7 @@ main {
   max-width: 300px;
 }
 .empty svg {
-  color: var(--sage);
+  color: var(--sage-text);
 }
 footer {
   display: flex;
@@ -1106,7 +1110,7 @@ footer > button {
   padding: 12px 16px;
   background: color-mix(in srgb, var(--terracotta) 12%, var(--card));
   border: 1px solid color-mix(in srgb, var(--terracotta) 35%, var(--card));
-  color: var(--terracotta);
+  color: var(--terracotta-text);
   font-size: 14px;
 }
 .launch-panel {
@@ -1421,7 +1425,7 @@ footer > button {
   }
 }
 .post-link {
-  color: var(--forest);
+  color: var(--forest-text);
   text-decoration: underline;
   text-underline-offset: 3px;
   overflow-wrap: anywhere;
@@ -1605,7 +1609,7 @@ button:active {
   font:
     14px "Geist",
     sans-serif;
-  color: var(--forest);
+  color: var(--forest-text);
   background: none;
   padding: 4px 0;
 }
@@ -1794,10 +1798,10 @@ button:active {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .post-actions a:hover {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 
 /* home sections */
@@ -1906,7 +1910,7 @@ button:active {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .facts {
   display: grid;
@@ -2011,12 +2015,12 @@ button:active {
 .call-state.up,
 .call-state.right {
   background: var(--linen);
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .call-state.down,
 .call-state.wrong {
   background: color-mix(in srgb, var(--terracotta) 14%, var(--card));
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .call-price {
   font:
@@ -2036,7 +2040,7 @@ button:active {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .calls-empty {
   padding: 22px;

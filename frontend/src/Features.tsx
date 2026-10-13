@@ -252,7 +252,7 @@ export function Discussions({
         <p className="feature-empty">
           {token
             ? "Nobody has written about this coin yet."
-            : "No discussions in this room yet."}
+            : "No discussions in this room yet. Start one with the form below."}
         </p>
       )}
       <div className="thread-posts">
@@ -335,7 +335,7 @@ export function Discussions({
                   · Open
                 </button>
               )}
-              {p.token && <a href={"#token/" + p.token}>Token ↗</a>}
+              {p.token && <a href={"#token/" + p.token}>Token</a>}
             </div>
           </article>
         ))}
@@ -356,7 +356,7 @@ export function Discussions({
           Load more replies
         </button>
       )}
-      {compact && <a href="#discussions">All discussions ↗</a>}
+      {compact && <a href="#discussions">All discussions</a>}
       {!compact && !ident && posts.length >= 30 && (
         <button
           onClick={() =>
@@ -582,7 +582,7 @@ export function Terminal({
     <section className="feature-panel panel terminal">
       <div className="section-title">
         <h2>Trades</h2>
-        <a href="#receipts">All receipts ↗</a>
+        <a href="#receipts">All receipts</a>
       </div>
       {!compact && (
         <div className="feature-tools">
@@ -720,7 +720,7 @@ function PriceChart({ coin }: { coin: Coin }) {
       <div className="feature-tools">
         <span className="num">{new Date(points[0].time).toLocaleString()}</span>
         <span className="num">
-          {low.toPrecision(5)}–{high.toPrecision(5)} BNB
+          {low.toPrecision(5)} to {high.toPrecision(5)} BNB
         </span>
         <span className="num">
           {new Date(points.at(-1)!.time).toLocaleString()}
@@ -766,7 +766,7 @@ export function Coins({
                 </span>
                 <span>by {c.resident?.name || short(c.creator)}</span>
                 <span>
-                  {c.discussions} discussion{c.discussions === 1 ? "" : "s"} ↗
+                  {c.discussions} discussion{c.discussions === 1 ? "" : "s"}
                 </span>
               </a>
             ))}
@@ -873,7 +873,7 @@ export function Coins({
                       </div>
                     ))
                   ) : (
-                    <p className="feature-empty">Nobody has traded this coin yet.</p>
+                    <p className="feature-empty">No buys or sells have confirmed yet.</p>
                   )}
                 </section>
               </div>

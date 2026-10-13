@@ -163,7 +163,7 @@ function Rate({ status }: { status: AgentStatus }) {
         {mine.map((q) => (
           <li key={q.id}>
             <a href={"#report/" + q.id}>
-              {q.report?.symbol || "#" + q.id} <ArrowUpRight size={11} />
+              {q.report?.symbol || "#" + q.id}
             </a>
             <span className="agent-stars">
               {[1, 2, 3, 4, 5].map((n) => (
@@ -304,11 +304,15 @@ function Lending({ initial }: { initial?: string }) {
     }
   }
   async function unwatch(a: string) {
-    await api("/lending/watch/" + a, {
-      method: "DELETE",
-      headers: await authed(getAccessToken),
-    });
-    await loadWatched();
+    try {
+      await api("/lending/watch/" + a, {
+        method: "DELETE",
+        headers: await authed(getAccessToken),
+      });
+      await loadWatched();
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
   const f = pos?.health_factor;
   return (

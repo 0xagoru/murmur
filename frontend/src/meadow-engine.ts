@@ -257,7 +257,7 @@ export function startMeadow(canvas: HTMLCanvasElement, opts: MeadowOptions) {
         low: false,
       });
     }
-    // Clouds that sit low on the hillside, as in the photo.
+    // Clouds that sit low on the hillside.
     for (let i = 0; i < 3; i++) {
       const s = cloudSprite(r, (0.75 + r() * 0.4) * k);
       const x = W * (0.3 + i * 0.22 + r() * 0.08);

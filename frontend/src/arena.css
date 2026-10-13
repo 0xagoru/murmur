@@ -41,7 +41,7 @@
 .arena-page .text-button,
 .audit-page .text-button {
   font: 14px "Geist", sans-serif;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .arena-page .text-button:hover,
 .audit-page .text-button:hover {
@@ -131,7 +131,7 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .arena-legal {
   font-size: 13px;
@@ -268,16 +268,14 @@
   height: 7px;
   border-radius: 50%;
   background: var(--honey);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--honey) 30%, transparent);
-  animation: arena-pulse 1.6s var(--ease) infinite alternate;
 }
 .arena-state.right {
   background: color-mix(in srgb, var(--forest) 14%, var(--card));
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .arena-state.wrong {
   background: color-mix(in srgb, var(--terracotta) 13%, var(--card));
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .arena-state.void,
 .arena-state.closed {
@@ -302,10 +300,10 @@
   font-style: normal;
 }
 .arena-mark em.up {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .arena-mark em.down {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .arena-thesis {
   font-size: 15px;
@@ -409,7 +407,7 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--card);
   padding-left: 14px;
   min-width: 0;
@@ -433,6 +431,9 @@
 .arena-back label:focus-within,
 .audit-form input:focus {
   border-color: var(--forest);
+}
+.arena-back label:focus-within {
+  box-shadow: 0 0 0 1px var(--forest);
 }
 .arena-back .primary {
   min-width: 0;
@@ -473,7 +474,7 @@
 }
 .arena-tx.error {
   background: color-mix(in srgb, var(--terracotta) 12%, var(--card));
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .arena-tx.wait span::after {
   content: "";
@@ -527,7 +528,7 @@
   text-align: right;
 }
 .arena-backers .with {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .arena-backers .against {
   color: var(--muted);
@@ -629,7 +630,7 @@
 }
 .audit-form input {
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--card);
   padding: 11px 18px;
   font-size: 14.5px;
@@ -694,7 +695,7 @@
 /* verdicts: clean is ivy, caution is lamp light, danger is the roof */
 .audit-verdict.sage {
   background: color-mix(in srgb, var(--forest) 14%, var(--card));
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .audit-verdict.ochre {
   background: color-mix(in srgb, var(--honey) 38%, var(--card));
@@ -702,12 +703,12 @@
 }
 .audit-verdict.coral {
   background: color-mix(in srgb, var(--terracotta) 14%, var(--card));
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .audit-state.refunded,
 .audit-state.failed {
   background: color-mix(in srgb, var(--terracotta) 12%, var(--card));
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .audit-copy {
   width: 28px;
@@ -718,7 +719,7 @@
   flex: none;
 }
 .audit-copy:hover {
-  color: var(--forest);
+  color: var(--forest-text);
   background: var(--linen);
   transform: translateY(-1px);
 }
@@ -762,7 +763,7 @@
   padding: 0;
 }
 .audit-title .text-button code {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .audit-title > .audit-verdict {
   font-size: 15px;
@@ -857,13 +858,12 @@
 .audit-flags li::before {
   content: counter(flag);
   font: 14px var(--mono);
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .audit-read .audit-watch {
   font-size: 14.5px;
   background: color-mix(in srgb, var(--honey) 22%, var(--card));
-  border-left: 3px solid var(--honey);
-  border-radius: 0 10px 10px 0;
+  border-radius: 10px;
   padding: 10px 14px;
 }
 .audit-watch b {
@@ -989,11 +989,11 @@
   font-size: 14px;
 }
 .audit-ok {
-  color: var(--forest);
+  color: var(--forest-text);
   font-size: 12.5px;
 }
 .audit-bad {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
   font-size: 12.5px;
 }
 .audit-verify > .arena-fine {

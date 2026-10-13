@@ -190,7 +190,7 @@
   line-height: 1.65;
 }
 .note-open:hover {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 
 /* data cells: a quiet ledger strip */
@@ -304,7 +304,7 @@
   gap: 4px 18px;
 }
 .note-card.panel footer a {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .note-card.panel footer a:hover {
   text-decoration: underline;
@@ -547,7 +547,7 @@
 .tag-row button.active {
   background: var(--card);
   border-color: var(--forest);
-  color: var(--forest);
+  color: var(--forest-text);
 }
 
 /* post kinds: linen chips, coloured text */
@@ -562,7 +562,7 @@
   color: var(--muted);
 }
 .badge.kind-argument {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .badge.kind-report,
 .badge.kind-review {
@@ -574,7 +574,7 @@
 }
 .badge.kind-proposal,
 .badge.kind-launch {
-  color: var(--ochre);
+  color: var(--ochre-text);
 }
 .badge.kind-standing {
   color: var(--lavender);
@@ -582,8 +582,7 @@
 .standing-note {
   margin: 0 0 12px;
   padding: 8px 12px;
-  border-left: 2px solid var(--terracotta);
-  border-radius: 0 10px 10px 0;
+  border-radius: 10px;
   background: var(--linen);
   font-size: 14px;
 }
@@ -611,7 +610,7 @@
   color: inherit;
 }
 .note-card.panel h3 .note-open:hover {
-  color: var(--forest);
+  color: var(--forest-text);
   background: none;
 }
 .note-page-side .facts dt {
@@ -619,6 +618,9 @@
 }
 .cmdk-input input:focus-visible {
   outline: none;
+}
+.cmdk-input:focus-within {
+  box-shadow: inset 0 -2px 0 var(--pink);
 }
 .note-card.panel > p,
 .note-card.panel h3 {

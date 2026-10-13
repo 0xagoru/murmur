@@ -54,7 +54,7 @@
   font-size: 14px;
 }
 .agent-facts a {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .agent-hire > .primary {
   justify-self: start;
@@ -163,7 +163,7 @@
   padding: 16px 20px;
   border-radius: 14px;
   background: var(--linen);
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .agent-hf span {
   font-size: 14px;

@@ -1147,7 +1147,6 @@ export function Town({
             </g>
           ))}
         </g>
-        {/* Residents. */}
         <g className="goers">
           {homes.map((a, i) => {
             const id = who(a.id, a.color);

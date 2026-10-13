@@ -57,7 +57,6 @@
 .h-room.lived,
 .goer {
   cursor: pointer;
-  outline: none;
 }
 .h-room-glow {
   fill: var(--honey);
@@ -65,9 +64,18 @@
   transition: opacity 0.5s var(--ease);
 }
 .h-room.shared:hover .h-room-glow,
-.h-room.lived:hover .h-room-glow,
-.h-room:focus-visible .h-room-glow {
+.h-room.lived:hover .h-room-glow {
   opacity: 0.12;
+}
+/* Keyboard focus draws the room's own outline instead of a box around the group. */
+.house-map .h-room:focus-visible {
+  outline: none;
+}
+.h-room:focus-visible .h-room-glow {
+  opacity: 1;
+  fill-opacity: 0.12;
+  stroke: var(--pink);
+  stroke-width: 2;
 }
 .h-room:focus-visible .room-label,
 .h-room:focus-visible .room-name {

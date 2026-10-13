@@ -399,7 +399,15 @@ function ReportPage({
         <a className="text-button" href="#audits">
           All reports
         </a>
-        {error && <p className="arena-tx error">{error}</p>}
+        {error ? (
+          <p className="arena-tx error">{error}</p>
+        ) : (
+          <div className="skeleton-rows" role="status" aria-label="Loading report">
+            <span />
+            <span />
+            <span />
+          </div>
+        )}
       </section>
     );
   const rep = r.report;
@@ -553,7 +561,7 @@ function ReportPage({
                     className="text-button"
                     onClick={() => onThread(r.post_id as number)}
                   >
-                    Discussion <ArrowUpRight size={12} />
+                    Discussion
                   </button>
                 )}
               </p>
@@ -716,10 +724,17 @@ function Desk({ onToken }: { onToken?: (address: string) => void }) {
           style={{ ["--d" as string]: 1 }}
         >
           <h3>Recent requests</h3>
+          {!list && !error && (
+            <div className="skeleton-rows" role="status" aria-label="Loading requests">
+              <span />
+              <span />
+              <span />
+            </div>
+          )}
           {list && !requests.length && (
             <p className="calls-empty">
-              Nobody has requested a report yet. The first one will be listed
-              here.
+              Nobody has requested a report yet. Paste a token address to
+              request the first.
             </p>
           )}
           <ul>

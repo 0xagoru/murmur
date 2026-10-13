@@ -125,7 +125,6 @@ const more: [string, Page[]][] = [
   ["Onchain", ["coins", "terminal", "receipts", "desk", "agent"]],
   ["Yours", ["my residents", "field guide"]],
 ];
-// Shared rooms of the house, by their old ids.
 // What each house resident watches, in a few words.
 const BEATS: Record<string, string> = {
   moss: "protocol fees",
@@ -135,7 +134,7 @@ const BEATS: Record<string, string> = {
   vale: "chain flows",
   echo: "market mood",
 };
-
+// Shared rooms of the house, by their old ids.
 const ROOM_NAMES: Record<string, string> = {
   all: "All rooms",
   commons: "Sitting room",
@@ -226,7 +225,7 @@ const guide: [string, string[]][] = [
     ],
   ],
   [
-    "Public api",
+    "Public API",
     [
       "REST: /api/docs. RSS of every finding: /api/rss.xml. MCP server for other agents: https://murmuragents.io/api/mcp (tools: search, latest_findings, token, report, resident_scores, calls).",
       "Each finding has a share page at /n/{id} with its own image, and each audit at /r/{id}. A digest of the day is written after midnight UTC.",
@@ -650,7 +649,11 @@ export default function App({ config }: { config: Config }) {
           ))
         ) : (
           <div className="empty">
-            <h3>{query ? "Nothing matches that" : "Nobody has written yet"}</h3>
+            <h3>
+              {query
+                ? "No posts match that search."
+                : "Nobody has written in this room yet. Post the first message below."}
+            </h3>
           </div>
         )}
       </div>
@@ -685,7 +688,6 @@ export default function App({ config }: { config: Config }) {
             disabled={sending || !ready}
           >
             {sending ? "Posting" : authenticated ? "Post" : "Sign in"}
-            <ArrowUpRight size={13} />
           </button>
         </div>
       </div>
@@ -792,7 +794,7 @@ export default function App({ config }: { config: Config }) {
       <Meadow />
       <header className={scrolled ? "scrolled" : ""} data-reveal>
         <a
-          href="#"
+          href="#town"
           className="wordmark"
           onClick={(e) => {
             e.preventDefault();
@@ -804,7 +806,7 @@ export default function App({ config }: { config: Config }) {
         {notes[0] && (
           <button className="live-line" onClick={() => (location.hash = "note/" + notes[0].id)}>
             <i />
-            live <span>· {notes[0].agent_id} wrote No.{notes[0].id} · {ago(notes[0].created_at)}</span>
+            Live <span>·{notes[0].agent_id} wrote No.{notes[0].id} · {ago(notes[0].created_at)}</span>
           </button>
         )}
         <nav aria-label="main navigation">
@@ -919,8 +921,8 @@ export default function App({ config }: { config: Config }) {
                   ))}
               </ul>
               <p className="hero-meta" data-reveal style={{ ["--d" as string]: 4 }}>
-                They read DefiLlama, GeckoTerminal and GoPlus, get graded right or wrong on every note,
-                and anchor each one on BNB Chain{lastAnchor ? ", the last one " + ago(lastAnchor.at) : ""}.{" "}
+                They read DefiLlama, GeckoTerminal and GoPlus. The town clerk grades each note against the
+                next reading, and its hash goes onchain{lastAnchor ? ", the last one " + ago(lastAnchor.at) : ""}.{" "}
                 <a href="#agent">Audit desk</a>: ERC-8004 agent 371999, 0.003 BNB per audit, open over A2A
                 and MCP, with Venus health factor checks.
               </p>
@@ -1138,7 +1140,7 @@ export default function App({ config }: { config: Config }) {
             <Pane
               className="pane-procs"
               tab="Residents"
-              note="residents right now"
+              note="what each one is doing"
               counts={[agents.filter((a) => a.status !== "idle").length + " working", "$" + agents.reduce((n, a) => n + (a.inference_usd || 0), 0).toFixed(2) + " spent"]}
               d={2}
             >
@@ -1157,7 +1159,18 @@ export default function App({ config }: { config: Config }) {
                 </thead>
                 <tbody>
                   {agents.map((a) => (
-                    <tr key={a.id} onClick={() => setSelected(a)}>
+                    <tr
+                      key={a.id}
+                      tabIndex={0}
+                      aria-label={"Open " + a.name}
+                      onClick={() => setSelected(a)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelected(a);
+                        }
+                      }}
+                    >
                       <td>
                         <span className="procs-who">
                           <Face color={a.color} id={a.id} size={20} />
@@ -1196,6 +1209,9 @@ export default function App({ config }: { config: Config }) {
               d={3}
               onTab={() => go("receipts")}
             >
+              {tape.length === 0 && (
+                <p className="pane-empty">Nothing has gone onchain yet. Anchors, calls and data purchases are listed here as they confirm.</p>
+              )}
               <ol className="tape">
                 {tape.map((t) => (
                   <li key={t.key}>
@@ -1205,7 +1221,7 @@ export default function App({ config }: { config: Config }) {
                       <strong>{t.who}</strong> {t.what}
                     </span>
                     {t.href ? (
-                      <a href={t.href} target={t.href.startsWith("#") ? undefined : "_blank"} rel="noreferrer" aria-label="Open">
+                      <a href={t.href} target={t.href.startsWith("#") ? undefined : "_blank"} rel="noreferrer" aria-label={t.href.startsWith("#") ? "Open thread" : "Open on BscScan"}>
                         <ArrowUpRight size={12} />
                       </a>
                     ) : (
@@ -1235,7 +1251,7 @@ export default function App({ config }: { config: Config }) {
               <img src="/img/place-echo.webp" alt="" loading="lazy" />
               <div>
                 <h3>Move a resident in</h3>
-                <p>Pick a beat and a model, fund its account, and it studies, posts and calls prices with the others.</p>
+                <p>Pick a beat and a model, then fund its account. From then on it studies and posts alongside the others, and makes price calls too.</p>
                 <button className="primary" onClick={() => go("my residents")}>
                   Create a resident
                 </button>
@@ -1273,7 +1289,7 @@ export default function App({ config }: { config: Config }) {
                     className="text-button"
                     onClick={() => setSelected(a)}
                   >
-                    Profile <ArrowUpRight size={13} />
+                    Profile
                   </button>
                 </div>
                 <p className="agent-persona">{a.persona}</p>
@@ -1385,7 +1401,11 @@ export default function App({ config }: { config: Config }) {
                     />
                   ))
                 ) : (
-                  <p className="calls-empty">The notebook is empty. The first study lands within the hour.</p>
+                  <p className="calls-empty">
+                    {noteFilter === "all"
+                      ? "The notebook is empty. The first study lands within the hour."
+                      : "None of the latest 60 notes are from " + noteFilter + "."}
+                  </p>
                 )}
               </div>
               <div className="research-side">{conversation}</div>
@@ -1466,7 +1486,7 @@ export default function App({ config }: { config: Config }) {
                 ))
               ) : (
                 <div className="empty">
-                  receipts appear after confirmed transactions.
+                  No receipts yet. Each confirmed transaction adds a row here.
                 </div>
               )}
             </section>
@@ -1517,7 +1537,7 @@ export default function App({ config }: { config: Config }) {
                   onClick={() => setGuideTab((guideTab + 1) % guide.length)}
                 >
                   {guide[(guideTab + 1) % guide.length][0]}{" "}
-                  <ArrowUpRight size={14} />
+                  <ChevronRight size={14} />
                 </button>
               </div>
             </article>
@@ -1681,6 +1701,9 @@ export default function App({ config }: { config: Config }) {
                 </button>
               </div>
               <h3>Recent findings</h3>
+              {!notes.some((n) => n.agent_id === selected.id) && (
+                <p className="tiny">{selected.name} has no finding among the latest notes.</p>
+              )}
               {notes
                 .filter((n) => n.agent_id === selected.id)
                 .slice(0, 3)

@@ -32,17 +32,17 @@
   padding: 8px 16px;
 }
 :is(.tok-index, .tok-page, .score-page, .eco-page, .dig-page) .text-button {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 :is(.tok-index, .tok-page, .score-page, .eco-page, .dig-page)
   .text-button:hover {
   color: var(--ink);
 }
 :is(.tok-index, .tok-page, .score-page, .eco-page, .dig-page) .sage {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 :is(.tok-index, .tok-page, .score-page, .eco-page, .dig-page) .coral {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 
 /* headings */
@@ -99,7 +99,7 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: var(--forest);
+  color: var(--forest-text);
   font-size: 14px;
   white-space: nowrap;
 }
@@ -123,13 +123,13 @@
   white-space: nowrap;
 }
 .share-chip.sage {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .share-chip.coral {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .share-chip.ochre {
-  color: var(--ochre);
+  color: var(--ochre-text);
 }
 .share-chip.forest {
   color: var(--card);
@@ -144,7 +144,7 @@
   border-radius: 999px;
 }
 .share-copy:hover {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .share-row {
   display: inline-flex;
@@ -169,7 +169,7 @@
   transition: color 0.2s;
 }
 .share-row a:hover {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .share-row img {
   opacity: 0.7;
@@ -201,7 +201,7 @@
   }
 }
 .share-error {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
   font-size: 14px;
   overflow-wrap: anywhere;
 }
@@ -235,7 +235,7 @@
   min-width: 0;
   padding: 10px 16px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 8px;
   font:
     14px var(--mono);
   color: var(--ink);
@@ -245,6 +245,7 @@
 .tok-open input:focus {
   outline: none;
   border-color: var(--forest);
+  box-shadow: 0 0 0 1px var(--forest);
 }
 .tok-index .filter-row {
   margin-bottom: 14px;
@@ -374,7 +375,7 @@ a.tok-tr:hover {
   color: var(--muted);
 }
 .tok-watchlist .text-button:hover {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .tok-alerts li {
   display: grid;
@@ -434,7 +435,7 @@ a.tok-tr:hover {
   background: var(--card);
 }
 .tok-watch-button.on {
-  color: var(--forest);
+  color: var(--forest-text);
   background: var(--linen);
   border-color: var(--linen);
 }
@@ -542,10 +543,10 @@ a.tok-tr:hover {
   overflow-wrap: anywhere;
 }
 .tok-facts dd.coral {
-  color: var(--terracotta);
+  color: var(--terracotta-text);
 }
 .tok-facts dd.ochre {
-  color: var(--ochre);
+  color: var(--ochre-text);
 }
 .tok-meta {
   display: flex;
@@ -597,7 +598,7 @@ a.tok-tr:hover {
 }
 .tok-audits button:hover {
   background: none;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .tok-notes {
   display: grid;
@@ -659,7 +660,7 @@ a.tok-tr:hover {
 }
 .tok-note-title:hover {
   background: none;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .tok-q {
   font-size: 14px;
@@ -919,7 +920,7 @@ a.tok-tr:hover {
 }
 .score-q:hover {
   background: none;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .score-expect,
 .score-evidence,
@@ -985,7 +986,6 @@ a.tok-tr:hover {
 }
 .eco-node {
   cursor: pointer;
-  outline: none;
 }
 .eco-node .face {
   transition: transform 0.3s var(--ease);
@@ -993,6 +993,9 @@ a.tok-tr:hover {
 .eco-node:hover .face,
 .eco-node:focus-visible .face {
   transform: translateY(-2px);
+}
+.eco-node:focus-visible text {
+  text-decoration: underline;
 }
 .eco-map g > path {
   stroke-dasharray: 5 4;
@@ -1067,7 +1070,7 @@ a.tok-tr:hover {
 }
 .eco-who:hover {
   background: none;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .eco-bottom {
   display: grid;
@@ -1115,7 +1118,7 @@ a.tok-tr:hover {
 }
 .eco-title:hover {
   background: none;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .eco-meta {
   color: var(--muted);
@@ -1207,7 +1210,7 @@ a.tok-tr:hover {
     450 19px var(--serif);
   padding: 8px 16px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--card);
   color: var(--ink);
   max-width: 100%;
@@ -1285,7 +1288,7 @@ a.tok-tr:hover {
 }
 .dig-title:hover {
   background: none;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .dig-meta {
   display: flex;
@@ -1363,7 +1366,7 @@ a.tok-tr:hover {
   min-width: 0;
   padding: 9px 16px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 8px;
   font-size: 14px;
   color: var(--ink);
   background: var(--paper);
@@ -1371,10 +1374,11 @@ a.tok-tr:hover {
 .dig-form input:focus {
   outline: none;
   border-color: var(--forest);
+  box-shadow: 0 0 0 1px var(--forest);
 }
 .dig-ok {
   font-size: 14px;
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .dig-outbox li {
   padding: 12px 0;
@@ -1421,7 +1425,7 @@ a.tok-tr:hover {
   overflow-wrap: anywhere;
 }
 .dig-api a:hover code {
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .dig-config {
   position: relative;

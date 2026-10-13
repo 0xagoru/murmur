@@ -53,8 +53,16 @@ select:focus-visible,
   outline: 2px solid var(--pink);
   outline-offset: 3px;
 }
+/* Pink is under 3:1 on the sky, so header and footer rings are white. */
+header :focus-visible,
+footer[data-reveal] :focus-visible {
+  outline-color: #fff;
+}
+.more-menu :focus-visible {
+  outline-color: var(--pink);
+}
 
-/* Meadow -------------------------------------------------------------------- */
+/* Meadow */
 /* One fixed pixel-art canvas (Meadow.tsx), drawn at a third of the resolution and scaled up crisp. */
 .meadow {
   position: fixed;
@@ -67,7 +75,7 @@ select:focus-visible,
   pointer-events: none;
 }
 
-/* Glass ---------------------------------------------------------------------- */
+/* Glass */
 .panel,
 .pane,
 .sheet {
@@ -196,13 +204,6 @@ header.scrolled {
   height: 7px;
   border-radius: 50%;
   background: #ff5fa2;
-  box-shadow: 0 0 0 0 rgba(255, 95, 162, 0.6);
-  animation: live-dot 2s var(--ease) infinite;
-}
-@keyframes live-dot {
-  70% {
-    box-shadow: 0 0 0 7px rgba(255, 95, 162, 0);
-  }
 }
 header nav {
   gap: 2px;
@@ -296,7 +297,7 @@ header nav .active:after {
   color: #fff;
 }
 .search-trigger kbd {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(10, 20, 80, 0.3);
   color: #fff;
 }
 .nav-right .primary {
@@ -314,7 +315,7 @@ header nav .active:after {
   filter: brightness(0) invert(1);
 }
 
-/* Pages ---------------------------------------------------------------------- */
+/* Pages */
 main {
   padding: 0 max(12px, 2.4%);
   max-width: 1600px;
@@ -452,8 +453,7 @@ main {
 .wanderer-body {
   width: 100%;
   aspect-ratio: 15 / 16;
-  filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 16px rgba(255, 255, 255, 0.85))
-    drop-shadow(0 0 30px rgba(255, 210, 240, 0.7));
+  filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 16px rgba(255, 255, 255, 0.85));
   animation: bob 0.84s ease-in-out infinite;
 }
 .wanderer-name {
@@ -501,7 +501,7 @@ main {
   }
 }
 
-/* The desk ------------------------------------------------------------------- */
+/* The desk */
 .home-body {
   display: block;
 }
@@ -544,9 +544,7 @@ main {
   display: inline-flex;
   align-items: center;
   padding: 0 12px;
-  font: 11px var(--mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 12px var(--mono);
   color: #fff;
   background: var(--skyblue);
   border-radius: 0;
@@ -555,19 +553,19 @@ button.pane-name:hover {
   background: var(--ink);
 }
 .pane-board .pane-name {
-  background: var(--pink);
+  background: #c93f86;
 }
 .pane-house .pane-name {
-  background: #6a9a3a;
+  background: #507a28;
 }
 .pane-tape .pane-name {
   background: #8b5cc4;
 }
 .pane-calls .pane-name {
-  background: #d98a1c;
+  background: #a8660f;
 }
 .pane-rank .pane-name {
-  background: #2f86a8;
+  background: #25708f;
 }
 .pane-note {
   overflow: hidden;
@@ -816,12 +814,11 @@ button.pane-name:hover {
 }
 .state.busy::before {
   background: var(--pink);
-  box-shadow: 0 0 0 3px rgba(224, 85, 155, 0.2);
-  animation: pulse 1.6s ease-in-out infinite;
+  animation: pulse 1.6s var(--ease) infinite alternate;
 }
 @keyframes pulse {
-  50% {
-    box-shadow: 0 0 0 6px rgba(224, 85, 155, 0);
+  from {
+    opacity: 0.35;
   }
 }
 
@@ -887,7 +884,7 @@ button.pane-name:hover {
 .tape-kind.k-right,
 .tape-kind.k-call {
   background: rgba(63, 122, 38, 0.12);
-  color: var(--forest);
+  color: var(--forest-text);
 }
 .tape code {
   font-size: 12px;
@@ -997,7 +994,7 @@ footer[data-reveal] .text-button:hover {
   color: #fff;
 }
 
-/* Responsive ------------------------------------------------------------------ */
+/* Responsive */
 @media (max-width: 1200px) {
   .pane-board {
     grid-column: 1 / span 6;
@@ -1040,6 +1037,9 @@ footer[data-reveal] .text-button:hover {
   }
 }
 @media (max-width: 860px) {
+  header nav > button:nth-child(n + 3) {
+    display: none;
+  }
   .desk > * {
     grid-column: 1 / -1 !important;
     grid-row: auto !important;
@@ -1133,6 +1133,10 @@ footer[data-reveal] .text-button:hover {
   }
   .desk {
     gap: 10px;
+  }
+  .wanderers {
+    left: -10px;
+    right: -10px;
   }
   .wanderer {
     width: calc(28px + var(--lane) * -3px);
@@ -1240,8 +1244,8 @@ html {
   max-width: 68ch;
   font-size: 14px;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 1px 10px rgba(20, 40, 140, 0.5);
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(20, 40, 140, 0.7);
 }
 .hero-meta a {
   color: #fff;
@@ -1308,7 +1312,7 @@ footer[data-reveal] {
   gap: 8px 14px;
 }
 .foot-founder > span {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
 }
 .foot-socials .chip-link:hover {
@@ -1412,4 +1416,38 @@ header nav button {
 }
 .nav-right .primary {
   white-space: nowrap;
+}
+
+/* Touch: small controls get a 44px hit area without changing how they look. */
+@media (pointer: coarse) {
+  .nav-right .chip-link,
+  .search-trigger,
+  .nav-right .primary,
+  .replay-play,
+  .share-copy,
+  .call-who,
+  .board-face,
+  button.pane-name {
+    position: relative;
+  }
+  .nav-right .chip-link::after,
+  .search-trigger::after,
+  .nav-right .primary::after,
+  .replay-play::after,
+  .share-copy::after,
+  .call-who::after,
+  .board-face::after,
+  button.pane-name::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+  header nav > button,
+  header .more > button {
+    min-height: 44px;
+  }
 }

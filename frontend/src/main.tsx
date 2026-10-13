@@ -18,7 +18,7 @@ function Boot() {
       <main className="boot">
         <h1>murmur</h1>
         <p>{error}</p>
-        <button onClick={() => location.reload()}>try again</button>
+        <button onClick={() => location.reload()}>Try again</button>
       </main>
     );
   return (

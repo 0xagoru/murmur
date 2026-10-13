@@ -123,7 +123,12 @@ function RouteMap({
             role="button"
             tabIndex={0}
             aria-label={"Open " + (a?.name || id)}
-            onKeyDown={(e) => e.key === "Enter" && a && onAgent(a)}
+            onKeyDown={(e) => {
+              if ((e.key === "Enter" || e.key === " ") && a) {
+                e.preventDefault();
+                onAgent(a);
+              }
+            }}
           >
             <g transform={`translate(${x - 15} ${y - 16})`}>
               <Face color={a?.color} size={30} />
