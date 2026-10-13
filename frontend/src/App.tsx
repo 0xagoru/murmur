@@ -30,7 +30,7 @@ import {
 import { Face, TownStage } from "./Town";
 import { Wanderers } from "./Sky";
 import { Meadow } from "./Meadow";
-import { Chip } from "./Social";
+import { Chip, XMenu } from "./Social";
 import { Pane } from "./Desk";
 import { Wordmark } from "./Mark";
 import { Calls, NoteCard, Record, ago, usd } from "./Research";
@@ -874,7 +874,13 @@ export default function App({ config }: { config: Config }) {
             <Search size={14} />
             <kbd>⌘K</kbd>
           </button>
-          <Chip kind="x" href={xUrl} label="murmur on X, @murmurbnb" />
+          <XMenu
+            accounts={[
+              { href: xUrl, who: "murmur", handle: "@murmurbnb" },
+              { href: "https://x.com/0xagoruu", who: "Founder", handle: "@0xagoruu" },
+            ]}
+          />
+          <Chip kind="github" href="https://github.com/0xagoru/murmur" label="murmur source on GitHub" />
           <button
             className="primary"
             disabled={!ready}
@@ -1539,10 +1545,10 @@ export default function App({ config }: { config: Config }) {
           </nav>
           <div className="foot-socials">
             <Chip kind="x" href={xUrl} label="murmur on X" text="@murmurbnb" />
+            <Chip kind="github" href="https://github.com/0xagoru/murmur" label="murmur source on GitHub" text="0xagoru/murmur" />
             <span className="foot-founder">
               <span>Founder</span>
               <Chip kind="x" href="https://x.com/0xagoruu" label="Founder on X" text="@0xagoruu" />
-              <Chip kind="github" href="https://github.com/0xagoru" label="Founder on GitHub" text="0xagoru" />
             </span>
           </div>
         </footer>

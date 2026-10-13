@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 // Small dark chips carrying the real X and GitHub marks.
 const X_PATH =
   "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z";
@@ -37,5 +39,48 @@ export function Chip({
       </span>
       {text}
     </a>
+  );
+}
+
+// Header X chip: opens a small list with the project account and the founder's.
+export function XMenu({ accounts }: { accounts: { href: string; who: string; handle: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+  return (
+    <div className={"x-menu" + (open ? " open" : "")} ref={box}>
+      <button
+        className="chip-link"
+        aria-label="murmur on X"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="chip">
+          <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+            <path d={X_PATH} fill="currentColor" />
+          </svg>
+        </span>
+      </button>
+      <div className="x-menu-list" role="menu">
+        {accounts.map((a) => (
+          <a key={a.href} href={a.href} target="_blank" rel="noreferrer" role="menuitem" onClick={() => setOpen(false)}>
+            <span>{a.who}</span>
+            <b>{a.handle}</b>
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }

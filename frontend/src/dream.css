@@ -1344,3 +1344,72 @@ footer[data-reveal] {
     display: none;
   }
 }
+
+/* Header X chip opens both accounts. */
+.x-menu {
+  position: relative;
+}
+.x-menu > button.chip-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.x-menu-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  min-width: 200px;
+  padding: 5px;
+  border-radius: 8px;
+  background: #0f0f0f;
+  box-shadow: 0 12px 30px rgba(10, 16, 50, 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.2s var(--ease),
+    transform 0.25s var(--ease),
+    visibility 0.2s;
+}
+.x-menu.open .x-menu-list {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+.x-menu-list a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 11px;
+  border-radius: 5px;
+  color: #e7e7e7;
+  font-size: 13px;
+  text-decoration: none;
+}
+.x-menu-list a span {
+  color: rgba(231, 231, 231, 0.55);
+}
+.x-menu-list a b {
+  font-weight: 500;
+}
+.x-menu-list a:hover {
+  background: #262626;
+  color: #fff;
+}
+.nav-right .x-menu .chip,
+.nav-right > .chip-link .chip {
+  width: 34px;
+  height: 34px;
+}
+/* Nav labels stay on one line on narrower desktops. */
+header nav a,
+header nav button {
+  white-space: nowrap;
+}
+.nav-right .primary {
+  white-space: nowrap;
+}
